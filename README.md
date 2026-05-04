@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 04 deterministic strategy/regime/signal scaffolding.
+This repository is at Milestone 05 deterministic risk/execution-core scaffolding.
 
 Implemented pieces:
 
@@ -31,11 +31,14 @@ Implemented pieces:
 - deterministic `RISK_ON` / `CAUTION` / `RISK_OFF` regime classification
 - long-only deterministic candidate evaluation for configured trend, breakout, volume, RS63, ATR, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates
 - stop-level and exit-trigger calculation helpers that do not submit orders
-- unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, and strategy/regime/exit helpers
+- deterministic risk checks for new-risk eligibility
+- position sizing from configured risk and position caps
+- kill-switch state models
+- passive `ExecutionIntent`, idempotency, order lifecycle, and rejection contracts
+- unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
 
 Not implemented yet:
 
-- risk/execution core
 - broker adapters or order submission
 - AI/news integration
 - database migrations

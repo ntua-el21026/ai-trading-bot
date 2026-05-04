@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, and deterministic strategy architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, and risk/execution-core architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 04 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, and deterministic strategy/regime/signal helpers.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 05 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, and passive risk/execution-core contracts.
 
 ## Target Shape
 
@@ -24,10 +24,13 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Regime classification implements deterministic `RISK_ON`, `CAUTION`, and `RISK_OFF` states from SPY SMA/realized-volatility rules.
 - Strategy candidate evaluation implements long-only trend, breakout, volume, RS63, ATR percent, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates.
 - Exit helpers calculate stop levels and exit trigger reason codes only; they do not submit or modify orders.
+- Risk checks evaluate new-risk eligibility from config and caller-supplied system, session, reconciliation, Temporal, exposure, loss, cash, duplicate-intent, and kill-switch state.
+- Position sizing implements the configured risk-per-trade and max-position-size formula with non-increasing multipliers.
+- Execution-core contracts define `ExecutionIntent`, deterministic client order ID roots, duplicate-intent helpers, passive order lifecycle transitions, and structured rejection models.
 - No API service is implemented.
 - No production worker deployment is implemented.
 - No dashboard is implemented.
-- No broker-executable trading logic is implemented.
+- No broker-executable order submission is implemented.
 - No broker adapter is implemented.
 - No database schema or migration is implemented.
 - No AI/news integration is implemented.
