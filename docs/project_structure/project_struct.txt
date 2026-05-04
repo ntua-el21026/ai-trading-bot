@@ -1,0 +1,28 @@
+AI_Trading_Bot/
+├── docs/
+│   ├── ai_deep_research/
+│   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 1).md
+│   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 2).md
+│   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (Gemini).md
+│   │   └── Trading Bot Deep Research - 1 (ChatGPT).md
+│   ├── alpaca/
+│   │   ├── Alpaca Customer Agreement.pdf
+│   │   ├── Alpaca Securities Customer Options Agreement.pdf
+│   │   ├── Crypto Customer Agreement.pdf
+│   │   └── W-8BEN_Form.pdf
+│   ├── app/
+│   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
+│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+│   ├── project_analytics/
+│   │   ├── project_analytics.py
+│   │   └── project_analytics.txt
+│   └── project_structure/
+│       ├── project_struct.py
+│       └── project_struct.txt
+├── .gitattributes
+├── .gitignore
+├── AGENTS.md
+├── LICENSE
+└── README.md
+
+Total directories: 7, Total files: 19

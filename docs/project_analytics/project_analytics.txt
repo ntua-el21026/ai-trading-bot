@@ -1,0 +1,14 @@
+===== ANALYSIS (With .gitignore) =====
+
+Total directories: 7
+Total files      : 19
+Total lines      : 7,745
+
+By language / type:
+  Asset/PDF            Files: 4  Lines: 0
+  GitAttributes        Files: 1  Lines: 46
+  GitIgnore            Files: 1  Lines: 85
+  License              Files: 1  Lines: 21
+  Markdown             Files: 8  Lines: 6,984
+  Python               Files: 2  Lines: 569
+  Text                 Files: 2  Lines: 40
