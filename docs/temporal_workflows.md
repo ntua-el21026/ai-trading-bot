@@ -1,20 +1,128 @@
 # Temporal Workflows
 
-This document is a foundation placeholder for Temporal workflow design.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Temporal is required from v0.1, but Milestone 01 does not implement workers, workflows, schedules, activities, signals, or queries.
+Milestone 03 adds Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
+contracts, signal names, query names, and contract tests. It does not implement broker execution,
+database writes, AI calls, market/news provider calls, production schedule activation, or live
+trading.
 
-## Foundation Configuration
+## Configuration
 
-`config/temporal.yaml` defines the initial namespace, task queue names, schedule names, and retry defaults from the latest spec so later milestones can build workers and workflow skeletons against stable names.
+`config/temporal.yaml` defines the namespace, task queue names, schedule names, and default retry
+values from the latest spec. The typed config loader also supports a Temporal service address and
+defaults it to `localhost:7233` for local development.
 
-## Required Boundary
+Task queues:
 
-Future workflow code must remain deterministic and call activities for side effects. Broker APIs, database writes, AI APIs, news APIs, alert sending, random values, and direct wall-clock reads belong in activities, not workflows.
+- `market-data-task-queue`
+- `strategy-task-queue`
+- `ai-research-task-queue`
+- `execution-task-queue`
+- `reconciliation-task-queue`
+- `reporting-task-queue`
 
-## Current Milestone Status
+Execution-critical skeletons are registered on `execution-task-queue`; reconciliation skeletons are
+registered on `reconciliation-task-queue`.
 
-- No Temporal SDK dependency is installed.
-- No Temporal client is implemented.
-- No worker process is implemented.
-- No workflow code is implemented.
+## Workflow Skeletons
+
+- `DailyDataRefreshWorkflow`
+- `EODSignalWorkflow`
+- `AIShortlistResearchWorkflow`
+- `DecisionWorkflow`
+- `ExecutionIntentWorkflow`
+- `OrderLifecycleWorkflow`
+- `PositionLifecycleWorkflow`
+- `ReconciliationWorkflow`
+- `KillSwitchWorkflow`
+- `ReportingWorkflow`
+
+Workflow code is limited to deterministic orchestration state, Temporal signals, Temporal queries,
+and Temporal activity calls. The skeletons call placeholder activities by name and return placeholder
+status objects.
+
+## Activity Boundary
+
+Current activity contracts are placeholders under `apps/workers/app/activities/contracts.py`.
+They intentionally perform no external calls and return `external_calls_performed=false`.
+
+Future side effects must stay in activities:
+
+- broker API calls;
+- database writes;
+- AI API calls;
+- news/data provider calls;
+- alert delivery;
+- wall-clock reads;
+- non-deterministic I/O.
+
+Workflow code must not perform those side effects directly.
+
+## Signals
+
+Required signal contract names are defined in `apps/workers/app/signals.py`:
+
+- `manual_kill_switch`
+- `manual_pause_new_risk`
+- `manual_resume_after_review`
+- `force_reconciliation`
+- `force_report`
+- `approve_level_change`
+- `acknowledge_incident`
+
+The kill-switch skeleton records deterministic state transitions that block new risk while
+preserving risk-reducing exits.
+
+## Queries
+
+Required query contract names are defined in `apps/workers/app/queries.py`:
+
+- `get_current_system_state`
+- `get_active_workflows`
+- `get_active_execution_intents`
+- `get_open_order_lifecycles`
+- `get_open_position_lifecycles`
+- `get_recent_incidents`
+- `get_last_reconciliation_status`
+- `get_kill_switch_state`
+
+## Retry Contracts
+
+Retry policy contracts are defined in `apps/workers/app/retry_policies.py`:
+
+- default non-critical activity retry from config;
+- broker order submit placeholder with `maximum_attempts=1` and an idempotency lookup flag;
+- protective stop retry placeholder;
+- AI retry placeholder with neutral fallback metadata.
+
+These are contracts only. They do not implement broker, stop, or AI behavior.
+
+## Local Worker Bootstrap
+
+Start one worker for a configured queue after a local Temporal service is available:
+
+```bash
+uv run python scripts/start_worker.py --task-queue execution-task-queue
+```
+
+Schedule creation is intentionally dry-run only in Milestone 03:
+
+```bash
+uv run python scripts/seed_temporal_schedules.py
+```
+
+## Testing
+
+Current tests are import and contract tests:
+
+```bash
+uv run --group dev pytest tests/unit tests/temporal
+```
+
+Full Temporal replay or local test-server execution is deferred until workflow behavior and mocked
+activities are added. A future command should use Temporal's testing environment, for example:
+
+```bash
+uv run --group dev pytest tests/temporal --run-temporal-server
+```

@@ -75,6 +75,7 @@ class RetryDefaults(StrictModel):
 
 
 class TemporalConfig(StrictModel):
+    address: str = "localhost:7233"
     namespace: str
     task_queues: TemporalTaskQueues
     schedules: TemporalSchedules

@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation and data/backtest architecture.
+This document describes the current foundation, data/backtest, and Temporal skeleton architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 02 data/backtest scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, and explicit-signal backtest utilities.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 03 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, and Temporal workflow/worker skeletons.
 
 ## Target Shape
 
@@ -20,12 +20,14 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Feature utilities calculate daily returns, SMA, EMA, ATR14, ATR percent, volume averages, volume ratios, highs, dollar volume, and RS63 inputs.
 - Universe filters support live and research universe scaffolding with point-in-time optimism warnings.
 - Backtesting utilities support explicit fixture signals, basic mark-to-market equity, and validation metrics.
+- Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, placeholder activity contracts, signal names, query names, and retry-policy contracts exist.
 - No API service is implemented.
-- No worker process is implemented.
+- No production worker deployment is implemented.
 - No dashboard is implemented.
 - No trading logic is implemented.
 - No broker adapter is implemented.
 - No database schema or migration is implemented.
 - No AI/news integration is implemented.
+- Temporal schedules are not activated.
 
 Future milestones must keep implementation aligned with the latest spec before adding behavior.

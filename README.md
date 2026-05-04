@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 02 data/backtest core scaffolding.
+This repository is at Milestone 03 Temporal workflow foundation scaffolding.
 
 Implemented pieces:
 
@@ -24,12 +24,15 @@ Implemented pieces:
 - deterministic daily feature functions
 - live/research universe filter scaffolding
 - deterministic backtest models, metrics, and explicit-signal engine skeleton
-- unit tests for config, data models, features, universe filters, and backtest metrics
+- Temporal SDK dependency and typed Temporal client bootstrap
+- Temporal task queue mapping for the spec-defined queues
+- workflow skeletons and placeholder activity contracts under `apps/workers/`
+- signal, query, and retry-policy contracts
+- unit tests for config, data models, features, universe filters, backtest metrics, and Temporal contracts
 
 Not implemented yet:
 
 - trading strategy logic
-- Temporal workflows or workers
 - broker adapters or order submission
 - AI/news integration
 - database migrations
@@ -52,12 +55,29 @@ Run unit tests:
 uv run --group dev pytest tests/unit
 ```
 
+Run Temporal contract tests:
+
+```bash
+uv run --group dev pytest tests/temporal
+```
+
 Optional local checks once dependencies are installed:
 
 ```bash
 uv run --group dev ruff check .
-uv run --group dev mypy packages tests
+uv run --group dev mypy packages apps tests
 ```
+
+## Temporal Skeletons
+
+The worker bootstrap is available after a local Temporal service is running:
+
+```bash
+uv run python scripts/start_worker.py --task-queue execution-task-queue
+```
+
+`scripts/seed_temporal_schedules.py` is dry-run only in this milestone and does not create or
+activate production schedules.
 
 ## Safety Defaults
 
