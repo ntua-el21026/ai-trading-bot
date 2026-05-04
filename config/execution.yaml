@@ -1,0 +1,22 @@
+execution:
+  autonomous_execution_enabled: false
+  allow_live_orders: false
+  require_execution_intent: true
+  require_passed_risk_check: true
+  require_broker_reconciliation_before_order: true
+  require_protective_stop: true
+  entry_order_type: "limit"
+  entry_time_in_force: "day"
+  entry_window_start_et: "09:45"
+  entry_window_end_et: "10:30"
+  unfilled_entry_cancel_time_et: "11:00"
+  max_acceptable_slippage_bps: 25
+  pause_on_order_submit_failure: true
+  pause_on_stop_failure: true
+  notify_on_every_order: true
+
+protective_stop:
+  warning_after_seconds: 5
+  critical_after_seconds: 30
+  flatten_after_seconds: 60
+  max_retries: 3

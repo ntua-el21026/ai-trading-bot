@@ -1,0 +1,16 @@
+regime:
+  model_version: "rule_based_regime_v0_3"
+  states:
+    - RISK_ON
+    - CAUTION
+    - RISK_OFF
+  proxy: "SPY"
+  sma_slow: 200
+  sma_fast: 50
+  risk_on_above_sma200_multiplier: 1.01
+  risk_off_below_sma200_multiplier: 0.99
+  risk_on_confirm_closes: 3
+  risk_off_confirm_closes: 2
+  rv20_risk_on_max: 0.25
+  rv20_risk_off_min: 0.35
+  risk_off_cooldown_days: 3

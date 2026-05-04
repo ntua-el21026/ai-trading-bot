@@ -1,0 +1,39 @@
+risk_level_4_micro_live:
+  max_gross_exposure_pct: 0.20
+  max_deployable_capital_pct: 0.20
+  max_position_size_pct: 0.04
+  max_risk_per_trade_pct: 0.0035
+  max_open_positions: 5
+  max_sector_exposure_pct: 0.10
+  min_cash_buffer_pct: 0.75
+  max_daily_loss_pct: 0.01
+  max_weekly_loss_pct: 0.025
+  max_monthly_loss_pct: 0.05
+  allow_margin: false
+  allow_shorting: false
+  allow_options: false
+  allow_leveraged_etfs: false
+  allow_futures: false
+  allow_crypto: false
+  allow_prediction_markets: false
+  require_protective_stop: true
+
+risk_level_4_expanded:
+  max_gross_exposure_pct: 0.60
+  max_deployable_capital_pct: 0.60
+  max_position_size_pct: 0.10
+  max_risk_per_trade_pct: 0.0035
+  max_open_positions: 6
+  max_sector_exposure_pct: 0.20
+  min_cash_buffer_pct: 0.35
+  max_daily_loss_pct: 0.0125
+  max_weekly_loss_pct: 0.03
+  max_monthly_loss_pct: 0.06
+  allow_margin: false
+  allow_shorting: false
+  allow_options: false
+  allow_leveraged_etfs: false
+  allow_futures: false
+  allow_crypto: false
+  allow_prediction_markets: false
+  require_protective_stop: true

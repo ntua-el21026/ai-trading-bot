@@ -1,0 +1,28 @@
+strategy:
+  name: "regime_filtered_breakout_v0_3"
+  trend_fast_ma: 50
+  trend_slow_ma: 200
+  breakout_lookback_primary: 20
+  breakout_lookback_research_variants:
+    - 20
+    - 55
+  volume_lookback_days: 20
+  volume_ratio_min: 1.20
+  relative_strength_lookback_days: 63
+  relative_strength_min: 0.0
+  relative_strength_percentile_floor_research: 70
+  atr_period: 14
+  atr_pct_min: 0.015
+  atr_pct_max: 0.060
+  initial_stop_atr_multiplier: 2.0
+  initial_stop_atr_multiplier_research_variants:
+    - 2.0
+    - 2.5
+  trailing_stop_atr_multiplier: 2.5
+  trailing_stop_atr_multiplier_research_variants:
+    - 2.5
+    - 3.0
+  technical_exit_ema: 10
+  technical_exit_confirm_closes: 2
+  time_stop_days: 20
+  fail_fast_exit_days: 5

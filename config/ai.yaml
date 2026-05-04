@@ -1,0 +1,20 @@
+ai:
+  enabled: true
+  provider: "openai_or_anthropic"
+  model: "configured_in_env"
+  require_json_schema: true
+  allow_ai_to_create_orders: false
+  allow_ai_to_modify_strategy: false
+  allow_ai_to_modify_risk_limits: false
+  analyze_full_universe: false
+  analyze_deterministic_shortlist_only: true
+  default_news_lookback_calendar_days: 7
+  extended_event_lookback_calendar_days: 14
+  max_articles_per_symbol: 12
+  batch_size_symbols: 5
+  max_batch_size_symbols: 8
+  missing_news_fallback_score: 50
+  invalid_output_fallback_score: 50
+  hard_block_confidence_min: 0.70
+  prompt_version: "ai_trade_research_v0_3"
+  schema_version: "ai_trade_research_schema_v0_3"

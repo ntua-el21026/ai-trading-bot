@@ -1,0 +1,35 @@
+live_universe:
+  symbols:
+    - SPY
+    - QQQ
+    - DIA
+    - IWM
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - AAPL
+    - MSFT
+    - NVDA
+    - AMZN
+    - META
+    - GOOGL
+  min_price: 20
+  min_adv20_usd: 50000000
+  allow_etfs: true
+  allow_common_stocks: true
+  allow_options: false
+  allow_shorting: false
+  allow_leveraged_etfs: false
+  allow_inverse_etfs: false
+  allow_futures: false
+  allow_crypto: false
+  allow_prediction_markets: false
+
+research_universe:
+  min_price: 10
+  min_adv20_usd: 20000000
+  include_us_common_stocks: true
+  include_major_etfs: true
+  survivorship_bias_warning_required: true
+  point_in_time_universe_preferred: true

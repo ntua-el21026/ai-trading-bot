@@ -1,0 +1,22 @@
+temporal:
+  namespace: "autonomous-trading"
+  task_queues:
+    market_data: "market-data-task-queue"
+    strategy: "strategy-task-queue"
+    ai_research: "ai-research-task-queue"
+    execution: "execution-task-queue"
+    reconciliation: "reconciliation-task-queue"
+    reporting: "reporting-task-queue"
+
+  schedules:
+    daily_data_refresh: "25 8 * * 1-5"
+    eod_signal_generation: "10 16 * * 1-5"
+    ai_shortlist_research: "30 16 * * 1-5"
+    trade_plan_snapshot: "0 17 * * 1-5"
+    sanity_reconciliation: "0 20 * * 1-5"
+
+  retry_defaults:
+    initial_interval_seconds: 5
+    backoff_coefficient: 2.0
+    maximum_interval_seconds: 60
+    maximum_attempts: 3

@@ -1,0 +1,11 @@
+system:
+  environment: "paper"
+  timezone_market: "America/New_York"
+  timezone_user: "Europe/Athens"
+  dry_run: true
+  live_trading_enabled: false
+  autonomous_execution_enabled: false
+  autonomy_level: 2
+  kill_switch_enabled: true
+  require_broker_reconciliation: true
+  pause_on_reconciliation_error: true
