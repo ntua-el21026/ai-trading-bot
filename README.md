@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 03 Temporal workflow foundation scaffolding.
+This repository is at Milestone 04 deterministic strategy/regime/signal scaffolding.
 
 Implemented pieces:
 
@@ -28,11 +28,14 @@ Implemented pieces:
 - Temporal task queue mapping for the spec-defined queues
 - workflow skeletons and placeholder activity contracts under `apps/workers/`
 - signal, query, and retry-policy contracts
-- unit tests for config, data models, features, universe filters, backtest metrics, and Temporal contracts
+- deterministic `RISK_ON` / `CAUTION` / `RISK_OFF` regime classification
+- long-only deterministic candidate evaluation for configured trend, breakout, volume, RS63, ATR, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates
+- stop-level and exit-trigger calculation helpers that do not submit orders
+- unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, and strategy/regime/exit helpers
 
 Not implemented yet:
 
-- trading strategy logic
+- risk/execution core
 - broker adapters or order submission
 - AI/news integration
 - database migrations

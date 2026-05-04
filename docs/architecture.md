@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, and Temporal skeleton architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, and deterministic strategy architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 03 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, and Temporal workflow/worker skeletons.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 04 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, and deterministic strategy/regime/signal helpers.
 
 ## Target Shape
 
@@ -21,13 +21,17 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Universe filters support live and research universe scaffolding with point-in-time optimism warnings.
 - Backtesting utilities support explicit fixture signals, basic mark-to-market equity, and validation metrics.
 - Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, placeholder activity contracts, signal names, query names, and retry-policy contracts exist.
+- Regime classification implements deterministic `RISK_ON`, `CAUTION`, and `RISK_OFF` states from SPY SMA/realized-volatility rules.
+- Strategy candidate evaluation implements long-only trend, breakout, volume, RS63, ATR percent, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates.
+- Exit helpers calculate stop levels and exit trigger reason codes only; they do not submit or modify orders.
 - No API service is implemented.
 - No production worker deployment is implemented.
 - No dashboard is implemented.
-- No trading logic is implemented.
+- No broker-executable trading logic is implemented.
 - No broker adapter is implemented.
 - No database schema or migration is implemented.
 - No AI/news integration is implemented.
 - Temporal schedules are not activated.
+- Earnings blackout evaluation requires caller-supplied earnings dates and trading calendars. Missing earnings data is treated as unknown and blocks entries conservatively.
 
 Future milestones must keep implementation aligned with the latest spec before adding behavior.
