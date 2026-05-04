@@ -79,7 +79,7 @@ temp/
 artifacts/
 backtests/
 checkpoints/
-data/
+/data/
 models/
 outputs/
 runs/

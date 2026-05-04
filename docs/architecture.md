@@ -1,8 +1,8 @@
 # Architecture
 
-This document is a foundation placeholder for the autonomous AI trading bot architecture.
+This document describes the current foundation and data/backtest architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 01 foundation scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, and documentation placeholders.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 02 data/backtest scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, and explicit-signal backtest utilities.
 
 ## Target Shape
 
@@ -14,11 +14,18 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
 ## Current Milestone Status
 
+- Data models exist for adjusted daily OHLCV bars, quotes, asset metadata, raw provider payload metadata, feature rows, and universe membership.
+- Raw provider payload hashing helpers and repository protocol contracts exist.
+- Provider interfaces exist as protocols only and make no live network calls.
+- Feature utilities calculate daily returns, SMA, EMA, ATR14, ATR percent, volume averages, volume ratios, highs, dollar volume, and RS63 inputs.
+- Universe filters support live and research universe scaffolding with point-in-time optimism warnings.
+- Backtesting utilities support explicit fixture signals, basic mark-to-market equity, and validation metrics.
 - No API service is implemented.
 - No worker process is implemented.
 - No dashboard is implemented.
 - No trading logic is implemented.
 - No broker adapter is implemented.
 - No database schema or migration is implemented.
+- No AI/news integration is implemented.
 
 Future milestones must keep implementation aligned with the latest spec before adding behavior.
