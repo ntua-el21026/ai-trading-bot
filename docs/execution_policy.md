@@ -62,6 +62,13 @@ a broker or submit orders. Invalid transitions return structured rejections for 
 
 Future broker order submission must happen only through the deterministic Temporal execution workflow path, after valid decisions, risk checks, reconciliation, active autonomy permission, and kill-switch checks.
 
+AI/news intelligence is not an execution path. AI output cannot create orders, modify orders, change
+stops, modify strategy rules, modify risk limits, access broker credentials, or call broker APIs.
+
+Dashboard/control-plane actions are also not an execution path. The Milestone 08 contracts expose no
+order-entry action, no natural-language trading input, and no broker adapter access. Safe controls
+are auditable requests mapped to server-side Temporal signal names only.
+
 ## Broker Adapter Boundary
 
 `packages/broker/adapters.py` defines the broker operations required by later execution activities:

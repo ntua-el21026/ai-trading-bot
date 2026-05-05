@@ -48,6 +48,30 @@ async def research_ai_shortlist(payload: ActivityPlaceholderInput) -> ActivityPl
     return _placeholder_result("research_ai_shortlist", payload)
 
 
+@activity.defn(name="fetch_candidate_news")
+async def fetch_candidate_news(payload: ActivityPlaceholderInput) -> ActivityPlaceholderResult:
+    return _placeholder_result("fetch_candidate_news", payload)
+
+
+@activity.defn(name="run_ai_trade_research")
+async def run_ai_trade_research(payload: ActivityPlaceholderInput) -> ActivityPlaceholderResult:
+    return _placeholder_result("run_ai_trade_research", payload)
+
+
+@activity.defn(name="validate_ai_research_output")
+async def validate_ai_research_output(
+    payload: ActivityPlaceholderInput,
+) -> ActivityPlaceholderResult:
+    return _placeholder_result("validate_ai_research_output", payload)
+
+
+@activity.defn(name="store_ai_research_payload")
+async def store_ai_research_payload(
+    payload: ActivityPlaceholderInput,
+) -> ActivityPlaceholderResult:
+    return _placeholder_result("store_ai_research_payload", payload)
+
+
 @activity.defn(name="build_trade_decisions")
 async def build_trade_decisions(payload: ActivityPlaceholderInput) -> ActivityPlaceholderResult:
     return _placeholder_result("build_trade_decisions", payload)
@@ -111,6 +135,10 @@ ACTIVITY_FUNCTIONS = (
     refresh_market_data,
     build_eod_signals,
     research_ai_shortlist,
+    fetch_candidate_news,
+    run_ai_trade_research,
+    validate_ai_research_output,
+    store_ai_research_payload,
     build_trade_decisions,
     build_execution_intents,
     submit_order_placeholder,

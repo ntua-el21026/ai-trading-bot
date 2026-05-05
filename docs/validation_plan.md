@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 06 adds unit tests for config loading, data models, raw payload hashing, deterministic feature utilities, universe filtering, backtest metrics/engine scaffolding, Temporal contracts, deterministic regime/strategy/exit helpers, risk checks, position sizing, kill-switch state, execution intents, idempotency, passive order lifecycle transitions, broker model validation, Alpaca stream mapping, safe adapter gating, REST fallback snapshots, reconciliation mismatches, and incident recommendations. It does not validate real Alpaca paper credentials, live Temporal replay behavior, AI schema behavior, database persistence, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 08 adds unit tests for config loading, data models, raw payload hashing, deterministic feature utilities, universe filtering, backtest metrics/engine scaffolding, Temporal contracts, deterministic regime/strategy/exit helpers, risk checks, position sizing, kill-switch state, execution intents, idempotency, passive order lifecycle transitions, broker model validation, Alpaca stream mapping, safe adapter gating, REST fallback snapshots, reconciliation mismatches, AI/news contracts, dashboard/control-plane contracts, and incident/fallback recommendations. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, or profitability.
 
 ## Foundation Checks
 
@@ -27,6 +27,13 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - REST fallback snapshot construction is fixture-tested with the 30-second spec interval.
 - Reconciliation comparison is fixture-tested for clean state, missing/extra positions, missing protective stops, duplicate open entry orders, unexpected short positions, unsupported broker asset classes, unknown open broker orders, missing fills, quantity mismatch, average-price mismatch, account-equity mismatch, stale snapshots, and Temporal workflow inconsistency.
 - Incident severity, pause-new-risk recommendations, and flatten-if-safe recommendations are fixture-tested.
+- AI article validation, normalization, deduplication, and deterministic-shortlist provider boundaries are fixture-tested.
+- AI prompt loading, strict JSON parsing, invalid JSON fallback, schema-violation fallback, no-news fallback, provider-outage fallback, and conflicting-source fallback are fixture-tested.
+- AI recency decay, source quality weighting, score clipping, hard-block confidence threshold, and non-increasing size-multiplier behavior are fixture-tested.
+- AI persistence payload hashes are fixture-tested without database writes.
+- AI/news activity contracts are fixture-tested as placeholders with no external calls.
+- Dashboard/control-plane read models, safe control action shapes, Temporal signal mapping, no
+  order-entry controls, fixture dispatch behavior, and frontend secret guardrails are fixture-tested.
 
 ## Backtest Policy
 

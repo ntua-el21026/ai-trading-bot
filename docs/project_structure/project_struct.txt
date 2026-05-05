@@ -1,5 +1,14 @@
 AI_Trading_Bot/
 ├── apps/
+│   ├── api/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   └── control_plane.py
+│   │   └── __init__.py
+│   ├── dashboard/
+│   │   ├── __init__.py
+│   │   ├── public_env.py
+│   │   └── README.md
 │   ├── workers/
 │   │   ├── app/
 │   │   │   ├── activities/
@@ -71,13 +80,27 @@ AI_Trading_Bot/
 │   │   ├── 11_LEVEL4_MICRO_LIVE_READINESS.md
 │   │   ├── CODEX_CREATE_MILESTONE_PROMPTS.md
 │   │   └── README.md
+│   ├── ai_intelligence.md
 │   ├── architecture.md
+│   ├── dashboard_control_plane.md
 │   ├── execution_policy.md
 │   ├── operations_runbook.md
 │   ├── risk_policy.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
 ├── packages/
+│   ├── ai/
+│   │   ├── prompts/
+│   │   │   └── ai_trade_research_v0_3.md
+│   │   ├── __init__.py
+│   │   ├── dedupe.py
+│   │   ├── fallback.py
+│   │   ├── models.py
+│   │   ├── news.py
+│   │   ├── parser.py
+│   │   ├── persistence.py
+│   │   ├── prompts.py
+│   │   └── scoring.py
 │   ├── backtesting/
 │   │   ├── __init__.py
 │   │   ├── engine.py
@@ -88,6 +111,11 @@ AI_Trading_Bot/
 │   │   ├── adapters.py
 │   │   ├── alpaca.py
 │   │   └── models.py
+│   ├── control_plane/
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── security.py
+│   │   └── service.py
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── config.py
@@ -124,10 +152,17 @@ AI_Trading_Bot/
 │   ├── temporal/
 │   │   └── test_workflow_contracts.py
 │   └── unit/
+│       ├── test_ai_news.py
+│       ├── test_ai_parser.py
+│       ├── test_ai_persistence.py
+│       ├── test_ai_scoring.py
 │       ├── test_alpaca_mapping.py
 │       ├── test_backtesting_metrics.py
 │       ├── test_broker_models.py
 │       ├── test_config.py
+│       ├── test_control_plane_api.py
+│       ├── test_control_plane_models.py
+│       ├── test_dashboard_env_security.py
 │       ├── test_data_models.py
 │       ├── test_execution_intent.py
 │       ├── test_features.py
@@ -150,4 +185,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 26, Total files: 125
+Total directories: 32, Total files: 154

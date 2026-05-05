@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 06 broker-reconciliation boundary scaffolding.
+This repository is at Milestone 08 dashboard/control-plane contract scaffolding.
 
 Implemented pieces:
 
@@ -41,17 +41,36 @@ Implemented pieces:
 - REST fallback snapshot contracts using the spec's 30-second fallback interval
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations
+- bounded AI/news provider protocols for deterministic shortlist candidates only
+- ticker-tagged news article normalization and deduplication helpers
+- versioned AI trade-research prompt template
+- strict schema-validated AI trade-research output models and neutral fallback behavior
+- deterministic AI event scoring, hard-block classification, and non-increasing size-multiplier
+  helpers
+- raw prompt/output persistence payload contracts with audit hashes
+- Temporal AI/news activity boundaries that perform no external calls
+- dashboard/control-plane read models for system state, workflows, intents, orders, positions,
+  incidents, reconciliation, kill switch, candidates/signals, AI outputs, reports, and risk status
+- server-side control-plane contracts mapping safe manual controls to existing Temporal signal names
+- minimal `apps/api/` and `apps/dashboard/` scaffolds with frontend environment guardrails and no
+  frontend framework dependencies
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
 - unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
   reconciliation clean state, mismatch detection, and incident recommendations
+- unit tests for AI/news article validation, deduplication, prompt loading, strict parsing,
+  fallbacks, scoring, hard-block policy, and persistence hashes
+- unit tests for dashboard read models, safe control actions, Temporal signal mapping, no order-entry
+  controls, and frontend secret guardrails
 
 Not implemented yet:
 
 - executable broker order submission
 - real Alpaca SDK/client integration
+- real news provider integration
+- real AI provider integration
 - database migrations or durable ledger persistence
-- AI/news integration
-- dashboard/control plane
+- production dashboard UI/deployment
+- real Temporal query/signal backend integration
 - live trading
 
 ## Setup
@@ -96,6 +115,6 @@ activate production schedules.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker calls. Broker adapter methods are protocol/skeleton boundaries until a later milestone wires an explicitly configured paper client through Temporal activities.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Broker, AI, and control-plane methods are protocol/skeleton boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

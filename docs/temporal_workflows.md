@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 06 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
-contracts, signal names, query names, broker-reconciliation activity boundaries, and contract tests.
-It does not implement broker execution, database writes, AI calls, market/news provider calls,
-production schedule activation, or live trading.
+Milestone 08 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
+contracts, signal names, query names, broker-reconciliation activity boundaries, AI/news activity
+boundaries, dashboard/control-plane signal mapping contracts, and contract tests. It does not
+implement broker execution, database writes, AI calls, market/news provider calls, production
+schedule activation, browser-side Temporal calls, or live trading.
 
 ## Configuration
 
@@ -53,8 +54,15 @@ Milestone 06 adds placeholder boundaries for:
 - internal ledger snapshot retrieval;
 - reconciliation snapshot comparison.
 
+Milestone 07 adds placeholder boundaries for:
+
+- deterministic-shortlist candidate news retrieval;
+- AI trade-research execution;
+- AI output validation;
+- AI research payload storage.
+
 These are activity contracts only. Workflow code still calls activities by name and performs no
-broker API, database, websocket, or REST calls directly.
+broker API, AI API, news API, database, websocket, or REST calls directly.
 
 Future side effects must stay in activities:
 
@@ -83,6 +91,9 @@ Required signal contract names are defined in `apps/workers/app/signals.py`:
 The kill-switch skeleton records deterministic state transitions that block new risk while
 preserving risk-reducing exits.
 
+Dashboard/control-plane actions map only to safe signal names through server-side contracts under
+`apps/api/app/control_plane.py`. Browser/dashboard code must not call Temporal directly.
+
 ## Queries
 
 Required query contract names are defined in `apps/workers/app/queries.py`:
@@ -105,9 +116,10 @@ Retry policy contracts are defined in `apps/workers/app/retry_policies.py`:
 - protective stop retry placeholder;
 - AI retry placeholder with neutral fallback metadata.
 
-These are contracts only. They do not implement broker, stop, or AI behavior. Broker order
-submission retry remains capped at one attempt until a later milestone adds explicit idempotency
-lookup behavior through broker and database activities.
+These are contracts only. They do not implement broker, stop, or provider-backed AI behavior. Broker
+order submission retry remains capped at one attempt until a later milestone adds explicit
+idempotency lookup behavior through broker and database activities. AI activity retry is represented
+as a contract with neutral fallback on failure.
 
 ## Local Worker Bootstrap
 

@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, and broker-reconciliation boundary architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, and dashboard/control-plane boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 06 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, and pure reconciliation comparison.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 08 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, and dashboard/control-plane read/action contracts.
 
 ## Target Shape
 
@@ -31,13 +31,20 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - The Alpaca paper adapter is a dependency-free safety skeleton. It refuses live-mode configuration and raises until an explicitly configured paper client is added in a later milestone.
 - Alpaca `trade_updates` fixture payloads can be mapped into internal broker stream events without credentials or websocket connections.
 - Reconciliation contracts compare broker snapshots against passive internal ledger snapshots and classify mismatches into structured incidents with pause-new-risk or flatten-if-safe recommendations.
-- No API service is implemented.
+- AI/news contracts define deterministic-shortlist-only news requests, provider protocols, article normalization/deduplication, strict AI output schemas, neutral fallbacks, deterministic AI event scoring, hard-block classification, and persistence payload contracts.
+- The AI prompt template is versioned under `packages/ai/prompts/` and explicitly forbids broker actions, order creation/modification, stop changes, strategy mutation, risk-limit changes, and full-universe scanning.
+- AI/news Temporal activity boundaries are placeholders only and perform no external provider, AI, database, broker, or network calls.
+- Control-plane contracts define read-only dashboard views and auditable safe control requests.
+- `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal names. It does not call Temporal, broker adapters, AI/news providers, or databases yet.
+- `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No frontend framework or deployment files are added.
+- No production API service is implemented.
 - No production worker deployment is implemented.
-- No dashboard is implemented.
+- No production dashboard UI is implemented.
 - No broker-executable order submission is implemented.
 - No real Alpaca SDK/client integration is implemented.
 - No database schema or migration is implemented.
-- No AI/news integration is implemented.
+- No real AI/news provider integration is implemented.
+- No real Temporal query/signal backend integration is implemented.
 - Temporal schedules are not activated.
 - Earnings blackout evaluation requires caller-supplied earnings dates and trading calendars. Missing earnings data is treated as unknown and blocks entries conservatively.
 

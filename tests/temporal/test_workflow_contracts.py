@@ -6,8 +6,12 @@ from apps.workers.app.activities.contracts import (
     ACTIVITY_FUNCTIONS,
     compare_reconciliation_snapshots,
     fetch_broker_reconciliation_snapshot,
+    fetch_candidate_news,
     fetch_internal_ledger_snapshot,
     refresh_market_data,
+    run_ai_trade_research,
+    store_ai_research_payload,
+    validate_ai_research_output,
 )
 from apps.workers.app.queries import QUERY_NAMES
 from apps.workers.app.signals import SIGNAL_NAMES
@@ -60,6 +64,10 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
 
     assert "refresh_market_data" in activity_names
     assert "submit_order_placeholder" in activity_names
+    assert "fetch_candidate_news" in activity_names
+    assert "run_ai_trade_research" in activity_names
+    assert "validate_ai_research_output" in activity_names
+    assert "store_ai_research_payload" in activity_names
     assert "fetch_broker_reconciliation_snapshot" in activity_names
     assert "fetch_internal_ledger_snapshot" in activity_names
     assert "compare_reconciliation_snapshots" in activity_names
@@ -93,6 +101,41 @@ def test_reconciliation_activity_contracts_are_placeholders_without_external_cal
     ]
     assert all(result.external_calls_performed is False for result in results)
     assert all(result.details["external_calls"] == "none" for result in results)
+
+
+def test_ai_activity_contracts_are_placeholders_without_external_calls() -> None:
+    payload = ActivityPlaceholderInput(
+        workflow_name="AIShortlistResearchWorkflow",
+        purpose="contract-test",
+    )
+
+    results = asyncio.run(_run_ai_activity_placeholders(payload))
+
+    assert [result.activity_name for result in results] == [
+        "fetch_candidate_news",
+        "run_ai_trade_research",
+        "validate_ai_research_output",
+        "store_ai_research_payload",
+    ]
+    assert all(result.external_calls_performed is False for result in results)
+    assert all(result.details["external_calls"] == "none" for result in results)
+
+
+async def _run_ai_activity_placeholders(
+    payload: ActivityPlaceholderInput,
+) -> tuple[
+    ActivityPlaceholderResult,
+    ActivityPlaceholderResult,
+    ActivityPlaceholderResult,
+    ActivityPlaceholderResult,
+]:
+    news, research, validation, storage = await asyncio.gather(
+        fetch_candidate_news(payload),
+        run_ai_trade_research(payload),
+        validate_ai_research_output(payload),
+        store_ai_research_payload(payload),
+    )
+    return news, research, validation, storage
 
 
 async def _run_reconciliation_activity_placeholders(

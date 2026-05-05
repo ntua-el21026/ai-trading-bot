@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 06 does not implement production services, active schedules, real broker clients, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation contracts and incident recommendations.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 08 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, and dashboard/control-plane contracts with incident/fallback recommendations.
 
 ## Current Foundation Operations
 
@@ -25,8 +25,36 @@ Broker reconciliation is currently a pure comparison contract:
 No current operation submits, cancels, or flattens broker orders. Flattening is represented only as a
 `flatten_if_safe` recommendation for later execution workflow handling.
 
+## Current AI Operations
+
+AI/news intelligence is currently a fixture-safe contract:
+
+1. Request ticker-tagged news only for deterministic shortlist symbols.
+2. Normalize and deduplicate articles.
+3. Build a versioned prompt and validate strict AI JSON output.
+4. Fall back to neutral behavior for no news, invalid JSON, schema violations, provider outages, or
+   insufficient data.
+5. Persist only payload contracts for future database integration.
+
+No current operation calls AI providers, news providers, broker APIs, or databases. AI has no broker
+credentials and cannot create or modify orders, stops, strategy rules, risk limits, or kill switches.
+
+## Current Dashboard Operations
+
+Dashboard/control-plane behavior is currently contract-only:
+
+1. Read dashboard snapshots from fixture or future database/Temporal read-model providers.
+2. Represent safe manual controls as auditable command objects.
+3. Map safe controls to existing Temporal signal names through server-side contracts.
+4. Expose only explicitly safe public dashboard environment values.
+
+No current dashboard operation submits broker orders, calls broker APIs, calls AI/news providers,
+calls Temporal from browser code, exposes broker/AI provider secrets, or changes risk/autonomy
+configuration.
+
 ## Future Operations Scope
 
 Later milestones must document real worker startup, Temporal schedules, paper trading procedures,
-real broker credential setup, database-backed reconciliation, incident response, kill-switch
-behavior, reporting, and Level 4 micro-live readiness gates.
+real broker credential setup, real AI/news provider setup, database-backed reconciliation and AI
+research persistence, real Temporal query/signal backend integration, dashboard deployment,
+incident response, kill-switch behavior, reporting, and Level 4 micro-live readiness gates.

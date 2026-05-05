@@ -59,6 +59,22 @@ risk-reducing exits. Missing protective stops follow the latest-spec thresholds:
 The implementation emits recommendations only. It does not cancel orders, submit flattening orders,
 or mutate kill-switch state directly.
 
+## AI Risk Intelligence Input
+
+`packages/ai/scoring.py` maps schema-validated AI news events into deterministic AI scores,
+hard-block flags, and non-increasing size multipliers. AI output is advisory only and does not
+override risk checks, broker reconciliation, kill-switch state, protective-stop requirements, or
+execution gates.
+
+Invalid AI output, no news, or provider outages fall back to neutral behavior and do not trigger a
+global kill switch by themselves.
+
+## Dashboard Control Input
+
+`packages/control_plane/models.py` represents manual kill-switch, pause-new-risk, resume-after-review,
+force reconciliation/report, and acknowledge-incident requests as auditable control commands. These
+commands do not modify risk limits, autonomy level, stop policy, or broker state directly.
+
 ## Position Sizing
 
 `packages/risk/sizing.py` implements the latest-spec sizing formula:
