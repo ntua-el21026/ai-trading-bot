@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 10 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, and paper trading operations documentation with incident/fallback recommendations.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 11 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, and Level 4 readiness documentation with incident/fallback recommendations.
 
 ## Current Foundation Operations
 
@@ -85,6 +85,22 @@ The runbook covers paper setup constraints, daily/weekly procedures, monitoring,
 reporting expectations, frozen paper acceptance criteria, and paper-to-Level-4 handoff gates. It is
 target-state readiness documentation only. It does not submit paper orders, call broker APIs, start
 provider integrations, enable live trading, or prove profitability.
+
+## Level 4 Micro-Live Readiness
+
+Level 4 readiness documentation is in `docs/level4_micro_live_readiness.md`.
+
+Supporting documentation-only artifacts:
+
+- `docs/checklists/level4_micro_live_readiness_checklist.md`
+- `docs/checklists/credential_separation_checklist.md`
+- `docs/checklists/kill_switch_rearm_checklist.md`
+- `docs/templates/level4_micro_live_go_no_go_template.md`
+
+Current conclusion: Level 4 micro-live is not ready. The readiness documents define evidence gates,
+config review, credential separation, kill-switch/manual re-arm tests, reconciliation evidence,
+protective-stop evidence, slippage/fill-quality evidence, dashboard evidence, and final go/no-go
+records. They do not enable live trading or autonomous live execution.
 
 ## Future Operations Scope
 

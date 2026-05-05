@@ -45,3 +45,10 @@ Real news provider clients, real AI provider clients, database persistence/migra
 dashboard deployment, and paper/live validation remain deferred. Tests use fixtures only and require
 no API keys or network calls. Milestone 08 dashboard contracts can display AI output read models but
 do not call AI providers from frontend code.
+
+## Level 4 Readiness Evidence
+
+`docs/level4_micro_live_readiness.md` requires AI evidence before Level 4 micro-live: deterministic
+shortlist-only analysis, strict schema validation, neutral fallbacks for invalid/provider-failure
+cases, no broker access, and AI valid-schema rate >= 99% during frozen paper. Current AI
+implementation is fixture-only and has no real provider evidence.

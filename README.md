@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 10 paper trading runbook readiness.
+This repository is at Milestone 11 Level 4 micro-live readiness documentation.
 
 Implemented pieces:
 
@@ -58,6 +58,8 @@ Implemented pieces:
   Monte Carlo placeholders, failure simulations, and paper dry-run checks
 - paper trading runbook, daily/weekly checklist templates, report templates, incident response flow,
   frozen paper acceptance criteria, and paper-to-Level-4 handoff gates
+- Level 4 micro-live readiness documentation, credential separation checklist, kill-switch re-arm
+  checklist, readiness checklist, and go/no-go template
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
 - unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
   reconciliation clean state, mismatch detection, and incident recommendations
@@ -78,6 +80,7 @@ Not implemented yet:
 - production dashboard UI/deployment
 - real Temporal query/signal backend integration
 - actual paper trading operations
+- Level 4 micro-live readiness evidence
 - live trading
 
 ## Setup
@@ -139,6 +142,20 @@ Milestone 10 adds paper trading operating documentation only:
 The runbook is target-state operational readiness documentation. It does not mean real provider
 integrations, database persistence, paper broker execution, alerting, dashboard deployment, or live
 trading are complete.
+
+## Level 4 Micro-Live Readiness
+
+Milestone 11 adds readiness documentation only:
+
+- `docs/level4_micro_live_readiness.md`
+- `docs/checklists/level4_micro_live_readiness_checklist.md`
+- `docs/checklists/credential_separation_checklist.md`
+- `docs/checklists/kill_switch_rearm_checklist.md`
+- `docs/templates/level4_micro_live_go_no_go_template.md`
+
+Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
+real provider integrations, database/audit persistence, real Temporal query/signal backend
+integration, real dashboard deployment, alerting, and live go/no-go approval.
 
 ## Safety Defaults
 

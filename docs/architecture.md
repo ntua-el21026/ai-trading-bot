@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, and paper-operations documentation boundary architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 10 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, and paper trading runbook documentation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 11 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -43,6 +43,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - `docs/paper_trading_runbook.md` and related checklist/report templates define paper operations,
   monitoring, incident response, frozen paper acceptance criteria, and paper-to-Level-4 handoff
   gates. They are documentation only and do not activate paper or live trading.
+- `docs/level4_micro_live_readiness.md` and related checklists/templates define Level 4 evidence
+  gates, credential separation, control re-arm checks, and go/no-go records. They are documentation
+  only and do not enable live trading.
 - No production API service is implemented.
 - No production worker deployment is implemented.
 - No production dashboard UI is implemented.
@@ -52,6 +55,7 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - No real AI/news provider integration is implemented.
 - No real Temporal query/signal backend integration is implemented.
 - Temporal schedules are not activated.
+- Level 4 micro-live readiness is not satisfied because required evidence is absent.
 - Earnings blackout evaluation requires caller-supplied earnings dates and trading calendars. Missing earnings data is treated as unknown and blocks entries conservatively.
 
 Future milestones must keep implementation aligned with the latest spec before adding behavior.

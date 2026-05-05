@@ -109,3 +109,10 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 Later milestones must connect these contracts to Temporal execution workflows, real Alpaca paper
 adapters, and database audit persistence. Any change to risk limits or risk semantics requires
 explicit approval and a corresponding spec update.
+
+## Level 4 Readiness Status
+
+`docs/level4_micro_live_readiness.md` documents the current Level 4 micro-live risk config review.
+The current `risk_level_4_micro_live` values match the latest spec, while live trading and
+autonomous live execution remain disabled. Level 4 readiness is not satisfied because frozen paper,
+real broker/provider, database, dashboard, alerting, and go/no-go evidence are still absent.

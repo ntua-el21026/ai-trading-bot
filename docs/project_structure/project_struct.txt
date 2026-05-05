@@ -60,6 +60,9 @@ AI_Trading_Bot/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
 │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 │   ├── checklists/
+│   │   ├── credential_separation_checklist.md
+│   │   ├── kill_switch_rearm_checklist.md
+│   │   ├── level4_micro_live_readiness_checklist.md
 │   │   ├── paper_daily_checklist.md
 │   │   └── paper_weekly_review.md
 │   ├── project_analytics/
@@ -84,12 +87,14 @@ AI_Trading_Bot/
 │   │   ├── CODEX_CREATE_MILESTONE_PROMPTS.md
 │   │   └── README.md
 │   ├── templates/
+│   │   ├── level4_micro_live_go_no_go_template.md
 │   │   ├── paper_daily_report_template.md
 │   │   └── paper_incident_report_template.md
 │   ├── ai_intelligence.md
 │   ├── architecture.md
 │   ├── dashboard_control_plane.md
 │   ├── execution_policy.md
+│   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
 │   ├── paper_trading_runbook.md
 │   ├── risk_policy.md
@@ -200,4 +205,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 35, Total files: 166
+Total directories: 35, Total files: 171

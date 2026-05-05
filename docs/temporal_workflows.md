@@ -153,3 +153,9 @@ activities are added. A future command should use Temporal's testing environment
 ```bash
 uv run --group dev pytest tests/temporal --run-temporal-server
 ```
+
+## Level 4 Readiness Evidence
+
+`docs/level4_micro_live_readiness.md` requires real Temporal query/signal backend evidence before
+Level 4 micro-live. Current workflow tests are import/static contract tests only; real test-server
+or replay evidence, live worker evidence, and production schedule activation remain deferred.

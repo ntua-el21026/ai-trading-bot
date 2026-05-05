@@ -60,3 +60,11 @@ credentials, AI/news provider keys, privileged database URLs, or Temporal API ke
 
 Current implementation does not add Vercel deployment files, frontend dependencies, real Temporal
 clients, database persistence, or production dashboard deployment.
+
+## Level 4 Readiness Evidence
+
+`docs/level4_micro_live_readiness.md` requires dashboard/control-plane evidence before any Level 4
+micro-live decision: safe read models, no frontend secrets, no browser-side broker/AI/news/Temporal
+calls, no order-entry controls, server-side control routing, and operator-tested kill-switch,
+pause-new-risk, force-reconciliation, force-report, acknowledge-incident, and resume-after-review
+paths. Current dashboard/control-plane implementation is contract-only and not deployed.

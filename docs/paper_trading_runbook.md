@@ -382,3 +382,7 @@ Before micro-live readiness review, collect and approve:
 
 Live enablement is not complete in this milestone. Do not document or execute live trading activation
 until a future approved milestone updates the implementation and, if required, the spec.
+
+Level 4 readiness evidence and go/no-go requirements are tracked in
+`docs/level4_micro_live_readiness.md` and
+`docs/templates/level4_micro_live_go_no_go_template.md`.

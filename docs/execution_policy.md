@@ -92,3 +92,11 @@ Alpaca `trade_updates` fixture payloads are mapped to normalized `BrokerStreamEv
 `BrokerOrder`, and `BrokerFill` contracts. REST fallback is represented by
 `BrokerRestFallbackSnapshot`, which uses the latest-spec 30-second fallback interval. Tests use
 fixtures only; no websocket, REST, or broker credential access occurs.
+
+## Level 4 Readiness Status
+
+`docs/level4_micro_live_readiness.md` documents the execution evidence required before Level 4
+micro-live: valid `ExecutionIntent`, broker reconciliation, idempotent `client_order_id`,
+protective-stop verification, partial-fill handling, duplicate-order prevention, alerts, and
+manual-control evidence. Current implementation remains passive and does not submit paper or live
+broker orders.

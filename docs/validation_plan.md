@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 10 adds paper trading runbook documentation, checklists, report templates, incident response flow, frozen paper acceptance criteria, and paper-to-Level-4 handoff gates. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, paper trading operations, live trading, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 11 adds Level 4 micro-live readiness documentation, evidence gates, config review, credential separation, kill-switch/manual re-arm evidence requirements, and a go/no-go template. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, paper trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -47,6 +47,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
   environment, and wall-clock side-effect imports.
 - Paper trading runbook documentation cross-links the frozen paper acceptance gates and operating
   evidence requirements without claiming paper operations have started.
+- Level 4 readiness documentation cross-links acceptance gates, current blockers, config review,
+  credential separation, kill-switch/manual re-arm evidence, reconciliation evidence, protective
+  stop evidence, slippage/fill-quality evidence, and go/no-go records.
 
 ## Coverage Inventory
 
@@ -146,6 +149,31 @@ Frozen paper acceptance gates before Level 4 micro-live consideration:
 - Zero duplicate-order incidents.
 
 These are gates, not current achievements.
+
+## Level 4 Micro-Live Evidence
+
+`docs/level4_micro_live_readiness.md` defines the current Level 4 readiness evidence checklist and
+states the current conclusion: not ready.
+
+Required supporting artifacts:
+
+- `docs/checklists/level4_micro_live_readiness_checklist.md`
+- `docs/checklists/credential_separation_checklist.md`
+- `docs/checklists/kill_switch_rearm_checklist.md`
+- `docs/templates/level4_micro_live_go_no_go_template.md`
+
+Current blockers:
+
+- Frozen paper evidence is unavailable.
+- Actual paper trading operations have not started.
+- Database/audit persistence is absent.
+- Real Temporal query/signal backend integration is deferred.
+- Real broker/AI/news provider integrations are deferred.
+- Real dashboard deployment is deferred.
+- Alerting is absent.
+- Live trading remains disabled.
+
+These blockers must be resolved before a Level 4 go/no-go report can approve micro-live.
 
 ## Backtest Policy
 
