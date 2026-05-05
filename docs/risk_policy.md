@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 05 implements deterministic risk-check contracts, position sizing, and kill-switch state
-models. The implementation is passive: it approves or rejects proposed new-risk entries and returns
-structured reason codes. It does not submit orders, call a broker, write a database, or enable live
-trading.
+Milestone 06 implements deterministic risk-check contracts, position sizing, kill-switch state
+models, and passive broker reconciliation inputs. The implementation is passive: it approves or
+rejects proposed new-risk entries, compares broker/internal snapshots, and returns structured reason
+codes and incident recommendations. It does not submit orders, call a broker, write a database, or
+enable live trading.
 
 ## Foundation Defaults
 
@@ -42,6 +43,22 @@ Checks include:
 
 Any failed check rejects the new-risk order.
 
+## Broker Reconciliation Input
+
+`packages/reconciliation/service.py` compares normalized broker snapshots against passive internal
+ledger snapshots. Its `ReconciliationResult.broker_reconciliation_clean` property is designed to feed
+the existing `broker_reconciliation_clean` risk-check input.
+
+Critical reconciliation mismatches recommend `PAUSED_NEW_RISK` behavior while preserving
+risk-reducing exits. Missing protective stops follow the latest-spec thresholds:
+
+- warning/investigate after the warning threshold;
+- critical pause-new-risk after the critical threshold;
+- flatten-if-safe recommendation after the flatten threshold.
+
+The implementation emits recommendations only. It does not cancel orders, submit flattening orders,
+or mutate kill-switch state directly.
+
 ## Position Sizing
 
 `packages/risk/sizing.py` implements the latest-spec sizing formula:
@@ -73,6 +90,6 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 
 ## Future Work
 
-Milestone 06 must provide real broker reconciliation inputs. Later milestones must connect these
-contracts to Temporal execution workflows and database audit persistence. Any change to risk limits
-or risk semantics requires explicit approval and a corresponding spec update.
+Later milestones must connect these contracts to Temporal execution workflows, real Alpaca paper
+adapters, and database audit persistence. Any change to risk limits or risk semantics requires
+explicit approval and a corresponding spec update.

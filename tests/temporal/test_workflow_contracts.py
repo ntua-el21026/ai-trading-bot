@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import asyncio
 
-from apps.workers.app.activities.contracts import ACTIVITY_FUNCTIONS, refresh_market_data
+from apps.workers.app.activities.contracts import (
+    ACTIVITY_FUNCTIONS,
+    compare_reconciliation_snapshots,
+    fetch_broker_reconciliation_snapshot,
+    fetch_internal_ledger_snapshot,
+    refresh_market_data,
+)
 from apps.workers.app.queries import QUERY_NAMES
 from apps.workers.app.signals import SIGNAL_NAMES
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
@@ -54,6 +60,9 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
 
     assert "refresh_market_data" in activity_names
     assert "submit_order_placeholder" in activity_names
+    assert "fetch_broker_reconciliation_snapshot" in activity_names
+    assert "fetch_internal_ledger_snapshot" in activity_names
+    assert "compare_reconciliation_snapshots" in activity_names
     result = asyncio.run(
         refresh_market_data(
             ActivityPlaceholderInput(
@@ -67,6 +76,34 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
     assert result.status == "placeholder"
     assert result.external_calls_performed is False
     assert result.details["external_calls"] == "none"
+
+
+def test_reconciliation_activity_contracts_are_placeholders_without_external_calls() -> None:
+    payload = ActivityPlaceholderInput(
+        workflow_name="ReconciliationWorkflow",
+        purpose="contract-test",
+    )
+
+    results = asyncio.run(_run_reconciliation_activity_placeholders(payload))
+
+    assert [result.activity_name for result in results] == [
+        "fetch_broker_reconciliation_snapshot",
+        "fetch_internal_ledger_snapshot",
+        "compare_reconciliation_snapshots",
+    ]
+    assert all(result.external_calls_performed is False for result in results)
+    assert all(result.details["external_calls"] == "none" for result in results)
+
+
+async def _run_reconciliation_activity_placeholders(
+    payload: ActivityPlaceholderInput,
+) -> tuple[ActivityPlaceholderResult, ActivityPlaceholderResult, ActivityPlaceholderResult]:
+    broker_snapshot, internal_snapshot, comparison = await asyncio.gather(
+        fetch_broker_reconciliation_snapshot(payload),
+        fetch_internal_ledger_snapshot(payload),
+        compare_reconciliation_snapshots(payload),
+    )
+    return broker_snapshot, internal_snapshot, comparison
 
 
 def test_manual_kill_switch_uses_spec_defined_paused_state() -> None:

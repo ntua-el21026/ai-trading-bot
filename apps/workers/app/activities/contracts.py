@@ -75,6 +75,27 @@ async def reconcile_broker_state(payload: ActivityPlaceholderInput) -> ActivityP
     return _placeholder_result("reconcile_broker_state", payload)
 
 
+@activity.defn(name="fetch_broker_reconciliation_snapshot")
+async def fetch_broker_reconciliation_snapshot(
+    payload: ActivityPlaceholderInput,
+) -> ActivityPlaceholderResult:
+    return _placeholder_result("fetch_broker_reconciliation_snapshot", payload)
+
+
+@activity.defn(name="fetch_internal_ledger_snapshot")
+async def fetch_internal_ledger_snapshot(
+    payload: ActivityPlaceholderInput,
+) -> ActivityPlaceholderResult:
+    return _placeholder_result("fetch_internal_ledger_snapshot", payload)
+
+
+@activity.defn(name="compare_reconciliation_snapshots")
+async def compare_reconciliation_snapshots(
+    payload: ActivityPlaceholderInput,
+) -> ActivityPlaceholderResult:
+    return _placeholder_result("compare_reconciliation_snapshots", payload)
+
+
 @activity.defn(name="apply_kill_switch_state")
 async def apply_kill_switch_state(payload: ActivityPlaceholderInput) -> ActivityPlaceholderResult:
     return _placeholder_result("apply_kill_switch_state", payload)
@@ -95,6 +116,9 @@ ACTIVITY_FUNCTIONS = (
     submit_order_placeholder,
     monitor_position_placeholder,
     reconcile_broker_state,
+    fetch_broker_reconciliation_snapshot,
+    fetch_internal_ledger_snapshot,
+    compare_reconciliation_snapshots,
     apply_kill_switch_state,
     generate_report,
 )

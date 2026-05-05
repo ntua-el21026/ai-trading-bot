@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 05 deterministic risk/execution-core scaffolding.
+This repository is at Milestone 06 broker-reconciliation boundary scaffolding.
 
 Implemented pieces:
 
@@ -35,13 +35,22 @@ Implemented pieces:
 - position sizing from configured risk and position caps
 - kill-switch state models
 - passive `ExecutionIntent`, idempotency, order lifecycle, and rejection contracts
+- dependency-free broker adapter protocols and a safe Alpaca paper adapter skeleton
+- normalized broker account/order/fill/position/protective-stop/stream models
+- fixture-only Alpaca `trade_updates` mapping to internal broker lifecycle events
+- REST fallback snapshot contracts using the spec's 30-second fallback interval
+- passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
+  and pause-new-risk or flatten-if-safe recommendations
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
+- unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
+  reconciliation clean state, mismatch detection, and incident recommendations
 
 Not implemented yet:
 
-- broker adapters or order submission
+- executable broker order submission
+- real Alpaca SDK/client integration
+- database migrations or durable ledger persistence
 - AI/news integration
-- database migrations
 - dashboard/control plane
 - live trading
 
@@ -87,6 +96,6 @@ activate production schedules.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not implement broker access.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker calls. Broker adapter methods are protocol/skeleton boundaries until a later milestone wires an explicitly configured paper client through Temporal activities.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

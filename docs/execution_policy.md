@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 05 implements passive execution-core contracts: `ExecutionIntent`, client-order
-idempotency helpers, order lifecycle transition validation, and structured rejection models. It does
-not implement broker adapters, broker order submission, database persistence, live trading, or real
-Temporal order execution behavior.
+Milestone 06 implements passive execution-core and broker-reconciliation contracts:
+`ExecutionIntent`, client-order idempotency helpers, order lifecycle transition validation,
+structured rejection models, broker adapter protocols, normalized broker state models, Alpaca
+`trade_updates` mapping, and pure reconciliation comparison. It does not implement executable broker
+order submission, database persistence, live trading, or real Temporal order execution behavior.
 
 ## Foundation Defaults
 
@@ -60,3 +61,27 @@ a broker or submit orders. Invalid transitions return structured rejections for 
 ## Required Future Boundary
 
 Future broker order submission must happen only through the deterministic Temporal execution workflow path, after valid decisions, risk checks, reconciliation, active autonomy permission, and kill-switch checks.
+
+## Broker Adapter Boundary
+
+`packages/broker/adapters.py` defines the broker operations required by later execution activities:
+
+- account snapshot retrieval;
+- open order retrieval and lookup by broker/client order ID;
+- recent fill retrieval;
+- current position retrieval;
+- protective stop lookup;
+- REST fallback snapshot retrieval;
+- order submission, cancellation, protective-stop submission, and stream event consumption.
+
+`packages/broker/alpaca.py` currently provides a safe Alpaca paper adapter skeleton and fixture
+mapping for Alpaca `trade_updates`. The adapter refuses live-mode configuration and raises
+`BrokerAdapterNotConfigured` for all network/order methods until a later milestone wires an explicit
+paper client inside Temporal activities.
+
+## Stream And REST Fallback
+
+Alpaca `trade_updates` fixture payloads are mapped to normalized `BrokerStreamEvent`,
+`BrokerOrder`, and `BrokerFill` contracts. REST fallback is represented by
+`BrokerRestFallbackSnapshot`, which uses the latest-spec 30-second fallback interval. Tests use
+fixtures only; no websocket, REST, or broker credential access occurs.

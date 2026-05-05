@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, and risk/execution-core architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, and broker-reconciliation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 05 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, and passive risk/execution-core contracts.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 06 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, and pure reconciliation comparison.
 
 ## Target Shape
 
@@ -27,11 +27,15 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Risk checks evaluate new-risk eligibility from config and caller-supplied system, session, reconciliation, Temporal, exposure, loss, cash, duplicate-intent, and kill-switch state.
 - Position sizing implements the configured risk-per-trade and max-position-size formula with non-increasing multipliers.
 - Execution-core contracts define `ExecutionIntent`, deterministic client order ID roots, duplicate-intent helpers, passive order lifecycle transitions, and structured rejection models.
+- Broker contracts define account, order, fill, position, protective-stop, REST fallback, and stream event models.
+- The Alpaca paper adapter is a dependency-free safety skeleton. It refuses live-mode configuration and raises until an explicitly configured paper client is added in a later milestone.
+- Alpaca `trade_updates` fixture payloads can be mapped into internal broker stream events without credentials or websocket connections.
+- Reconciliation contracts compare broker snapshots against passive internal ledger snapshots and classify mismatches into structured incidents with pause-new-risk or flatten-if-safe recommendations.
 - No API service is implemented.
 - No production worker deployment is implemented.
 - No dashboard is implemented.
 - No broker-executable order submission is implemented.
-- No broker adapter is implemented.
+- No real Alpaca SDK/client integration is implemented.
 - No database schema or migration is implemented.
 - No AI/news integration is implemented.
 - Temporal schedules are not activated.

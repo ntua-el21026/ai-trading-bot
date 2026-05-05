@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 03 adds Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
-contracts, signal names, query names, and contract tests. It does not implement broker execution,
-database writes, AI calls, market/news provider calls, production schedule activation, or live
-trading.
+Milestone 06 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
+contracts, signal names, query names, broker-reconciliation activity boundaries, and contract tests.
+It does not implement broker execution, database writes, AI calls, market/news provider calls,
+production schedule activation, or live trading.
 
 ## Configuration
 
@@ -46,6 +46,15 @@ status objects.
 
 Current activity contracts are placeholders under `apps/workers/app/activities/contracts.py`.
 They intentionally perform no external calls and return `external_calls_performed=false`.
+
+Milestone 06 adds placeholder boundaries for:
+
+- broker reconciliation snapshot retrieval;
+- internal ledger snapshot retrieval;
+- reconciliation snapshot comparison.
+
+These are activity contracts only. Workflow code still calls activities by name and performs no
+broker API, database, websocket, or REST calls directly.
 
 Future side effects must stay in activities:
 
@@ -96,7 +105,9 @@ Retry policy contracts are defined in `apps/workers/app/retry_policies.py`:
 - protective stop retry placeholder;
 - AI retry placeholder with neutral fallback metadata.
 
-These are contracts only. They do not implement broker, stop, or AI behavior.
+These are contracts only. They do not implement broker, stop, or AI behavior. Broker order
+submission retry remains capped at one attempt until a later milestone adds explicit idempotency
+lookup behavior through broker and database activities.
 
 ## Local Worker Bootstrap
 
@@ -106,7 +117,7 @@ Start one worker for a configured queue after a local Temporal service is availa
 uv run python scripts/start_worker.py --task-queue execution-task-queue
 ```
 
-Schedule creation is intentionally dry-run only in Milestone 03:
+Schedule creation remains dry-run only in the current implementation:
 
 ```bash
 uv run python scripts/seed_temporal_schedules.py

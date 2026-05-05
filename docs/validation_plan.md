@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 05 adds unit tests for config loading, data models, raw payload hashing, deterministic feature utilities, universe filtering, backtest metrics/engine scaffolding, Temporal contracts, deterministic regime/strategy/exit helpers, risk checks, position sizing, kill-switch state, execution intents, idempotency, and passive order lifecycle transitions. It does not validate broker integration, live Temporal replay behavior, AI schema behavior, database persistence, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 06 adds unit tests for config loading, data models, raw payload hashing, deterministic feature utilities, universe filtering, backtest metrics/engine scaffolding, Temporal contracts, deterministic regime/strategy/exit helpers, risk checks, position sizing, kill-switch state, execution intents, idempotency, passive order lifecycle transitions, broker model validation, Alpaca stream mapping, safe adapter gating, REST fallback snapshots, reconciliation mismatches, and incident recommendations. It does not validate real Alpaca paper credentials, live Temporal replay behavior, AI schema behavior, database persistence, or profitability.
 
 ## Foundation Checks
 
@@ -22,6 +22,11 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Risk checks are fixture-tested for accepted and rejected new-risk paths, stale data, kill switch, duplicate intent, exposure, and loss-limit failures.
 - Position sizing is fixture-tested for configured caps, multipliers, invalid stop distance, and below-one-share rejection.
 - Execution intent and idempotency helpers are fixture-tested for approved-risk intent creation, protective-stop validation, expiration checks, deterministic client order IDs, duplicate detection, and passive lifecycle transition rejection.
+- Broker model validation is fixture-tested without credentials.
+- Alpaca `trade_updates` mapping is fixture-tested without websocket connections.
+- REST fallback snapshot construction is fixture-tested with the 30-second spec interval.
+- Reconciliation comparison is fixture-tested for clean state, missing/extra positions, missing protective stops, duplicate open entry orders, unexpected short positions, unsupported broker asset classes, unknown open broker orders, missing fills, quantity mismatch, average-price mismatch, account-equity mismatch, stale snapshots, and Temporal workflow inconsistency.
+- Incident severity, pause-new-risk recommendations, and flatten-if-safe recommendations are fixture-tested.
 
 ## Backtest Policy
 
@@ -31,7 +36,7 @@ If point-in-time universe membership is unavailable, stock-universe backtests mu
 
 ## Future Validation Scope
 
-Later milestones must add unit, Temporal, integration, failure, backtest, and paper dry-run checks required by the latest spec. Backtests and paper trading must not be represented as proof of live profitability.
+Later milestones must add real integration, failure, backtest, and paper dry-run checks required by the latest spec. Backtests and paper trading must not be represented as proof of live profitability.
 
 ## Current Assumptions
 

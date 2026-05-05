@@ -83,6 +83,11 @@ AI_Trading_Bot/
 │   │   ├── engine.py
 │   │   ├── metrics.py
 │   │   └── models.py
+│   ├── broker/
+│   │   ├── __init__.py
+│   │   ├── adapters.py
+│   │   ├── alpaca.py
+│   │   └── models.py
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── config.py
@@ -94,6 +99,10 @@ AI_Trading_Bot/
 │   │   ├── models.py
 │   │   ├── order_lifecycle.py
 │   │   └── rejections.py
+│   ├── reconciliation/
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   └── service.py
 │   ├── risk/
 │   │   ├── __init__.py
 │   │   ├── checks.py
@@ -115,7 +124,9 @@ AI_Trading_Bot/
 │   ├── temporal/
 │   │   └── test_workflow_contracts.py
 │   └── unit/
+│       ├── test_alpaca_mapping.py
 │       ├── test_backtesting_metrics.py
+│       ├── test_broker_models.py
 │       ├── test_config.py
 │       ├── test_data_models.py
 │       ├── test_execution_intent.py
@@ -123,6 +134,7 @@ AI_Trading_Bot/
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
 │       ├── test_position_sizing.py
+│       ├── test_reconciliation.py
 │       ├── test_regime.py
 │       ├── test_risk_checks.py
 │       ├── test_strategy_exits.py
@@ -138,4 +150,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 24, Total files: 115
+Total directories: 26, Total files: 125
