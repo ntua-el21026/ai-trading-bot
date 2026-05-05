@@ -59,6 +59,9 @@ AI_Trading_Bot/
 │   ├── app/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
 │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+│   ├── checklists/
+│   │   ├── paper_daily_checklist.md
+│   │   └── paper_weekly_review.md
 │   ├── project_analytics/
 │   │   ├── project_analytics.py
 │   │   └── project_analytics.txt
@@ -80,11 +83,15 @@ AI_Trading_Bot/
 │   │   ├── 11_LEVEL4_MICRO_LIVE_READINESS.md
 │   │   ├── CODEX_CREATE_MILESTONE_PROMPTS.md
 │   │   └── README.md
+│   ├── templates/
+│   │   ├── paper_daily_report_template.md
+│   │   └── paper_incident_report_template.md
 │   ├── ai_intelligence.md
 │   ├── architecture.md
 │   ├── dashboard_control_plane.md
 │   ├── execution_policy.md
 │   ├── operations_runbook.md
+│   ├── paper_trading_runbook.md
 │   ├── risk_policy.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
@@ -193,4 +200,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 33, Total files: 161
+Total directories: 35, Total files: 166

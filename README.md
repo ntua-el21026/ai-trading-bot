@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 09 validation/testing harness scaffolding.
+This repository is at Milestone 10 paper trading runbook readiness.
 
 Implemented pieces:
 
@@ -56,6 +56,8 @@ Implemented pieces:
   frontend framework dependencies
 - validation harness contracts for spec-defined backtest splits, benchmarks, costs, ablations,
   Monte Carlo placeholders, failure simulations, and paper dry-run checks
+- paper trading runbook, daily/weekly checklist templates, report templates, incident response flow,
+  frozen paper acceptance criteria, and paper-to-Level-4 handoff gates
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
 - unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
   reconciliation clean state, mismatch detection, and incident recommendations
@@ -75,6 +77,7 @@ Not implemented yet:
 - database migrations or durable ledger persistence
 - production dashboard UI/deployment
 - real Temporal query/signal backend integration
+- actual paper trading operations
 - live trading
 
 ## Setup
@@ -122,6 +125,20 @@ uv run python scripts/start_worker.py --task-queue execution-task-queue
 
 `scripts/seed_temporal_schedules.py` is dry-run only in this milestone and does not create or
 activate production schedules.
+
+## Paper Trading Runbook
+
+Milestone 10 adds paper trading operating documentation only:
+
+- `docs/paper_trading_runbook.md`
+- `docs/checklists/paper_daily_checklist.md`
+- `docs/checklists/paper_weekly_review.md`
+- `docs/templates/paper_daily_report_template.md`
+- `docs/templates/paper_incident_report_template.md`
+
+The runbook is target-state operational readiness documentation. It does not mean real provider
+integrations, database persistence, paper broker execution, alerting, dashboard deployment, or live
+trading are complete.
 
 ## Safety Defaults
 

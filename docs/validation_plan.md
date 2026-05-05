@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 09 adds validation/testing contracts for spec-defined backtest split assumptions, benchmark assumptions, fee/slippage assumptions, required ablations, Monte Carlo placeholders, failure simulations, paper dry-run safety checks, and workflow side-effect boundary checks. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, paper trading operations, live trading, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 10 adds paper trading runbook documentation, checklists, report templates, incident response flow, frozen paper acceptance criteria, and paper-to-Level-4 handoff gates. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, paper trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -45,6 +45,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
   trading flags, and autonomous execution flags.
 - Workflow modules are statically checked for direct broker, AI/news, provider SDK, network, random,
   environment, and wall-clock side-effect imports.
+- Paper trading runbook documentation cross-links the frozen paper acceptance gates and operating
+  evidence requirements without claiming paper operations have started.
 
 ## Coverage Inventory
 
@@ -118,6 +120,33 @@ submissions, absence of external calls, and safe live/autonomous runtime flags.
 Paper dry-run checks are operational contract validation, not proof of profitability or live
 readiness.
 
+## Paper Operations Evidence
+
+`docs/paper_trading_runbook.md` defines the target paper operating procedure, monitoring checklist,
+incident response flow, report expectations, frozen paper acceptance criteria, and paper-to-Level-4
+handoff gates.
+
+Current paper operations evidence is absent. The repository still needs real database/audit
+persistence, real Temporal query/signal backend integration, real Alpaca paper client integration,
+real AI/news provider integration, real dashboard deployment, alerting, and controlled paper runs
+before these gates can be satisfied.
+
+Frozen paper acceptance gates before Level 4 micro-live consideration:
+
+- At least 8 weeks frozen paper.
+- At least 30 closed paper trades or 2 quarters of forward paper, whichever comes later.
+- OOS Profit Factor >= 1.10.
+- OOS Sharpe >= 0.75 or OOS Sortino >= 1.00.
+- Max drawdown <= 10%.
+- 100% protective stop placement success.
+- Broker/internal mismatch rate < 0.1%.
+- AI valid-schema rate >= 99%.
+- Zero Sev-1 control incidents in the last 20 sessions.
+- Zero missing-stop incidents.
+- Zero duplicate-order incidents.
+
+These are gates, not current achievements.
+
 ## Backtest Policy
 
 Backtests are validation tools. They are not proof of live profitability. They can help validate data plumbing, feature calculations, assumptions, metrics, and later strategy behavior.
@@ -127,8 +156,8 @@ If point-in-time universe membership is unavailable, stock-universe backtests mu
 ## Future Validation Scope
 
 Later milestones must add real database-backed integration tests, real provider mock/replay
-integration, Temporal test-server/replay coverage, controlled paper trading runbooks, paper trading
-evidence, and Level 4 readiness gates required by the latest spec. Backtests and paper trading must
+integration, Temporal test-server/replay coverage, controlled paper trading execution, paper trading
+evidence, and Level 4 readiness review required by the latest spec. Backtests and paper trading must
 not be represented as proof of live profitability.
 
 ## Current Assumptions

@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 09 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, and validation/testing contracts with incident/fallback recommendations.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 10 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, and paper trading operations documentation with incident/fallback recommendations.
 
 ## Current Foundation Operations
 
@@ -70,9 +70,25 @@ uv run --group dev pytest tests/unit/test_validation_harness.py tests/unit/test_
 These checks are operational rehearsal and contract validation only. They are not backtest,
 paper-trading, or live-profitability evidence.
 
+## Paper Trading Runbook
+
+Paper operations are documented in `docs/paper_trading_runbook.md`.
+
+Supporting documentation-only artifacts:
+
+- `docs/checklists/paper_daily_checklist.md`
+- `docs/checklists/paper_weekly_review.md`
+- `docs/templates/paper_daily_report_template.md`
+- `docs/templates/paper_incident_report_template.md`
+
+The runbook covers paper setup constraints, daily/weekly procedures, monitoring, incident response,
+reporting expectations, frozen paper acceptance criteria, and paper-to-Level-4 handoff gates. It is
+target-state readiness documentation only. It does not submit paper orders, call broker APIs, start
+provider integrations, enable live trading, or prove profitability.
+
 ## Future Operations Scope
 
-Later milestones must document real worker startup, Temporal schedules, paper trading procedures,
+Later milestones must implement real worker startup, Temporal schedules, paper trading procedures,
 real broker credential setup, real AI/news provider setup, database-backed reconciliation and AI
 research persistence, real Temporal query/signal backend integration, dashboard deployment,
-incident response, kill-switch behavior, reporting, and Level 4 micro-live readiness gates.
+alerting, evidence collection, and Level 4 micro-live readiness gates.
