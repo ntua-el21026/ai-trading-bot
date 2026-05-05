@@ -30,6 +30,10 @@ include = ["packages*", "apps*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# Default fd capture uses the WSL Windows-mounted temp directory in this environment and can
+# lose its temporary capture file during teardown. Sys capture keeps the exact pytest command
+# stable without disabling capture or skipping tests.
+addopts = ["--capture=sys"]
 
 [tool.ruff]
 line-length = 100

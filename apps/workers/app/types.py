@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,13 @@ class ActivityPlaceholderResult:
 class KillSwitchState:
     """Kill-switch state contract for workflow queries."""
 
-    state: str = "RUNNING"
+    state: Literal[
+        "RUNNING",
+        "PAUSED_NEW_RISK",
+        "PAUSED_ALL_AUTONOMOUS_ACTIONS",
+        "FORCE_FLAT_REQUESTED",
+        "MANUAL_REVIEW_REQUIRED",
+    ] = "RUNNING"
     new_risk_allowed: bool = True
     risk_reducing_exits_allowed: bool = True
     reason: str = "initialized"

@@ -38,7 +38,7 @@ class KillSwitchWorkflow:
     @workflow.signal(name=MANUAL_KILL_SWITCH)
     def manual_kill_switch(self, reason: str = "manual") -> None:
         self._kill_switch_state = KillSwitchState(
-            state="KILL_SWITCH_ACTIVE",
+            state="PAUSED_NEW_RISK",
             new_risk_allowed=False,
             risk_reducing_exits_allowed=True,
             reason=reason,

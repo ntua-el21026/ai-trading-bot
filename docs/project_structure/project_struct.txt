@@ -1,4 +1,41 @@
 AI_Trading_Bot/
+├── apps/
+│   ├── workers/
+│   │   ├── app/
+│   │   │   ├── activities/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── contracts.py
+│   │   │   ├── workflows/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── _shared.py
+│   │   │   │   ├── ai_shortlist_research.py
+│   │   │   │   ├── daily_data_refresh.py
+│   │   │   │   ├── decision.py
+│   │   │   │   ├── eod_signal.py
+│   │   │   │   ├── execution_intent.py
+│   │   │   │   ├── kill_switch.py
+│   │   │   │   ├── order_lifecycle.py
+│   │   │   │   ├── position_lifecycle.py
+│   │   │   │   ├── reconciliation.py
+│   │   │   │   └── reporting.py
+│   │   │   ├── __init__.py
+│   │   │   ├── queries.py
+│   │   │   ├── retry_policies.py
+│   │   │   ├── signals.py
+│   │   │   ├── temporal_client.py
+│   │   │   ├── types.py
+│   │   │   └── worker.py
+│   │   └── __init__.py
+│   └── __init__.py
+├── config/
+│   ├── ai.yaml
+│   ├── execution.yaml
+│   ├── regime.yaml
+│   ├── risk.yaml
+│   ├── strategy.yaml
+│   ├── system.yaml
+│   ├── temporal.yaml
+│   └── universe.yaml
 ├── docs/
 │   ├── ai_deep_research/
 │   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 1).md
@@ -16,13 +53,89 @@ AI_Trading_Bot/
 │   ├── project_analytics/
 │   │   ├── project_analytics.py
 │   │   └── project_analytics.txt
-│   └── project_structure/
-│       ├── project_struct.py
-│       └── project_struct.txt
+│   ├── project_structure/
+│   │   ├── project_struct.py
+│   │   └── project_struct.txt
+│   ├── prompts/
+│   │   ├── 00_REPO_INSPECTION_AND_PLAN.md
+│   │   ├── 01_PROJECT_FOUNDATION.md
+│   │   ├── 02_DATA_AND_BACKTEST_CORE.md
+│   │   ├── 03_TEMPORAL_WORKFLOWS.md
+│   │   ├── 04_STRATEGY_REGIME_AND_SIGNALS.md
+│   │   ├── 05_RISK_AND_EXECUTION_CORE.md
+│   │   ├── 06_BROKER_RECONCILIATION.md
+│   │   ├── 07_AI_INTELLIGENCE_LAYER.md
+│   │   ├── 08_DASHBOARD_AND_CONTROL_PLANE.md
+│   │   ├── 09_VALIDATION_AND_TESTING.md
+│   │   ├── 10_PAPER_TRADING_RUNBOOK.md
+│   │   ├── 11_LEVEL4_MICRO_LIVE_READINESS.md
+│   │   ├── CODEX_CREATE_MILESTONE_PROMPTS.md
+│   │   └── README.md
+│   ├── architecture.md
+│   ├── execution_policy.md
+│   ├── operations_runbook.md
+│   ├── risk_policy.md
+│   ├── temporal_workflows.md
+│   └── validation_plan.md
+├── packages/
+│   ├── backtesting/
+│   │   ├── __init__.py
+│   │   ├── engine.py
+│   │   ├── metrics.py
+│   │   └── models.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   └── logging.py
+│   ├── execution/
+│   │   ├── __init__.py
+│   │   ├── execution_intent.py
+│   │   ├── idempotency.py
+│   │   ├── models.py
+│   │   ├── order_lifecycle.py
+│   │   └── rejections.py
+│   ├── risk/
+│   │   ├── __init__.py
+│   │   ├── checks.py
+│   │   ├── kill_switch.py
+│   │   ├── models.py
+│   │   └── sizing.py
+│   ├── strategy/
+│   │   ├── __init__.py
+│   │   ├── exits.py
+│   │   ├── models.py
+│   │   ├── regime.py
+│   │   ├── scoring.py
+│   │   └── signals.py
+│   └── __init__.py
+├── scripts/
+│   ├── seed_temporal_schedules.py
+│   └── start_worker.py
+├── tests/
+│   ├── temporal/
+│   │   └── test_workflow_contracts.py
+│   └── unit/
+│       ├── test_backtesting_metrics.py
+│       ├── test_config.py
+│       ├── test_data_models.py
+│       ├── test_execution_intent.py
+│       ├── test_features.py
+│       ├── test_idempotency.py
+│       ├── test_kill_switch.py
+│       ├── test_position_sizing.py
+│       ├── test_regime.py
+│       ├── test_risk_checks.py
+│       ├── test_strategy_exits.py
+│       ├── test_strategy_signals.py
+│       ├── test_temporal_config.py
+│       └── test_universe.py
+├── .env.example
 ├── .gitattributes
 ├── .gitignore
 ├── AGENTS.md
 ├── LICENSE
-└── README.md
+├── pyproject.toml
+├── README.md
+└── uv.lock
 
-Total directories: 7, Total files: 19
+Total directories: 24, Total files: 115

@@ -7,6 +7,7 @@ from apps.workers.app.queries import QUERY_NAMES
 from apps.workers.app.signals import SIGNAL_NAMES
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
 from apps.workers.app.workflows import WORKFLOW_CLASSES
+from apps.workers.app.workflows.kill_switch import KillSwitchWorkflow
 
 
 def test_required_workflow_skeletons_are_registered() -> None:
@@ -66,3 +67,14 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
     assert result.status == "placeholder"
     assert result.external_calls_performed is False
     assert result.details["external_calls"] == "none"
+
+
+def test_manual_kill_switch_uses_spec_defined_paused_state() -> None:
+    workflow = KillSwitchWorkflow()
+
+    workflow.manual_kill_switch("operator_requested")
+    state = workflow.get_kill_switch_state()
+
+    assert state.state == "PAUSED_NEW_RISK"
+    assert state.new_risk_allowed is False
+    assert state.risk_reducing_exits_allowed is True
