@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 08 dashboard/control-plane contract scaffolding.
+This repository is at Milestone 09 validation/testing harness scaffolding.
 
 Implemented pieces:
 
@@ -54,6 +54,8 @@ Implemented pieces:
 - server-side control-plane contracts mapping safe manual controls to existing Temporal signal names
 - minimal `apps/api/` and `apps/dashboard/` scaffolds with frontend environment guardrails and no
   frontend framework dependencies
+- validation harness contracts for spec-defined backtest splits, benchmarks, costs, ablations,
+  Monte Carlo placeholders, failure simulations, and paper dry-run checks
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
 - unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
   reconciliation clean state, mismatch detection, and incident recommendations
@@ -61,6 +63,8 @@ Implemented pieces:
   fallbacks, scoring, hard-block policy, and persistence hashes
 - unit tests for dashboard read models, safe control actions, Temporal signal mapping, no order-entry
   controls, and frontend secret guardrails
+- unit tests for validation harness assumptions, failure-simulation contracts, paper dry-run safety,
+  and workflow side-effect boundary checks
 
 Not implemented yet:
 
@@ -93,6 +97,12 @@ Run Temporal contract tests:
 
 ```bash
 uv run --group dev pytest tests/temporal
+```
+
+Run the Milestone 09 validation-focused tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_validation_harness.py tests/unit/test_failure_simulations.py tests/unit/test_paper_dry_run.py tests/temporal/test_workflow_contracts.py
 ```
 
 Optional local checks once dependencies are installed:

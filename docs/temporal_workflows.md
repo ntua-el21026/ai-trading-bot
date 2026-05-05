@@ -2,9 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 08 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
+Milestone 09 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
 contracts, signal names, query names, broker-reconciliation activity boundaries, AI/news activity
-boundaries, dashboard/control-plane signal mapping contracts, and contract tests. It does not
+boundaries, dashboard/control-plane signal mapping contracts, validation-oriented workflow boundary
+tests, and contract tests. It does not
 implement broker execution, database writes, AI calls, market/news provider calls, production
 schedule activation, browser-side Temporal calls, or live trading.
 
@@ -142,6 +143,9 @@ Current tests are import and contract tests:
 ```bash
 uv run --group dev pytest tests/unit tests/temporal
 ```
+
+Milestone 09 also statically checks that workflow modules do not directly import broker, AI/news, or
+network-provider code. Side effects remain activity responsibilities.
 
 Full Temporal replay or local test-server execution is deferred until workflow behavior and mocked
 activities are added. A future command should use Temporal's testing environment, for example:

@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, and dashboard/control-plane boundary architecture.
+This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, and validation/testing boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 08 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, and dashboard/control-plane read/action contracts.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 09 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, and validation/testing contracts.
 
 ## Target Shape
 
@@ -37,6 +37,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Control-plane contracts define read-only dashboard views and auditable safe control requests.
 - `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal names. It does not call Temporal, broker adapters, AI/news providers, or databases yet.
 - `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No frontend framework or deployment files are added.
+- Validation contracts under `packages/validation/` define the spec-required backtest split, benchmark,
+  fee/slippage, ablation, Monte Carlo placeholder, failure-simulation, and paper dry-run check
+  assumptions. They are deterministic contracts only and do not run live or paper broker orders.
 - No production API service is implemented.
 - No production worker deployment is implemented.
 - No production dashboard UI is implemented.

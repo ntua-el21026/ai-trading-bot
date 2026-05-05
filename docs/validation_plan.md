@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 08 adds unit tests for config loading, data models, raw payload hashing, deterministic feature utilities, universe filtering, backtest metrics/engine scaffolding, Temporal contracts, deterministic regime/strategy/exit helpers, risk checks, position sizing, kill-switch state, execution intents, idempotency, passive order lifecycle transitions, broker model validation, Alpaca stream mapping, safe adapter gating, REST fallback snapshots, reconciliation mismatches, AI/news contracts, dashboard/control-plane contracts, and incident/fallback recommendations. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 09 adds validation/testing contracts for spec-defined backtest split assumptions, benchmark assumptions, fee/slippage assumptions, required ablations, Monte Carlo placeholders, failure simulations, paper dry-run safety checks, and workflow side-effect boundary checks. It does not validate real Alpaca paper credentials, real AI/news provider credentials, production dashboard deployment, live Temporal replay behavior, database persistence, paper trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -34,6 +34,89 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - AI/news activity contracts are fixture-tested as placeholders with no external calls.
 - Dashboard/control-plane read models, safe control action shapes, Temporal signal mapping, no
   order-entry controls, fixture dispatch behavior, and frontend secret guardrails are fixture-tested.
+- Validation harness assumptions are fixture-tested for historical splits, benchmarks, fee/slippage
+  assumptions, required ablations, Monte Carlo placeholders, point-in-time universe optimism
+  warnings, and explicit no-profitability-proof language.
+- Failure-simulation contracts are fixture-tested for stale market data, invalid AI JSON, AI
+  provider outage, broker ambiguity, duplicate order attempts, partial fills, missing protective
+  stops, reconciliation mismatches, database/worker outage placeholders, kill-switch activation, and
+  submitted-but-not-recorded placeholders.
+- Paper dry-run contracts are fixture-tested to reject broker submissions, external calls, live
+  trading flags, and autonomous execution flags.
+- Workflow modules are statically checked for direct broker, AI/news, provider SDK, network, random,
+  environment, and wall-clock side-effect imports.
+
+## Coverage Inventory
+
+| Spec category | Current coverage |
+| --- | --- |
+| Config loading | `tests/unit/test_config.py`, `tests/unit/test_temporal_config.py` |
+| Data models and raw payload hashing | `tests/unit/test_data_models.py` |
+| Feature computation | `tests/unit/test_features.py` |
+| Universe filtering | `tests/unit/test_universe.py` |
+| Backtesting metrics and explicit-signal engine | `tests/unit/test_backtesting_metrics.py` |
+| Regime logic | `tests/unit/test_regime.py` |
+| Strategy signals and candidates | `tests/unit/test_strategy_signals.py` |
+| Exit helpers | `tests/unit/test_strategy_exits.py` |
+| Risk checks | `tests/unit/test_risk_checks.py` |
+| Position sizing | `tests/unit/test_position_sizing.py` |
+| Kill switch | `tests/unit/test_kill_switch.py`, `tests/temporal/test_workflow_contracts.py` |
+| Execution intent | `tests/unit/test_execution_intent.py` |
+| Idempotency | `tests/unit/test_idempotency.py` |
+| Order lifecycle contracts | `tests/unit/test_execution_intent.py`, `tests/unit/test_failure_simulations.py` |
+| Broker models and stream mapping | `tests/unit/test_broker_models.py`, `tests/unit/test_alpaca_mapping.py` |
+| Reconciliation | `tests/unit/test_reconciliation.py`, `tests/unit/test_failure_simulations.py` |
+| AI schema, fallback, scoring, persistence | `tests/unit/test_ai_news.py`, `tests/unit/test_ai_parser.py`, `tests/unit/test_ai_scoring.py`, `tests/unit/test_ai_persistence.py`, `tests/unit/test_failure_simulations.py` |
+| Control plane and dashboard env security | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_env_security.py` |
+| Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py` |
+| Validation harness assumptions | `tests/unit/test_validation_harness.py` |
+| Failure simulations | `tests/unit/test_failure_simulations.py` |
+| Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
+
+Remaining gaps are explicit: real database persistence/migrations, real provider integrations, real
+Temporal test-server/replay coverage, production dashboard deployment, paper trading operations, and
+Level 4 micro-live readiness evidence are not implemented.
+
+## Validation Harness Contracts
+
+`packages/validation/models.py` defines the current validation-harness contract:
+
+- historical period begins on 2012-01-01 and ends at latest available data;
+- design / parameter selection split: 2012-2018;
+- rolling OOS development split: 2019-2023;
+- final untouched lockbox split: 2024-latest;
+- benchmarks: SPY total return, exposure-adjusted SPY, and equal-weight approved universe;
+- fee/slippage assumptions: zero commission, 1 bps fee proxy per side, 10 bps baseline entry,
+  10 bps routine exit, 20 bps stop exit, 25 bps stress entry, and 40 bps stress stop exit;
+- required ablations: regime on/off, relative strength on/off, volume filter on/off, AI forced
+  neutral vs enabled, fail-fast exit on/off, time stop on/off, 20D vs 55D breakout, 2.0 ATR vs 2.5
+  ATR stop, and 2.5 ATR vs 3.0 ATR trailing;
+- Monte Carlo placeholders: 10,000 trade-sequence bootstraps, monthly block-bootstrap returns,
+  random 5% missed fills, and randomized slippage multiplier in `[0.5x, 1.5x]`;
+- stock-universe validation without point-in-time universe membership requires an optimism warning.
+
+These are contracts and assumptions only. They do not run historical provider jobs or claim strategy
+profitability.
+
+## Failure Simulation Contracts
+
+`packages/validation/failures.py` defines fixture-safe failure simulation scenarios for stale data,
+invalid AI output, AI outage, broker ambiguity, duplicate order attempts, partial fills, missing
+stops, broker/internal reconciliation mismatches, database outage placeholders, Temporal worker
+unavailability placeholders, kill-switch activation, and submitted-but-not-recorded placeholders.
+
+The scenarios describe expected outcomes and reason codes. They do not call external services,
+submit orders, or mutate runtime state.
+
+## Paper Dry-Run Contracts
+
+`packages/validation/paper.py` defines paper dry-run check contracts for execution-intent lifecycle,
+fixture broker snapshots, reconciliation cleanliness, missing-stop policy, duplicate-order
+rejection, invalid-AI neutral fallback, control-plane kill-switch signal mapping, absence of broker
+submissions, absence of external calls, and safe live/autonomous runtime flags.
+
+Paper dry-run checks are operational contract validation, not proof of profitability or live
+readiness.
 
 ## Backtest Policy
 
@@ -43,7 +126,10 @@ If point-in-time universe membership is unavailable, stock-universe backtests mu
 
 ## Future Validation Scope
 
-Later milestones must add real integration, failure, backtest, and paper dry-run checks required by the latest spec. Backtests and paper trading must not be represented as proof of live profitability.
+Later milestones must add real database-backed integration tests, real provider mock/replay
+integration, Temporal test-server/replay coverage, controlled paper trading runbooks, paper trading
+evidence, and Level 4 readiness gates required by the latest spec. Backtests and paper trading must
+not be represented as proof of live profitability.
 
 ## Current Assumptions
 

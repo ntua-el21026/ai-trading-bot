@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 08 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, and dashboard/control-plane contracts with incident/fallback recommendations.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 09 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, and validation/testing contracts with incident/fallback recommendations.
 
 ## Current Foundation Operations
 
@@ -51,6 +51,24 @@ Dashboard/control-plane behavior is currently contract-only:
 No current dashboard operation submits broker orders, calls broker APIs, calls AI/news providers,
 calls Temporal from browser code, exposes broker/AI provider secrets, or changes risk/autonomy
 configuration.
+
+## Current Validation Operations
+
+Validation is currently fixture and contract based:
+
+1. Use `build_default_validation_harness_config` to inspect the spec-defined historical split,
+   benchmark, fee/slippage, ablation, and Monte Carlo placeholder assumptions.
+2. Use `default_failure_simulation_scenarios` to verify that required failure cases are represented
+   without external calls.
+3. Use `evaluate_paper_dry_run` to validate paper dry-run safety inputs without broker submission.
+4. Run validation-focused tests with:
+
+```bash
+uv run --group dev pytest tests/unit/test_validation_harness.py tests/unit/test_failure_simulations.py tests/unit/test_paper_dry_run.py tests/temporal/test_workflow_contracts.py
+```
+
+These checks are operational rehearsal and contract validation only. They are not backtest,
+paper-trading, or live-profitability evidence.
 
 ## Future Operations Scope
 

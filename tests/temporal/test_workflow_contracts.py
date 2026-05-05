@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 from apps.workers.app.activities.contracts import (
     ACTIVITY_FUNCTIONS,
@@ -158,3 +159,28 @@ def test_manual_kill_switch_uses_spec_defined_paused_state() -> None:
     assert state.state == "PAUSED_NEW_RISK"
     assert state.new_risk_allowed is False
     assert state.risk_reducing_exits_allowed is True
+
+
+def test_workflow_modules_do_not_directly_import_side_effect_providers() -> None:
+    workflow_dir = Path("apps/workers/app/workflows")
+    prohibited_tokens = (
+        "packages.broker",
+        "packages.ai",
+        "requests",
+        "httpx",
+        "openai",
+        "anthropic",
+        "alpaca.",
+        "os.environ",
+        "datetime.now",
+        "random.",
+    )
+
+    violations: list[str] = []
+    for path in sorted(workflow_dir.glob("*.py")):
+        source = path.read_text(encoding="utf-8")
+        for token in prohibited_tokens:
+            if token in source:
+                violations.append(f"{path}:{token}")
+
+    assert violations == []
