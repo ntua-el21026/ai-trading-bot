@@ -23,7 +23,7 @@ class DailyDataRefreshWorkflow:
         )
         self._status = await execute_placeholder_activity(
             workflow_name="DailyDataRefreshWorkflow",
-            activity_name="refresh_market_data",
+            activity_name="persist_data_refresh_result",
             task_queue="market-data-task-queue",
             run_input=run_input,
         )

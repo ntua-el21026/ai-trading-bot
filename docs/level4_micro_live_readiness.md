@@ -2,9 +2,9 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 12 adds a local database/audit-ledger foundation while preserving the readiness boundary.
-It does not enable live trading, autonomous live execution, live credentials, broker API calls, paper
-or live orders, production schedules, expanded Level 4, or Level 5.
+Milestone 13 adds safe local/fake Temporal ledger activity boundaries while preserving the readiness
+boundary. It does not enable live trading, autonomous live execution, live credentials, broker API
+calls, paper or live orders, production schedules, expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -34,11 +34,11 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-12 are complete.
+- Milestones 00-13 are complete.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
-- Database/audit-ledger foundation exists locally; managed Postgres/Supabase runtime integration is
-  absent.
+- Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
+  Postgres/Supabase runtime integration is absent.
 - Real Temporal query/signal backend integration is deferred.
 - Real broker/AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
@@ -48,8 +48,8 @@ Known status:
 
 Hard blockers:
 
-- No managed database runtime, migration execution evidence, or Temporal database-writing activity
-  evidence.
+- No managed database runtime or migration execution evidence.
+- No real Temporal test-server/replay evidence.
 - No real Alpaca paper client integration or paper execution evidence.
 - No real AI/news provider integration evidence.
 - No real Temporal query/signal backend evidence.
@@ -202,8 +202,8 @@ Required evidence:
 - Temporal workflow state inconsistent with DB/order state detection.
 
 Current status: deterministic reconciliation contracts and fixture tests exist, and local ledger
-schema/repository foundations exist. Real broker stream, REST fallback, managed database runtime, and
-Temporal/DB consistency evidence are pending.
+schema/repository/activity foundations exist. Real broker stream, REST fallback, managed database
+runtime, and Temporal/DB consistency evidence are pending.
 
 ## Protective Stop Evidence
 

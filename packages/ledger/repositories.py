@@ -21,7 +21,10 @@ from packages.ledger.models import (
     PositionRecord,
     RawProviderPayloadRecord,
     ReportRecord,
+    RiskCheckRecord,
     SystemEventRecord,
+    TradeCandidateRecord,
+    TradeDecisionRecord,
 )
 from packages.reconciliation.models import ReconciliationResult
 
@@ -73,6 +76,54 @@ class AuditLedgerRepository(RawProviderPayloadRepository, Protocol):
         client_order_id_root: str,
     ) -> ExecutionIntentRecord | None:
         """Fetch an execution intent by idempotent client-order root."""
+
+    def insert_trade_candidate(
+        self,
+        *,
+        symbol: str,
+        trading_date: date,
+        strategy_version: str,
+        candidate_status: str,
+        candidate_id: str | None = None,
+        technical_score: float | None = None,
+        relative_strength_score: float | None = None,
+        score_payload: Mapping[str, Any] | None = None,
+        reason_payload: Mapping[str, Any] | None = None,
+        rejection_reasons: Sequence[str] = (),
+        source_features_daily_id: str | None = None,
+        created_at: datetime | None = None,
+    ) -> TradeCandidateRecord:
+        """Persist a deterministic strategy candidate."""
+
+    def insert_trade_decision(
+        self,
+        *,
+        symbol: str,
+        decision_status: str,
+        decision_id: str | None = None,
+        candidate_id: str | None = None,
+        final_score: float | None = None,
+        deterministic_decision_payload: Mapping[str, Any] | None = None,
+        ai_output_id: str | None = None,
+        created_at: datetime | None = None,
+    ) -> TradeDecisionRecord:
+        """Persist a deterministic trade decision."""
+
+    def insert_risk_check(
+        self,
+        *,
+        symbol: str,
+        passed: bool,
+        risk_config_version: str,
+        risk_check_id: str | None = None,
+        decision_id: str | None = None,
+        execution_intent_id: str | None = None,
+        reason_codes: Sequence[str] = (),
+        input_snapshot: Mapping[str, Any] | None = None,
+        result_payload: Mapping[str, Any] | None = None,
+        created_at: datetime | None = None,
+    ) -> RiskCheckRecord:
+        """Persist a deterministic risk-check result."""
 
 
 class SQLiteLedgerRepository:
@@ -282,6 +333,174 @@ class SQLiteLedgerRepository:
             (client_order_id_root,),
         )
         return None if row is None else _execution_intent_record(row)
+
+    def list_active_execution_intents(
+        self,
+        *,
+        statuses: Sequence[str] = ("created", "risk_approved", "submitted_to_workflow"),
+        limit: int = 100,
+    ) -> tuple[ExecutionIntentRecord, ...]:
+        allowed_statuses = set(statuses)
+        rows = self._connection.execute(
+            """
+            SELECT * FROM execution_intents
+            ORDER BY created_at DESC, execution_intent_id DESC
+            """
+        ).fetchall()
+        records = [
+            _execution_intent_record(row) for row in rows if str(row["status"]) in allowed_statuses
+        ]
+        return tuple(records[:limit])
+
+    def insert_trade_candidate(
+        self,
+        *,
+        symbol: str,
+        trading_date: date,
+        strategy_version: str,
+        candidate_status: str,
+        candidate_id: str | None = None,
+        technical_score: float | None = None,
+        relative_strength_score: float | None = None,
+        score_payload: Mapping[str, Any] | None = None,
+        reason_payload: Mapping[str, Any] | None = None,
+        rejection_reasons: Sequence[str] = (),
+        source_features_daily_id: str | None = None,
+        created_at: datetime | None = None,
+    ) -> TradeCandidateRecord:
+        record_id = candidate_id or _new_id()
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT INTO trade_candidates (
+                    candidate_id,
+                    symbol,
+                    trading_date,
+                    strategy_version,
+                    candidate_status,
+                    technical_score,
+                    relative_strength_score,
+                    score_payload_json,
+                    reason_payload_json,
+                    rejection_reasons_json,
+                    source_features_daily_id,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record_id,
+                    symbol,
+                    _date_for_db(trading_date),
+                    strategy_version,
+                    candidate_status,
+                    technical_score,
+                    relative_strength_score,
+                    _json_for_db(dict(score_payload or {})),
+                    _json_for_db(dict(reason_payload or {})),
+                    _json_for_db(list(rejection_reasons)),
+                    source_features_daily_id,
+                    _datetime_for_db(created_at or _utc_now()),
+                ),
+            )
+        row = self._fetch_one("SELECT * FROM trade_candidates WHERE candidate_id = ?", (record_id,))
+        if row is None:
+            raise LedgerRepositoryError("trade candidate insert did not return a row")
+        return _trade_candidate_record(row)
+
+    def insert_trade_decision(
+        self,
+        *,
+        symbol: str,
+        decision_status: str,
+        decision_id: str | None = None,
+        candidate_id: str | None = None,
+        final_score: float | None = None,
+        deterministic_decision_payload: Mapping[str, Any] | None = None,
+        ai_output_id: str | None = None,
+        created_at: datetime | None = None,
+    ) -> TradeDecisionRecord:
+        record_id = decision_id or _new_id()
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT INTO trade_decisions (
+                    decision_id,
+                    candidate_id,
+                    symbol,
+                    decision_status,
+                    final_score,
+                    deterministic_decision_payload_json,
+                    ai_output_id,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record_id,
+                    candidate_id,
+                    symbol,
+                    decision_status,
+                    final_score,
+                    _json_for_db(dict(deterministic_decision_payload or {})),
+                    ai_output_id,
+                    _datetime_for_db(created_at or _utc_now()),
+                ),
+            )
+        row = self._fetch_one("SELECT * FROM trade_decisions WHERE decision_id = ?", (record_id,))
+        if row is None:
+            raise LedgerRepositoryError("trade decision insert did not return a row")
+        return _trade_decision_record(row)
+
+    def insert_risk_check(
+        self,
+        *,
+        symbol: str,
+        passed: bool,
+        risk_config_version: str,
+        risk_check_id: str | None = None,
+        decision_id: str | None = None,
+        execution_intent_id: str | None = None,
+        reason_codes: Sequence[str] = (),
+        input_snapshot: Mapping[str, Any] | None = None,
+        result_payload: Mapping[str, Any] | None = None,
+        created_at: datetime | None = None,
+    ) -> RiskCheckRecord:
+        record_id = risk_check_id or _new_id()
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT INTO risk_checks (
+                    risk_check_id,
+                    decision_id,
+                    execution_intent_id,
+                    symbol,
+                    passed,
+                    reason_codes_json,
+                    risk_config_version,
+                    input_snapshot_json,
+                    result_payload_json,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record_id,
+                    decision_id,
+                    execution_intent_id,
+                    symbol,
+                    _bool_for_db(passed),
+                    _json_for_db(list(reason_codes)),
+                    risk_config_version,
+                    _json_for_db(dict(input_snapshot or {})),
+                    _json_for_db(dict(result_payload or {})),
+                    _datetime_for_db(created_at or _utc_now()),
+                ),
+            )
+        row = self._fetch_one("SELECT * FROM risk_checks WHERE risk_check_id = ?", (record_id,))
+        if row is None:
+            raise LedgerRepositoryError("risk check insert did not return a row")
+        return _risk_check_record(row)
 
     def insert_order(
         self,
@@ -494,6 +713,18 @@ class SQLiteLedgerRepository:
         )
         return None if row is None else _position_record(row)
 
+    def list_open_positions(self, *, limit: int = 100) -> tuple[PositionRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM positions
+            WHERE status = 'open'
+            ORDER BY updated_at DESC, position_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_position_record(row) for row in rows)
+
     def insert_broker_reconciliation_snapshot(
         self,
         *,
@@ -644,6 +875,18 @@ class SQLiteLedgerRepository:
         ).fetchall()
         return tuple(_system_event_record(row) for row in rows)
 
+    def list_recent_incidents(self, *, limit: int = 100) -> tuple[SystemEventRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM system_events
+            WHERE event_type LIKE '%incident%' OR severity IN ('warning', 'critical')
+            ORDER BY created_at DESC, event_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_system_event_record(row) for row in rows)
+
     def insert_report(
         self,
         *,
@@ -776,6 +1019,53 @@ def _execution_intent_record(row: sqlite3.Row) -> ExecutionIntentRecord:
         status=str(row["status"]),
         payload=dict(_json_from_db(row["payload_json"])),
         expires_at=_datetime_from_db(row["expires_at"]),
+        created_at=_datetime_from_db(row["created_at"]),
+    )
+
+
+def _trade_candidate_record(row: sqlite3.Row) -> TradeCandidateRecord:
+    return TradeCandidateRecord(
+        candidate_id=str(row["candidate_id"]),
+        symbol=str(row["symbol"]),
+        trading_date=_date_from_db(row["trading_date"]),
+        strategy_version=str(row["strategy_version"]),
+        candidate_status=str(row["candidate_status"]),
+        technical_score=_optional_float(row["technical_score"]),
+        relative_strength_score=_optional_float(row["relative_strength_score"]),
+        score_payload=dict(_json_from_db(row["score_payload_json"])),
+        reason_payload=dict(_json_from_db(row["reason_payload_json"])),
+        rejection_reasons=tuple(str(item) for item in _json_from_db(row["rejection_reasons_json"])),
+        source_features_daily_id=_optional_str(row["source_features_daily_id"]),
+        created_at=_datetime_from_db(row["created_at"]),
+    )
+
+
+def _trade_decision_record(row: sqlite3.Row) -> TradeDecisionRecord:
+    return TradeDecisionRecord(
+        decision_id=str(row["decision_id"]),
+        candidate_id=_optional_str(row["candidate_id"]),
+        symbol=str(row["symbol"]),
+        decision_status=str(row["decision_status"]),
+        final_score=_optional_float(row["final_score"]),
+        deterministic_decision_payload=dict(
+            _json_from_db(row["deterministic_decision_payload_json"])
+        ),
+        ai_output_id=_optional_str(row["ai_output_id"]),
+        created_at=_datetime_from_db(row["created_at"]),
+    )
+
+
+def _risk_check_record(row: sqlite3.Row) -> RiskCheckRecord:
+    return RiskCheckRecord(
+        risk_check_id=str(row["risk_check_id"]),
+        decision_id=_optional_str(row["decision_id"]),
+        execution_intent_id=_optional_str(row["execution_intent_id"]),
+        symbol=str(row["symbol"]),
+        passed=bool(row["passed"]),
+        reason_codes=tuple(str(item) for item in _json_from_db(row["reason_codes_json"])),
+        risk_config_version=str(row["risk_config_version"]),
+        input_snapshot=dict(_json_from_db(row["input_snapshot_json"])),
+        result_payload=dict(_json_from_db(row["result_payload_json"])),
         created_at=_datetime_from_db(row["created_at"]),
     )
 
@@ -919,6 +1209,16 @@ def _optional_datetime_from_db(value: Any) -> datetime | None:
 
 def _optional_date_for_db(value: date | None) -> str | None:
     return None if value is None else value.isoformat()
+
+
+def _date_for_db(value: date) -> str:
+    return value.isoformat()
+
+
+def _date_from_db(value: Any) -> date:
+    if not isinstance(value, str):
+        raise LedgerRepositoryError("database date must be stored as text")
+    return date.fromisoformat(value)
 
 
 def _optional_date_from_db(value: Any) -> date | None:

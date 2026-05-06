@@ -1,14 +1,15 @@
-"""Side-effect activity placeholders for Temporal workflow skeletons.
+"""Side-effect activity contracts for Temporal workflow skeletons.
 
-These functions intentionally perform no broker, AI, news, database, alert, or network calls.
-Future milestones should replace placeholders with real activity implementations behind the same
-workflow boundary.
+Provider-facing functions intentionally remain placeholders with no broker, AI, news, alert, or
+network calls. Ledger activity functions are imported from `ledger.py` and use only safe local or
+fake repository-backed persistence.
 """
 
 from __future__ import annotations
 
 from temporalio import activity
 
+from apps.workers.app.activities.ledger import LEDGER_ACTIVITY_FUNCTIONS
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
 
 
@@ -149,4 +150,5 @@ ACTIVITY_FUNCTIONS = (
     compare_reconciliation_snapshots,
     apply_kill_switch_state,
     generate_report,
+    *LEDGER_ACTIVITY_FUNCTIONS,
 )

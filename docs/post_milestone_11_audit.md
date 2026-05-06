@@ -40,6 +40,34 @@ Still not implemented after Milestone 12:
 - actual paper trading operations and frozen paper evidence;
 - Level 4 micro-live readiness.
 
+## Milestone 13 Update
+
+Milestone 13 connects Temporal activity boundaries to the local/fake audit-ledger repository layer
+without enabling real provider or broker side effects. The repository now includes:
+
+- `apps/workers/app/activities/models.py` with typed ledger activity request/response contracts.
+- `apps/workers/app/activities/ledger.py` with safe repository-backed activity implementations.
+- `apps/workers/app/activities/fakes.py` with in-memory SQLite activity service helpers for tests.
+- Workflow skeleton activity names aligned to ledger persistence boundaries for data refresh,
+  candidates, AI outputs, decisions, execution intents, order events, positions, reconciliations,
+  system events/incidents, and reports.
+- Unit/Temporal tests proving local ledger activity persistence, read helpers, model validation,
+  no `DATABASE_URL` requirement, no external calls, and no direct workflow imports of ledger,
+  broker, AI/news, provider, network, clock, or random side-effect code.
+
+Still not implemented after Milestone 13:
+
+- managed Postgres/Supabase runtime connectivity and migration execution;
+- real Temporal test-server/replay coverage;
+- real Temporal query/signal backend for dashboard/control-plane operations;
+- real Alpaca paper integration;
+- real AI/news provider integration;
+- alert delivery;
+- report generation jobs;
+- deployed dashboard/read-model integration;
+- actual paper trading operations and frozen paper evidence;
+- Level 4 micro-live readiness.
+
 ## Governance Confirmation
 
 `AGENTS.md` defines the source-of-truth priority:

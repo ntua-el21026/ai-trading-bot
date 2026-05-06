@@ -29,6 +29,8 @@ AI cannot:
 - `packages/ai/persistence.py` defines raw prompt/output persistence payload contracts with audit hashes.
 - `packages/ledger/repositories.py` can persist AI research output payloads locally in repository
   tests without calling AI/news providers or managed databases.
+- `apps/workers/app/activities/ledger.py` can persist AI research output payloads through a
+  local/fake Temporal activity boundary without calling AI/news providers.
 
 ## Fallback Policy
 

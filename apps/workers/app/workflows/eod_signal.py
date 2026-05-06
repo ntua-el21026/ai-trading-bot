@@ -18,7 +18,7 @@ class EODSignalWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="EODSignalWorkflow",
-            activity_name="build_eod_signals",
+            activity_name="persist_trade_candidates",
             task_queue="strategy-task-queue",
             run_input=run_input,
         )

@@ -18,7 +18,7 @@ class DecisionWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="DecisionWorkflow",
-            activity_name="build_trade_decisions",
+            activity_name="persist_trade_decision",
             task_queue="strategy-task-queue",
             run_input=run_input,
         )

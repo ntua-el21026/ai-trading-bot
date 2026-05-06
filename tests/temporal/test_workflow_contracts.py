@@ -9,11 +9,11 @@ from apps.workers.app.activities.contracts import (
     fetch_broker_reconciliation_snapshot,
     fetch_candidate_news,
     fetch_internal_ledger_snapshot,
-    refresh_market_data,
     run_ai_trade_research,
     store_ai_research_payload,
     validate_ai_research_output,
 )
+from apps.workers.app.activities.ledger import persist_data_refresh_result
 from apps.workers.app.queries import QUERY_NAMES
 from apps.workers.app.signals import SIGNAL_NAMES
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
@@ -60,11 +60,19 @@ def test_required_signal_and_query_contracts_are_present() -> None:
     }
 
 
-def test_activity_contracts_are_placeholders_without_external_calls() -> None:
+def test_activity_contracts_include_ledger_boundaries_without_external_calls() -> None:
     activity_names = {activity.__name__ for activity in ACTIVITY_FUNCTIONS}
 
-    assert "refresh_market_data" in activity_names
-    assert "submit_order_placeholder" in activity_names
+    assert "persist_data_refresh_result" in activity_names
+    assert "persist_trade_candidates" in activity_names
+    assert "persist_ai_research_outputs" in activity_names
+    assert "persist_trade_decision" in activity_names
+    assert "persist_execution_intent" in activity_names
+    assert "persist_order_event" in activity_names
+    assert "persist_position_snapshot" in activity_names
+    assert "persist_broker_reconciliation" in activity_names
+    assert "persist_system_event" in activity_names
+    assert "persist_report" in activity_names
     assert "fetch_candidate_news" in activity_names
     assert "run_ai_trade_research" in activity_names
     assert "validate_ai_research_output" in activity_names
@@ -73,7 +81,7 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
     assert "fetch_internal_ledger_snapshot" in activity_names
     assert "compare_reconciliation_snapshots" in activity_names
     result = asyncio.run(
-        refresh_market_data(
+        persist_data_refresh_result(
             ActivityPlaceholderInput(
                 workflow_name="DailyDataRefreshWorkflow",
                 purpose="contract-test",
@@ -82,9 +90,29 @@ def test_activity_contracts_are_placeholders_without_external_calls() -> None:
     )
 
     assert isinstance(result, ActivityPlaceholderResult)
-    assert result.status == "placeholder"
+    assert result.status == "ledger_checkpoint"
     assert result.external_calls_performed is False
     assert result.details["external_calls"] == "none"
+
+
+def test_workflow_skeletons_call_ledger_activity_boundaries() -> None:
+    expected_activity_by_file = {
+        "daily_data_refresh.py": "persist_data_refresh_result",
+        "eod_signal.py": "persist_trade_candidates",
+        "ai_shortlist_research.py": "persist_ai_research_outputs",
+        "decision.py": "persist_trade_decision",
+        "execution_intent.py": "persist_execution_intent",
+        "order_lifecycle.py": "persist_order_event",
+        "position_lifecycle.py": "persist_position_snapshot",
+        "reconciliation.py": "persist_broker_reconciliation",
+        "kill_switch.py": "persist_system_event",
+        "reporting.py": "persist_report",
+    }
+    workflow_dir = Path("apps/workers/app/workflows")
+
+    for filename, activity_name in expected_activity_by_file.items():
+        source = (workflow_dir / filename).read_text(encoding="utf-8")
+        assert f'activity_name="{activity_name}"' in source
 
 
 def test_reconciliation_activity_contracts_are_placeholders_without_external_calls() -> None:
@@ -171,6 +199,9 @@ def test_workflow_modules_do_not_directly_import_side_effect_providers() -> None
         "openai",
         "anthropic",
         "alpaca.",
+        "packages.ledger",
+        "sqlite3",
+        "DATABASE_URL",
         "os.environ",
         "datetime.now",
         "random.",

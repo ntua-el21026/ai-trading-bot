@@ -2,12 +2,12 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 09 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, activity
-contracts, signal names, query names, broker-reconciliation activity boundaries, AI/news activity
-boundaries, dashboard/control-plane signal mapping contracts, validation-oriented workflow boundary
-tests, and contract tests. It does not
-implement broker execution, database writes, AI calls, market/news provider calls, production
-schedule activation, browser-side Temporal calls, or live trading.
+Milestone 13 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, ledger-backed
+activity contracts using safe local/fake repositories, provider placeholder activity boundaries,
+signal names, query names, dashboard/control-plane signal mapping contracts, validation-oriented
+workflow boundary tests, and contract tests. It does not implement broker execution, managed
+Postgres/Supabase runtime wiring, AI calls, market/news provider calls, production schedule
+activation, browser-side Temporal calls, paper orders, or live trading.
 
 ## Configuration
 
@@ -41,13 +41,35 @@ registered on `reconciliation-task-queue`.
 - `ReportingWorkflow`
 
 Workflow code is limited to deterministic orchestration state, Temporal signals, Temporal queries,
-and Temporal activity calls. The skeletons call placeholder activities by name and return placeholder
-status objects.
+and Temporal activity calls. The skeletons call ledger activity boundaries by name and return status
+objects. They do not import ledger repositories or database sessions directly.
 
 ## Activity Boundary
 
-Current activity contracts are placeholders under `apps/workers/app/activities/contracts.py`.
-They intentionally perform no external calls and return `external_calls_performed=false`.
+Current activity contracts are registered from `apps/workers/app/activities/contracts.py`.
+Ledger-backed activity implementations live in `apps/workers/app/activities/ledger.py`; typed
+request/response models live in `apps/workers/app/activities/models.py`; fake/local service helpers
+live in `apps/workers/app/activities/fakes.py`.
+
+Milestone 13 adds safe ledger activity boundaries for:
+
+- raw provider payload persistence;
+- data-refresh persistence checkpoints;
+- trade candidate persistence;
+- AI research output persistence;
+- trade decision persistence;
+- risk-check persistence;
+- execution intent persistence;
+- order/fill/position audit persistence;
+- broker reconciliation snapshot persistence;
+- system event/incident persistence;
+- report persistence;
+- read helpers for latest reconciliation status, active execution intents, open positions, and
+  recent incidents.
+
+The default activity service uses in-memory SQLite through `packages/ledger` and requires no
+`DATABASE_URL`. This is local/fake-safe integration, not managed Postgres/Supabase runtime wiring.
+All activity results keep `external_calls_performed=false`.
 
 Milestone 06 adds placeholder boundaries for:
 
@@ -62,10 +84,10 @@ Milestone 07 adds placeholder boundaries for:
 - AI output validation;
 - AI research payload storage.
 
-These are activity contracts only. Workflow code still calls activities by name and performs no
-broker API, AI API, news API, database, websocket, or REST calls directly.
+Provider-facing activities remain placeholders only. Workflow code still calls activities by name
+and performs no broker API, AI API, news API, database, websocket, or REST calls directly.
 
-Future side effects must stay in activities:
+Future real side effects must stay in activities:
 
 - broker API calls;
 - database writes;
@@ -119,8 +141,8 @@ Retry policy contracts are defined in `apps/workers/app/retry_policies.py`:
 
 These are contracts only. They do not implement broker, stop, or provider-backed AI behavior. Broker
 order submission retry remains capped at one attempt until a later milestone adds explicit
-idempotency lookup behavior through broker and database activities. AI activity retry is represented
-as a contract with neutral fallback on failure.
+idempotency lookup behavior through broker and managed database activities. AI activity retry is
+represented as a contract with neutral fallback on failure.
 
 ## Local Worker Bootstrap
 
@@ -144,11 +166,12 @@ Current tests are import and contract tests:
 uv run --group dev pytest tests/unit tests/temporal
 ```
 
-Milestone 09 also statically checks that workflow modules do not directly import broker, AI/news, or
-network-provider code. Side effects remain activity responsibilities.
+Milestone 13 also statically checks that workflow modules do not directly import broker, AI/news,
+ledger/database, network-provider, wall-clock, or random side-effect code. Side effects remain
+activity responsibilities.
 
-Full Temporal replay or local test-server execution is deferred until workflow behavior and mocked
-activities are added. A future command should use Temporal's testing environment, for example:
+Full Temporal replay or local test-server execution is deferred. A future command should use
+Temporal's testing environment, for example:
 
 ```bash
 uv run --group dev pytest tests/temporal --run-temporal-server

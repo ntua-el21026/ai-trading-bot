@@ -13,7 +13,10 @@ AI_Trading_Bot/
 │   │   ├── app/
 │   │   │   ├── activities/
 │   │   │   │   ├── __init__.py
-│   │   │   │   └── contracts.py
+│   │   │   │   ├── contracts.py
+│   │   │   │   ├── fakes.py
+│   │   │   │   ├── ledger.py
+│   │   │   │   └── models.py
 │   │   │   ├── workflows/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── _shared.py
@@ -197,6 +200,7 @@ AI_Trading_Bot/
 │       ├── test_features.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
+│       ├── test_ledger_activities.py
 │       ├── test_ledger_repositories.py
 │       ├── test_ledger_schema.py
 │       ├── test_paper_dry_run.py
@@ -218,4 +222,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 38, Total files: 181
+Total directories: 38, Total files: 185

@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 12 does not implement production services, active schedules, real broker clients, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, and a local database/audit-ledger foundation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 13 does not implement production services, active schedules, real broker clients, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, generated reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake ledger repositories.
 
 ## Current Foundation Operations
 
@@ -51,8 +51,23 @@ Database/audit-ledger behavior is currently a local persistence foundation:
 4. Preserve raw provider payloads, raw AI prompt/output hashes, execution intent IDs, client order
    IDs, broker snapshots, system events, and report payloads when exercising repository tests.
 
-No current operation opens a managed Postgres/Supabase connection, runs production migrations, writes
-from Temporal activities to the ledger, or requires real database credentials.
+No current operation opens a managed Postgres/Supabase connection, runs production migrations, or
+requires real database credentials.
+
+## Current Temporal Ledger Activity Operations
+
+Temporal ledger activities are currently local/fake-safe boundaries:
+
+1. Workflow skeletons call stable ledger activity names such as `persist_execution_intent`,
+   `persist_order_event`, `persist_broker_reconciliation`, `persist_system_event`, and
+   `persist_report`.
+2. Activity implementations use `LedgerActivityService` and `SQLiteLedgerRepository` by default.
+3. Tests may inject a fake/local service through `build_fake_ledger_activity_service`.
+4. Activity results report `external_calls_performed=false`.
+
+These activities persist to local SQLite during tests. They do not call broker APIs, AI/news
+providers, managed databases, alerts, or frontend code. Real Temporal test-server/replay coverage is
+still deferred.
 
 ## Current Dashboard Operations
 
@@ -121,6 +136,6 @@ records. They do not enable live trading or autonomous live execution.
 
 Later milestones must implement real worker startup, Temporal schedules, paper trading procedures,
 real broker credential setup, real AI/news provider setup, managed database-backed reconciliation and
-AI research persistence, Temporal activities connected to ledger repositories, real Temporal
-query/signal backend integration, dashboard deployment, alerting, evidence collection, and Level 4
-micro-live readiness gates.
+AI research persistence, real Temporal test-server/replay coverage, real Temporal query/signal
+backend integration, dashboard deployment, alerting, evidence collection, and Level 4 micro-live
+readiness gates.

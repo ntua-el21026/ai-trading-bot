@@ -68,6 +68,45 @@ class ExecutionIntentRecord(LedgerModel):
     created_at: datetime
 
 
+class TradeCandidateRecord(LedgerModel):
+    candidate_id: str
+    symbol: str
+    trading_date: date
+    strategy_version: str
+    candidate_status: str
+    technical_score: float | None = Field(default=None, ge=0, le=100)
+    relative_strength_score: float | None = Field(default=None, ge=0, le=100)
+    score_payload: dict[str, Any]
+    reason_payload: dict[str, Any]
+    rejection_reasons: tuple[str, ...]
+    source_features_daily_id: str | None
+    created_at: datetime
+
+
+class TradeDecisionRecord(LedgerModel):
+    decision_id: str
+    candidate_id: str | None
+    symbol: str
+    decision_status: str
+    final_score: float | None = Field(default=None, ge=0, le=100)
+    deterministic_decision_payload: dict[str, Any]
+    ai_output_id: str | None
+    created_at: datetime
+
+
+class RiskCheckRecord(LedgerModel):
+    risk_check_id: str
+    decision_id: str | None
+    execution_intent_id: str | None
+    symbol: str
+    passed: bool
+    reason_codes: tuple[str, ...]
+    risk_config_version: str
+    input_snapshot: dict[str, Any]
+    result_payload: dict[str, Any]
+    created_at: datetime
+
+
 class OrderRecord(LedgerModel):
     order_id: str
     execution_intent_id: str | None

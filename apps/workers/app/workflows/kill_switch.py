@@ -29,7 +29,7 @@ class KillSwitchWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="KillSwitchWorkflow",
-            activity_name="apply_kill_switch_state",
+            activity_name="persist_system_event",
             task_queue="execution-task-queue",
             run_input=run_input,
         )

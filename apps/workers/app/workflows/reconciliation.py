@@ -25,7 +25,7 @@ class ReconciliationWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="ReconciliationWorkflow",
-            activity_name="reconcile_broker_state",
+            activity_name="persist_broker_reconciliation",
             task_queue="reconciliation-task-queue",
             run_input=run_input,
         )

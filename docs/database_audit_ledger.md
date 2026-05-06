@@ -1,7 +1,10 @@
 # Database Audit Ledger
 
-Milestone 12 adds the database/audit-ledger foundation required by
+Milestone 12 added the database/audit-ledger foundation required by
 `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+
+Milestone 13 connects safe Temporal activity boundaries to the local/fake ledger repository layer.
+Workflow code still does not import repositories or database sessions directly.
 
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
@@ -24,6 +27,12 @@ Implemented:
 - Unit tests for schema, round trips, uniqueness constraints, rollback behavior, and safety flags:
   - `tests/unit/test_ledger_schema.py`
   - `tests/unit/test_ledger_repositories.py`
+- Safe Temporal ledger activity contracts and tests:
+  - `apps/workers/app/activities/models.py`
+  - `apps/workers/app/activities/ledger.py`
+  - `apps/workers/app/activities/fakes.py`
+  - `tests/unit/test_ledger_activities.py`
+  - `tests/temporal/test_workflow_contracts.py`
 
 No real managed database connection is required by default tests.
 
@@ -81,9 +90,19 @@ The local repository supports:
 - broker reconciliation snapshot insert/get latest;
 - system event insert/list;
 - report insert/get.
+- active execution intent, open position, recent incident, and latest reconciliation read helpers.
+
+Temporal ledger activities support:
+
+- raw provider payload and data-refresh checkpoint persistence;
+- trade candidate, AI research output, trade decision, and risk-check persistence;
+- execution intent, order, fill, and position audit persistence;
+- broker reconciliation, system event/incident, and report persistence;
+- read helpers for later dashboard/control-plane integration.
 
 Repositories are side-effect limited to database access against the provided connection. They do not
 call broker APIs, AI/news provider APIs, Temporal, alert services, or managed database APIs.
+Activity implementations call only these repository boundaries and local/fake SQLite by default.
 
 ## Local Test Strategy
 
@@ -97,10 +116,11 @@ SQLite compatibility differences:
 - The checked-in migration remains Postgres-oriented and uses `JSONB`, `TIMESTAMPTZ`, and
   `gen_random_uuid()`.
 - Real managed Postgres/Supabase migration execution is deferred to a later integration milestone.
+- Temporal real test-server/replay coverage remains deferred.
 
 ## Safety Boundary
 
-Milestone 12 does not:
+Milestones 12-13 do not:
 
 - enable live trading;
 - enable autonomous execution;
@@ -109,9 +129,10 @@ Milestone 12 does not:
 - call broker APIs;
 - call AI/news provider APIs;
 - submit paper or live broker orders;
-- connect Temporal activities to database writes;
+- connect Temporal activities to real managed Postgres/Supabase runtime writes;
 - deploy a dashboard;
 - implement alert delivery.
 
-Paper trading still requires Temporal side-effect integration, real paper broker integration,
-provider integration, alerting, reporting, dashboard read models, and operational dry-run evidence.
+Paper trading still requires real managed database integration, real paper broker integration,
+provider integration, alerting, report generation, dashboard read models, Temporal test-server/replay
+evidence, and operational dry-run evidence.

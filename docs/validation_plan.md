@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 12 adds a Postgres-oriented database/audit-ledger foundation and local SQLite repository tests. It does not validate real Alpaca paper credentials, real AI/news provider credentials, managed Postgres/Supabase runtime connectivity, production dashboard deployment, live Temporal replay behavior, paper trading operations, live trading, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 13 adds safe Temporal ledger activity boundaries using local/fake repositories. It does not validate real Alpaca paper credentials, real AI/news provider credentials, managed Postgres/Supabase runtime connectivity, production dashboard deployment, live Temporal replay behavior, paper trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -18,6 +18,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Backtest metrics and explicit-signal engine behavior are fixture-tested without broker calls.
 - Audit-ledger schema and repository round trips are fixture-tested with in-memory SQLite and no
   managed database credentials.
+- Ledger-backed activity persistence and read helpers are fixture-tested with in-memory SQLite and
+  no managed database credentials.
 - Regime classification is fixture-tested for `RISK_ON`, `CAUTION`, and `RISK_OFF`.
 - Strategy candidate evaluation is fixture-tested for long-only accepted/rejected candidates, 20D and 55D breakout variants, RS63, ATR percent, earnings blackout, held-symbol, and duplicate-intent gates.
 - Exit helpers are fixture-tested for initial stops, trailing stops, technical exits, time stops, and fail-fast exits without submitting orders.
@@ -33,7 +35,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - AI prompt loading, strict JSON parsing, invalid JSON fallback, schema-violation fallback, no-news fallback, provider-outage fallback, and conflicting-source fallback are fixture-tested.
 - AI recency decay, source quality weighting, score clipping, hard-block confidence threshold, and non-increasing size-multiplier behavior are fixture-tested.
 - AI persistence payload hashes are fixture-tested without database writes.
-- AI/news activity contracts are fixture-tested as placeholders with no external calls.
+- AI/news provider activity contracts remain fixture-tested as placeholders with no external calls.
+- Workflow skeletons are fixture-tested to call ledger activity boundaries by stable names while
+  avoiding direct side-effect imports.
 - Dashboard/control-plane read models, safe control action shapes, Temporal signal mapping, no
   order-entry controls, fixture dispatch behavior, and frontend secret guardrails are fixture-tested.
 - Validation harness assumptions are fixture-tested for historical splits, benchmarks, fee/slippage
@@ -63,6 +67,7 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 | Universe filtering | `tests/unit/test_universe.py` |
 | Backtesting metrics and explicit-signal engine | `tests/unit/test_backtesting_metrics.py` |
 | Database/audit-ledger foundation | `tests/unit/test_ledger_schema.py`, `tests/unit/test_ledger_repositories.py` |
+| Temporal ledger activities | `tests/unit/test_ledger_activities.py`, `tests/temporal/test_workflow_contracts.py` |
 | Regime logic | `tests/unit/test_regime.py` |
 | Strategy signals and candidates | `tests/unit/test_strategy_signals.py` |
 | Exit helpers | `tests/unit/test_strategy_exits.py` |
@@ -81,10 +86,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: managed Postgres/Supabase runtime integration, Temporal activities that
-write to the ledger, real provider integrations, real Temporal test-server/replay coverage,
-production dashboard deployment, paper trading operations, and Level 4 micro-live readiness evidence
-are not implemented.
+Remaining gaps are explicit: managed Postgres/Supabase runtime integration, real provider
+integrations, real Temporal test-server/replay coverage, production dashboard deployment, paper
+trading operations, and Level 4 micro-live readiness evidence are not implemented.
 
 ## Validation Harness Contracts
 
@@ -134,9 +138,9 @@ incident response flow, report expectations, frozen paper acceptance criteria, a
 handoff gates.
 
 Current paper operations evidence is absent. The repository still needs managed database runtime
-connectivity, Temporal activities connected to ledger repositories, real Temporal query/signal
-backend integration, real Alpaca paper client integration, real AI/news provider integration, real
-dashboard deployment, alerting, and controlled paper runs before these gates can be satisfied.
+connectivity, real Temporal query/signal backend integration, real Temporal test-server/replay
+evidence, real Alpaca paper client integration, real AI/news provider integration, real dashboard
+deployment, alerting, and controlled paper runs before these gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -170,8 +174,8 @@ Current blockers:
 
 - Frozen paper evidence is unavailable.
 - Actual paper trading operations have not started.
-- Database/audit-ledger foundation exists locally; managed runtime connectivity and Temporal
-  database-writing activities are absent.
+- Database/audit-ledger foundation and local/fake Temporal activity persistence exist; managed
+  runtime connectivity is absent.
 - Real Temporal query/signal backend integration is deferred.
 - Real broker/AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.

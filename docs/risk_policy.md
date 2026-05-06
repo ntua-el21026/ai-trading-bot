@@ -6,7 +6,8 @@ Milestone 06 implements deterministic risk-check contracts, position sizing, kil
 models, and passive broker reconciliation inputs. The implementation is passive: it approves or
 rejects proposed new-risk entries, compares broker/internal snapshots, and returns structured reason
 codes and incident recommendations. It does not submit orders, call a broker, write from Temporal to
-the database, or enable live trading.
+managed database runtime, or enable live trading. Milestone 13 adds local/fake Temporal ledger
+activities for risk-check and incident persistence.
 
 ## Foundation Defaults
 
@@ -107,9 +108,10 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 ## Future Work
 
 Later milestones must connect these contracts to Temporal execution workflows, real Alpaca paper
-adapters, and managed database audit persistence. The ledger foundation now provides schema and
-local repository support for future risk-check and incident persistence. Any change to risk limits
-or risk semantics requires explicit approval and a corresponding spec update.
+adapters, and managed database audit persistence. The ledger foundation now provides schema, local
+repository support, and local/fake Temporal activity boundaries for future risk-check and incident
+persistence. Any change to risk limits or risk semantics requires explicit approval and a
+corresponding spec update.
 
 ## Level 4 Readiness Status
 

@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, database/audit-ledger, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
+This document describes the current foundation, data/backtest, database/audit-ledger, Temporal skeleton/activity, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 12 scaffolding and local persistence foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 13 scaffolding and local persistence/activity foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, safe ledger-backed activity boundaries using fake/local repositories, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -24,7 +24,16 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
   schema for all core spec section 19 tables.
 - `packages/ledger/` defines local schema helpers, typed ledger records, repository protocols, and a
   SQLite repository implementation for deterministic tests without managed database credentials.
-- Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, placeholder activity contracts, signal names, query names, and retry-policy contracts exist.
+- Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, safe
+  ledger activity contracts, provider placeholders, signal names, query names, and retry-policy
+  contracts exist.
+- `apps/workers/app/activities/models.py` defines typed ledger activity request/response contracts.
+- `apps/workers/app/activities/ledger.py` defines repository-backed activities for raw payloads,
+  data refresh checkpoints, candidates, AI outputs, decisions, risk checks, execution intents,
+  orders, fills, positions, reconciliations, system events/incidents, reports, and read helpers.
+- Workflow skeletons call ledger activity boundaries by stable name while workflow code remains
+  deterministic and imports no database, broker, AI/news, provider, network, clock, or random
+  clients.
 - Regime classification implements deterministic `RISK_ON`, `CAUTION`, and `RISK_OFF` states from SPY SMA/realized-volatility rules.
 - Strategy candidate evaluation implements long-only trend, breakout, volume, RS63, ATR percent, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates.
 - Exit helpers calculate stop levels and exit trigger reason codes only; they do not submit or modify orders.
@@ -37,7 +46,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Reconciliation contracts compare broker snapshots against passive internal ledger snapshots and classify mismatches into structured incidents with pause-new-risk or flatten-if-safe recommendations.
 - AI/news contracts define deterministic-shortlist-only news requests, provider protocols, article normalization/deduplication, strict AI output schemas, neutral fallbacks, deterministic AI event scoring, hard-block classification, and persistence payload contracts.
 - The AI prompt template is versioned under `packages/ai/prompts/` and explicitly forbids broker actions, order creation/modification, stop changes, strategy mutation, risk-limit changes, and full-universe scanning.
-- AI/news Temporal activity boundaries are placeholders only and perform no external provider, AI, database, broker, or network calls.
+- AI/news provider activity boundaries are placeholders only and perform no external provider, AI,
+  broker, or network calls.
 - Control-plane contracts define read-only dashboard views and auditable safe control requests.
 - `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal names. It does not call Temporal, broker adapters, AI/news providers, or databases yet.
 - `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No frontend framework or deployment files are added.
@@ -56,8 +66,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - No broker-executable order submission is implemented.
 - No real Alpaca SDK/client integration is implemented.
 - No managed Postgres/Supabase runtime connection or migration execution is implemented.
-- No Temporal activity writes to the database ledger yet.
+- No real managed Postgres/Supabase activity wiring is implemented.
 - No real AI/news provider integration is implemented.
+- No real Temporal test-server/replay evidence is implemented.
 - No real Temporal query/signal backend integration is implemented.
 - Temporal schedules are not activated.
 - Level 4 micro-live readiness is not satisfied because required evidence is absent.

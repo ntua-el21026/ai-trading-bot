@@ -20,7 +20,7 @@ class ReportingWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="ReportingWorkflow",
-            activity_name="generate_report",
+            activity_name="persist_report",
             task_queue="reporting-task-queue",
             run_input=run_input,
         )

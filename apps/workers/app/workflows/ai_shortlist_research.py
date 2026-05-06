@@ -19,7 +19,7 @@ class AIShortlistResearchWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="AIShortlistResearchWorkflow",
-            activity_name="research_ai_shortlist",
+            activity_name="persist_ai_research_outputs",
             task_queue="ai-research-task-queue",
             run_input=run_input,
             retry_contract=AI_ACTIVITY_RETRY,

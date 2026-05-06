@@ -19,7 +19,7 @@ class ExecutionIntentWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="ExecutionIntentWorkflow",
-            activity_name="build_execution_intents",
+            activity_name="persist_execution_intent",
             task_queue="execution-task-queue",
             run_input=run_input,
         )

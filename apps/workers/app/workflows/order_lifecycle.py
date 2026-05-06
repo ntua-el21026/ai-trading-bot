@@ -20,7 +20,7 @@ class OrderLifecycleWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="OrderLifecycleWorkflow",
-            activity_name="submit_order_placeholder",
+            activity_name="persist_order_event",
             task_queue="execution-task-queue",
             run_input=run_input,
             retry_contract=BROKER_ORDER_SUBMIT_RETRY,

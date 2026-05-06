@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 12 database/audit-ledger foundation.
+This repository is at Milestone 13 Temporal ledger activity integration with safe fakes.
 
 Implemented pieces:
 
@@ -26,7 +26,7 @@ Implemented pieces:
 - deterministic backtest models, metrics, and explicit-signal engine skeleton
 - Temporal SDK dependency and typed Temporal client bootstrap
 - Temporal task queue mapping for the spec-defined queues
-- workflow skeletons and placeholder activity contracts under `apps/workers/`
+- workflow skeletons and safe Temporal activity contracts under `apps/workers/`
 - signal, query, and retry-policy contracts
 - deterministic `RISK_ON` / `CAUTION` / `RISK_OFF` regime classification
 - long-only deterministic candidate evaluation for configured trend, breakout, volume, RS63, ATR, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates
@@ -54,6 +54,11 @@ Implemented pieces:
 - ledger tables for symbols, raw payloads, OHLCV, features, regimes, candidates, AI outputs,
   decisions, risk checks, execution intents, orders, fills, positions, reconciliations, system
   events, and reports
+- typed ledger activity request/response models under `apps/workers/app/activities/models.py`
+- safe ledger-backed Temporal activity functions under `apps/workers/app/activities/ledger.py`
+  using local/fake SQLite repositories by default
+- workflow skeletons aligned to ledger persistence activity boundaries without direct database,
+  broker, AI/news, provider, network, clock, or random calls in workflow code
 - Temporal AI/news activity boundaries that perform no external calls
 - dashboard/control-plane read models for system state, workflows, intents, orders, positions,
   incidents, reconciliation, kill switch, candidates/signals, AI outputs, reports, and risk status
@@ -75,6 +80,7 @@ Implemented pieces:
   controls, and frontend secret guardrails
 - unit tests for validation harness assumptions, failure-simulation contracts, paper dry-run safety,
   and workflow side-effect boundary checks
+- unit tests for ledger activity persistence and read helpers
 
 Not implemented yet:
 
@@ -83,7 +89,7 @@ Not implemented yet:
 - real news provider integration
 - real AI provider integration
 - managed Postgres/Supabase runtime connection or migration execution
-- Temporal activities that write to the database ledger
+- real Temporal test-server/replay execution
 - production dashboard UI/deployment
 - real Temporal query/signal backend integration
 - actual paper trading operations
@@ -122,6 +128,12 @@ Run Milestone 12 ledger tests:
 
 ```bash
 uv run --group dev pytest tests/unit/test_ledger*.py
+```
+
+Run Milestone 13 ledger activity tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_ledger_activities.py tests/temporal/test_workflow_contracts.py
 ```
 
 Optional local checks once dependencies are installed:
@@ -172,6 +184,6 @@ integration, real dashboard deployment, alerting, and live go/no-go approval.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Ledger tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker, AI, ledger, and control-plane methods remain protocol or repository boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Ledger and ledger-activity tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker, AI, managed ledger runtime, and control-plane methods remain protocol or repository boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

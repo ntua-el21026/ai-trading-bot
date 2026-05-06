@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 12 adds a local database/audit-ledger foundation, while paper trading remains disabled.
-The repository still does not implement actual paper trading operations, real Alpaca paper client
-integration, managed database runtime integration, real AI/news provider calls, production dashboard
-deployment, or live trading.
+Milestone 13 adds local/fake Temporal ledger activity boundaries, while paper trading remains
+disabled. The repository still does not implement actual paper trading operations, real Alpaca paper
+client integration, managed database runtime integration, real AI/news provider calls, production
+dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -30,9 +30,9 @@ frozen, versioned, reproducible, and operationally clean.
 
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
 for broker reconciliation, AI/news validation, control-plane actions, failure simulation, paper
-dry-run checks, and local ledger repository tests. It does not connect those contracts to real
-provider clients, managed Postgres/Supabase runtime persistence, or Temporal database-writing
-activities yet.
+dry-run checks, local ledger repository tests, and safe local/fake Temporal ledger activity tests. It
+does not connect those contracts to real provider clients, managed Postgres/Supabase runtime
+persistence, or broker execution activities yet.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -201,7 +201,8 @@ readiness and expected future operations, not active trading capability.
 
 - Finalize EOD bars.
 - Compute features, regime, deterministic candidates, and rejection reasons.
-- Persist signal/candidate artifacts once managed database runtime integration exists.
+- Persist signal/candidate artifacts through local/fake ledger activity boundaries now; require
+  managed database runtime integration before operational paper trading.
 - Record optimism warnings if point-in-time universe membership is unavailable.
 
 ### 16:30-17:00 - AIShortlistResearchWorkflow
@@ -367,6 +368,7 @@ future approved validation policy says otherwise.
 Before micro-live readiness review, collect and approve:
 
 - managed database/audit persistence implementation and migration execution evidence;
+- real Temporal test-server/replay evidence;
 - real Temporal query/signal backend integration;
 - real Alpaca paper client integration and broker paper evidence;
 - real AI/news provider integration and schema-validity evidence;

@@ -20,7 +20,7 @@ class PositionLifecycleWorkflow:
     async def run(self, run_input: WorkflowRunInput) -> WorkflowStatus:
         self._status = await execute_placeholder_activity(
             workflow_name="PositionLifecycleWorkflow",
-            activity_name="monitor_position_placeholder",
+            activity_name="persist_position_snapshot",
             task_queue="execution-task-queue",
             run_input=run_input,
             retry_contract=PROTECTIVE_STOP_RETRY,
