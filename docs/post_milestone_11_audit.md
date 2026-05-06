@@ -68,6 +68,39 @@ Still not implemented after Milestone 13:
 - actual paper trading operations and frozen paper evidence;
 - Level 4 micro-live readiness.
 
+## Milestone 14 Update
+
+Milestone 14 adds paper-only Alpaca broker boundaries behind explicit safety gates while keeping
+default tests fake-client only. The repository now includes:
+
+- `packages/broker/alpaca.py` with `AlpacaClientProtocol`, `AlpacaPaperClient`,
+  `AlpacaPaperCredentials`, `AlpacaPaperAdapter`, paper entry/stop request builders, normalized
+  Alpaca payload mappers, and structured broker operation results.
+- `packages/broker/fakes.py` with `FakeAlpacaClient` and fake adapter helpers for account, order,
+  fill, and position snapshots, idempotency lookup, paper entry submit, cancel, protective-stop
+  submit/verify, stream events, and REST fallback contracts.
+- `apps/workers/app/activities/broker.py` with broker activity contracts for snapshots, broker
+  lookups, paper entry submit, paper cancel, protective-stop submit/verify, and trade-update
+  mapping. The default broker activity service uses the fake adapter.
+- Unit/Temporal tests proving paper-only gates, missing-runtime-credential refusal, fake mapping,
+  fake submit/cancel/stop/verify behavior, partial-fill stop quantity handling, structured
+  ambiguity, fake snapshot reconciliation, broker activity registration, and no direct workflow
+  imports of broker clients or SDKs.
+
+Still not implemented after Milestone 14:
+
+- real Alpaca SDK-backed runtime wiring and opt-in paper smoke-test evidence;
+- end-to-end paper trading orchestration;
+- managed Postgres/Supabase runtime connectivity and migration execution;
+- real Temporal test-server/replay coverage;
+- real Temporal query/signal backend for dashboard/control-plane operations;
+- real AI/news provider integration;
+- alert delivery;
+- report generation jobs;
+- deployed dashboard/read-model integration;
+- actual paper trading operations and frozen paper evidence;
+- Level 4 micro-live readiness.
+
 ## Governance Confirmation
 
 `AGENTS.md` defines the source-of-truth priority:

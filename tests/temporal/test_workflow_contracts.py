@@ -73,6 +73,17 @@ def test_activity_contracts_include_ledger_boundaries_without_external_calls() -
     assert "persist_broker_reconciliation" in activity_names
     assert "persist_system_event" in activity_names
     assert "persist_report" in activity_names
+    assert "get_broker_account_snapshot" in activity_names
+    assert "get_broker_orders_snapshot" in activity_names
+    assert "get_broker_positions_snapshot" in activity_names
+    assert "get_broker_fills_snapshot" in activity_names
+    assert "lookup_broker_order_by_client_order_id" in activity_names
+    assert "lookup_broker_order_by_broker_order_id" in activity_names
+    assert "submit_paper_entry_order" in activity_names
+    assert "cancel_paper_order" in activity_names
+    assert "submit_paper_protective_stop" in activity_names
+    assert "verify_paper_protective_stop" in activity_names
+    assert "map_trade_update_event" in activity_names
     assert "fetch_candidate_news" in activity_names
     assert "run_ai_trade_research" in activity_names
     assert "validate_ai_research_output" in activity_names
@@ -199,6 +210,9 @@ def test_workflow_modules_do_not_directly_import_side_effect_providers() -> None
         "openai",
         "anthropic",
         "alpaca.",
+        "AlpacaClient",
+        "alpaca_trade_api",
+        "alpaca.trading",
         "packages.ledger",
         "sqlite3",
         "DATABASE_URL",

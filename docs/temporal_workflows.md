@@ -2,12 +2,13 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 13 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons, ledger-backed
-activity contracts using safe local/fake repositories, provider placeholder activity boundaries,
-signal names, query names, dashboard/control-plane signal mapping contracts, validation-oriented
-workflow boundary tests, and contract tests. It does not implement broker execution, managed
+Milestone 14 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
+contracts using fake Alpaca clients by default, provider placeholder activity boundaries, signal
+names, query names, dashboard/control-plane signal mapping contracts, validation-oriented workflow
+boundary tests, and contract tests. It does not implement end-to-end paper orchestration, managed
 Postgres/Supabase runtime wiring, AI calls, market/news provider calls, production schedule
-activation, browser-side Temporal calls, paper orders, or live trading.
+activation, browser-side Temporal calls, real paper orders, or live trading.
 
 ## Configuration
 
@@ -48,8 +49,9 @@ objects. They do not import ledger repositories or database sessions directly.
 
 Current activity contracts are registered from `apps/workers/app/activities/contracts.py`.
 Ledger-backed activity implementations live in `apps/workers/app/activities/ledger.py`; typed
-request/response models live in `apps/workers/app/activities/models.py`; fake/local service helpers
-live in `apps/workers/app/activities/fakes.py`.
+ledger request/response models live in `apps/workers/app/activities/models.py`; fake/local service
+helpers live in `apps/workers/app/activities/fakes.py`. Paper broker activity contracts live in
+`apps/workers/app/activities/broker.py` and default to `FakeAlpacaClient`.
 
 Milestone 13 adds safe ledger activity boundaries for:
 
@@ -70,6 +72,19 @@ Milestone 13 adds safe ledger activity boundaries for:
 The default activity service uses in-memory SQLite through `packages/ledger` and requires no
 `DATABASE_URL`. This is local/fake-safe integration, not managed Postgres/Supabase runtime wiring.
 All activity results keep `external_calls_performed=false`.
+
+Milestone 14 adds fake-safe paper broker activity boundaries for:
+
+- broker account snapshots;
+- broker order, position, and fill snapshots;
+- broker order lookup by broker ID and `client_order_id`;
+- paper entry-order submit boundary;
+- paper order cancel boundary;
+- paper protective-stop submit/verify boundaries;
+- Alpaca trade-update mapping.
+
+These activities are registered with the worker but default to a fake adapter. They are not wired
+into a live/paper order-submission workflow path and do not call Alpaca in default tests.
 
 Milestone 06 adds placeholder boundaries for:
 
@@ -139,10 +154,10 @@ Retry policy contracts are defined in `apps/workers/app/retry_policies.py`:
 - protective stop retry placeholder;
 - AI retry placeholder with neutral fallback metadata.
 
-These are contracts only. They do not implement broker, stop, or provider-backed AI behavior. Broker
-order submission retry remains capped at one attempt until a later milestone adds explicit
-idempotency lookup behavior through broker and managed database activities. AI activity retry is
-represented as a contract with neutral fallback on failure.
+These are contracts only. Broker order submission retry remains capped at one attempt; Milestone 14
+adds fake-tested idempotency lookup by `client_order_id`, but end-to-end retry orchestration through
+Temporal remains deferred. AI activity retry is represented as a contract with neutral fallback on
+failure.
 
 ## Local Worker Bootstrap
 
@@ -166,9 +181,9 @@ Current tests are import and contract tests:
 uv run --group dev pytest tests/unit tests/temporal
 ```
 
-Milestone 13 also statically checks that workflow modules do not directly import broker, AI/news,
-ledger/database, network-provider, wall-clock, or random side-effect code. Side effects remain
-activity responsibilities.
+Milestone 14 also statically checks that workflow modules do not directly import broker clients,
+broker SDKs, AI/news, ledger/database, network-provider, wall-clock, or random side-effect code.
+Side effects remain activity responsibilities.
 
 Full Temporal replay or local test-server execution is deferred. A future command should use
 Temporal's testing environment, for example:

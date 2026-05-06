@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 13 adds local/fake Temporal ledger activity boundaries, while paper trading remains
-disabled. The repository still does not implement actual paper trading operations, real Alpaca paper
-client integration, managed database runtime integration, real AI/news provider calls, production
-dashboard deployment, or live trading.
+Milestone 14 adds paper-only Alpaca adapter and broker activity boundaries with fake-client defaults,
+while paper trading remains disabled. The repository still does not implement actual paper trading
+operations, real Alpaca paper smoke-test evidence, managed database runtime integration, real
+AI/news provider calls, production dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -29,10 +29,11 @@ frozen, versioned, reproducible, and operationally clean.
 ## Current Implementation Status
 
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
-for broker reconciliation, AI/news validation, control-plane actions, failure simulation, paper
-dry-run checks, local ledger repository tests, and safe local/fake Temporal ledger activity tests. It
-does not connect those contracts to real provider clients, managed Postgres/Supabase runtime
-persistence, or broker execution activities yet.
+for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validation, control-plane
+actions, failure simulation, paper dry-run checks, local ledger repository tests, safe local/fake
+Temporal ledger activity tests, and fake broker activity tests. It does not connect those contracts
+to real provider clients, managed Postgres/Supabase runtime persistence, or end-to-end paper
+execution orchestration yet.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -103,7 +104,8 @@ Complete this checklist before every paper session:
   explicitly changes it.
 - Confirm `live_trading_enabled: false`.
 - Confirm autonomous live execution is disabled.
-- Confirm broker account mode is paper.
+- Confirm broker account mode is paper through an explicitly gated server-side broker activity once
+  real paper smoke tests are approved.
 - Confirm kill switch is enabled.
 - Confirm broker reconciliation is required before new-risk orders.
 - Confirm protective stops are required.
@@ -370,7 +372,7 @@ Before micro-live readiness review, collect and approve:
 - managed database/audit persistence implementation and migration execution evidence;
 - real Temporal test-server/replay evidence;
 - real Temporal query/signal backend integration;
-- real Alpaca paper client integration and broker paper evidence;
+- real Alpaca paper smoke-test evidence and broker paper evidence;
 - real AI/news provider integration and schema-validity evidence;
 - real dashboard deployment evidence;
 - alerting implementation and delivery evidence;

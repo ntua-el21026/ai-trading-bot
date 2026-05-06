@@ -13,6 +13,7 @@ AI_Trading_Bot/
 │   │   ├── app/
 │   │   │   ├── activities/
 │   │   │   │   ├── __init__.py
+│   │   │   │   ├── broker.py
 │   │   │   │   ├── contracts.py
 │   │   │   │   ├── fakes.py
 │   │   │   │   ├── ledger.py
@@ -98,6 +99,7 @@ AI_Trading_Bot/
 │   │   └── paper_incident_report_template.md
 │   ├── ai_intelligence.md
 │   ├── architecture.md
+│   ├── broker_integration.md
 │   ├── dashboard_control_plane.md
 │   ├── database_audit_ledger.md
 │   ├── execution_policy.md
@@ -130,6 +132,7 @@ AI_Trading_Bot/
 │   │   ├── __init__.py
 │   │   ├── adapters.py
 │   │   ├── alpaca.py
+│   │   ├── fakes.py
 │   │   └── models.py
 │   ├── control_plane/
 │   │   ├── __init__.py
@@ -188,7 +191,9 @@ AI_Trading_Bot/
 │       ├── test_ai_persistence.py
 │       ├── test_ai_scoring.py
 │       ├── test_alpaca_mapping.py
+│       ├── test_alpaca_paper_adapter.py
 │       ├── test_backtesting_metrics.py
+│       ├── test_broker_activities.py
 │       ├── test_broker_models.py
 │       ├── test_config.py
 │       ├── test_control_plane_api.py
@@ -222,4 +227,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 38, Total files: 185
+Total directories: 38, Total files: 190

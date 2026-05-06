@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from packages.broker.alpaca import AlpacaPaperAdapter
+from packages.broker.fakes import FakeAlpacaClient
 from packages.broker.models import (
     REST_FALLBACK_INTERVAL_SECONDS,
     BrokerAccountSnapshot,
@@ -56,8 +57,16 @@ def test_alpaca_paper_adapter_refuses_live_mode_and_unconfigured_calls() -> None
     live_system = SystemConfig.model_validate(config.system.model_dump() | {"environment": "live"})
 
     with pytest.raises(RuntimeError, match="only supports paper mode"):
-        AlpacaPaperAdapter(system_config=live_system, execution_config=config.execution)
+        AlpacaPaperAdapter(
+            system_config=live_system,
+            execution_config=config.execution,
+            client=FakeAlpacaClient(),
+            run_mode="test",
+        )
 
-    adapter = AlpacaPaperAdapter(system_config=config.system, execution_config=config.execution)
-    with pytest.raises(RuntimeError, match="not configured"):
-        adapter.account_snapshot()
+    with pytest.raises(RuntimeError, match="credentials are required"):
+        AlpacaPaperAdapter(
+            system_config=config.system,
+            execution_config=config.execution,
+            client=FakeAlpacaClient(),
+        )

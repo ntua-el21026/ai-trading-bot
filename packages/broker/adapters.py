@@ -1,7 +1,7 @@
 """Broker adapter protocol boundaries.
 
 The protocol includes submit/cancel methods because the execution workflow will eventually need
-those boundaries. This milestone does not provide an executable broker path.
+those boundaries. Implementations must remain explicitly gated by environment and execution policy.
 """
 
 from __future__ import annotations
@@ -13,8 +13,10 @@ from packages.broker.models import (
     BrokerAccountSnapshot,
     BrokerFill,
     BrokerOrder,
+    BrokerOrderOperationResult,
     BrokerPosition,
     BrokerProtectiveStop,
+    BrokerProtectiveStopVerificationResult,
     BrokerRestFallbackSnapshot,
     BrokerStreamEvent,
 )
@@ -50,18 +52,30 @@ class BrokerAdapter(Protocol):
     def rest_fallback_snapshot(self) -> BrokerRestFallbackSnapshot:
         """Return a REST fallback snapshot for reconciliation."""
 
-    def submit_order(self, intent: ExecutionIntent) -> BrokerOrder:
+    def submit_entry_order(self, intent: ExecutionIntent) -> BrokerOrderOperationResult:
         """Submit an entry order. Must only be called by an execution activity."""
 
-    def cancel_order(self, client_order_id: str) -> BrokerOrder:
+    def submit_order(self, intent: ExecutionIntent) -> BrokerOrderOperationResult:
+        """Backward-compatible alias for entry-order submission."""
+
+    def cancel_order(self, client_order_id: str) -> BrokerOrderOperationResult:
         """Cancel an order by client order ID. Must only be called by an execution activity."""
 
     def submit_protective_stop(
         self,
         intent: ExecutionIntent,
         filled_quantity: float,
-    ) -> BrokerOrder:
+    ) -> BrokerOrderOperationResult:
         """Submit a protective stop for filled quantity."""
+
+    def verify_protective_stop(
+        self,
+        *,
+        symbol: str,
+        required_quantity: float,
+        client_order_id: str | None = None,
+    ) -> BrokerProtectiveStopVerificationResult:
+        """Verify that a filled paper position has an open protective stop."""
 
     def stream_events(self) -> Iterable[BrokerStreamEvent]:
         """Consume mapped broker stream events."""

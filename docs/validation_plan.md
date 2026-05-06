@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 13 adds safe Temporal ledger activity boundaries using local/fake repositories. It does not validate real Alpaca paper credentials, real AI/news provider credentials, managed Postgres/Supabase runtime connectivity, production dashboard deployment, live Temporal replay behavior, paper trading operations, live trading, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 14 adds paper-only Alpaca broker boundaries and broker activities using fake clients by default. It does not validate real Alpaca paper credentials, real AI/news provider credentials, managed Postgres/Supabase runtime connectivity, production dashboard deployment, live Temporal replay behavior, paper trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -28,6 +28,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Execution intent and idempotency helpers are fixture-tested for approved-risk intent creation, protective-stop validation, expiration checks, deterministic client order IDs, duplicate detection, and passive lifecycle transition rejection.
 - Broker model validation is fixture-tested without credentials.
 - Alpaca `trade_updates` mapping is fixture-tested without websocket connections.
+- Paper-only Alpaca adapter gates, fake-client mapping, idempotency lookup, paper entry/cancel,
+  protective-stop submit/verify, partial-fill stop-quantity handling, ambiguity handling, and
+  broker activity contracts are fixture-tested without real Alpaca calls.
 - REST fallback snapshot construction is fixture-tested with the 30-second spec interval.
 - Reconciliation comparison is fixture-tested for clean state, missing/extra positions, missing protective stops, duplicate open entry orders, unexpected short positions, unsupported broker asset classes, unknown open broker orders, missing fills, quantity mismatch, average-price mismatch, account-equity mismatch, stale snapshots, and Temporal workflow inconsistency.
 - Incident severity, pause-new-risk recommendations, and flatten-if-safe recommendations are fixture-tested.
@@ -78,6 +81,7 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 | Idempotency | `tests/unit/test_idempotency.py` |
 | Order lifecycle contracts | `tests/unit/test_execution_intent.py`, `tests/unit/test_failure_simulations.py` |
 | Broker models and stream mapping | `tests/unit/test_broker_models.py`, `tests/unit/test_alpaca_mapping.py` |
+| Paper broker adapter and activities | `tests/unit/test_alpaca_paper_adapter.py`, `tests/unit/test_broker_activities.py` |
 | Reconciliation | `tests/unit/test_reconciliation.py`, `tests/unit/test_failure_simulations.py` |
 | AI schema, fallback, scoring, persistence | `tests/unit/test_ai_news.py`, `tests/unit/test_ai_parser.py`, `tests/unit/test_ai_scoring.py`, `tests/unit/test_ai_persistence.py`, `tests/unit/test_failure_simulations.py` |
 | Control plane and dashboard env security | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_env_security.py` |
@@ -86,9 +90,10 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: managed Postgres/Supabase runtime integration, real provider
-integrations, real Temporal test-server/replay coverage, production dashboard deployment, paper
-trading operations, and Level 4 micro-live readiness evidence are not implemented.
+Remaining gaps are explicit: real Alpaca paper smoke tests, managed Postgres/Supabase runtime
+integration, real provider integrations, real Temporal test-server/replay coverage, production
+dashboard deployment, paper trading operations, and Level 4 micro-live readiness evidence are not
+implemented.
 
 ## Validation Harness Contracts
 
@@ -137,10 +142,11 @@ readiness.
 incident response flow, report expectations, frozen paper acceptance criteria, and paper-to-Level-4
 handoff gates.
 
-Current paper operations evidence is absent. The repository still needs managed database runtime
-connectivity, real Temporal query/signal backend integration, real Temporal test-server/replay
-evidence, real Alpaca paper client integration, real AI/news provider integration, real dashboard
-deployment, alerting, and controlled paper runs before these gates can be satisfied.
+Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
+but still needs explicit real Alpaca paper smoke tests, managed database runtime connectivity, real
+Temporal query/signal backend integration, real Temporal test-server/replay evidence, real AI/news
+provider integration, real dashboard deployment, alerting, and controlled paper runs before these
+gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -177,7 +183,7 @@ Current blockers:
 - Database/audit-ledger foundation and local/fake Temporal activity persistence exist; managed
   runtime connectivity is absent.
 - Real Temporal query/signal backend integration is deferred.
-- Real broker/AI/news provider integrations are deferred.
+- Real Alpaca paper smoke-test evidence and real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
 - Alerting is absent.
 - Live trading remains disabled.

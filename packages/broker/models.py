@@ -43,6 +43,24 @@ BrokerStreamEventType = Literal[
     "replaced",
     "unknown",
 ]
+BrokerErrorCode = Literal[
+    "missing_credentials",
+    "non_paper_environment",
+    "attempted_live_mode",
+    "order_not_found",
+    "duplicate_client_order_id",
+    "broker_timeout",
+    "ambiguous_broker_state",
+    "rejected_order",
+    "partial_fill",
+    "missing_protective_stop",
+    "stream_disconnect",
+    "rest_fallback_unavailable",
+    "unsupported_order_type",
+    "invalid_order_request",
+    "client_not_configured",
+]
+BrokerOperationStatus = Literal["succeeded", "failed", "ambiguous", "not_found", "noop"]
 
 OPEN_ORDER_STATUSES: frozenset[BrokerOrderStatus] = frozenset(
     {"new", "accepted", "pending_new", "partially_filled", "pending_cancel", "replaced"}
@@ -128,6 +146,7 @@ class BrokerFill(BrokerModel):
     quantity: float = Field(gt=0)
     price: float = Field(gt=0)
     filled_at: datetime
+    broker_fill_id: str | None = None
     raw_payload_hash: str | None = None
 
     @field_validator("symbol")
@@ -239,4 +258,82 @@ class BrokerRestFallbackSnapshot(BrokerSnapshot):
     def validate_poll_interval(self) -> Self:
         if self.poll_interval_seconds != REST_FALLBACK_INTERVAL_SECONDS:
             raise ValueError("REST fallback polling interval must be 30 seconds")
+        return self
+
+
+class BrokerOperationError(BrokerModel):
+    code: BrokerErrorCode
+    message: str
+    retryable: bool = False
+    ambiguous: bool = False
+    pause_new_risk: bool = False
+    details: dict[str, str] = Field(default_factory=dict)
+
+
+class BrokerOrderOperationResult(BrokerModel):
+    operation: str
+    status: BrokerOperationStatus
+    order: BrokerOrder | None = None
+    error: BrokerOperationError | None = None
+    idempotency_reused: bool = False
+    protective_stop_required_quantity: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_order_result(self) -> Self:
+        if self.status == "succeeded" and self.order is None:
+            raise ValueError("successful broker order operation requires order")
+        if self.status in {"failed", "ambiguous", "not_found"} and self.error is None:
+            raise ValueError("failed broker order operation requires structured error")
+        if self.error is not None and self.status == "succeeded":
+            raise ValueError("successful broker order operation cannot include error")
+        return self
+
+
+class BrokerProtectiveStopVerificationResult(BrokerModel):
+    symbol: str
+    required_quantity: float = Field(gt=0)
+    protected: bool
+    stop: BrokerProtectiveStop | None = None
+    status: BrokerOperationStatus
+    error: BrokerOperationError | None = None
+
+    @field_validator("symbol")
+    @classmethod
+    def validate_symbol(cls, symbol: str) -> str:
+        if symbol != symbol.upper():
+            raise ValueError("symbol must be uppercase")
+        return symbol
+
+    @model_validator(mode="after")
+    def validate_stop_result(self) -> Self:
+        if self.protected and self.stop is None:
+            raise ValueError("protected result requires stop")
+        if not self.protected and self.error is None:
+            raise ValueError("unprotected result requires structured error")
+        return self
+
+
+class BrokerStreamConnectionResult(BrokerModel):
+    connected: bool
+    events: tuple[BrokerStreamEvent, ...] = ()
+    error: BrokerOperationError | None = None
+
+    @model_validator(mode="after")
+    def validate_stream_result(self) -> Self:
+        if not self.connected and self.error is None:
+            raise ValueError("disconnected stream result requires structured error")
+        return self
+
+
+class BrokerRestFallbackStatus(BrokerModel):
+    available: bool
+    poll_interval_seconds: int = REST_FALLBACK_INTERVAL_SECONDS
+    error: BrokerOperationError | None = None
+
+    @model_validator(mode="after")
+    def validate_fallback_status(self) -> Self:
+        if self.poll_interval_seconds != REST_FALLBACK_INTERVAL_SECONDS:
+            raise ValueError("REST fallback polling interval must be 30 seconds")
+        if not self.available and self.error is None:
+            raise ValueError("unavailable REST fallback requires structured error")
         return self

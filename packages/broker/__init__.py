@@ -1,16 +1,28 @@
 """Broker adapter boundaries and normalized broker models."""
 
 from packages.broker.adapters import BrokerAdapter, BrokerAdapterNotConfigured
-from packages.broker.alpaca import AlpacaPaperAdapter, map_alpaca_trade_update
+from packages.broker.alpaca import (
+    AlpacaClientError,
+    AlpacaClientProtocol,
+    AlpacaPaperAdapter,
+    AlpacaPaperClient,
+    AlpacaPaperCredentials,
+    map_alpaca_trade_update,
+)
+from packages.broker.fakes import FakeAlpacaClient, build_fake_alpaca_paper_adapter
 from packages.broker.models import (
     REST_FALLBACK_INTERVAL_SECONDS,
     BrokerAccountSnapshot,
     BrokerEnvironment,
+    BrokerErrorCode,
     BrokerFill,
+    BrokerOperationError,
     BrokerOrder,
+    BrokerOrderOperationResult,
     BrokerOrderStatus,
     BrokerPosition,
     BrokerProtectiveStop,
+    BrokerProtectiveStopVerificationResult,
     BrokerRestFallbackSnapshot,
     BrokerSide,
     BrokerSnapshot,
@@ -19,21 +31,31 @@ from packages.broker.models import (
 )
 
 __all__ = [
+    "AlpacaClientError",
+    "AlpacaClientProtocol",
     "AlpacaPaperAdapter",
+    "AlpacaPaperClient",
+    "AlpacaPaperCredentials",
     "BrokerAccountSnapshot",
     "BrokerAdapter",
     "BrokerAdapterNotConfigured",
     "BrokerEnvironment",
+    "BrokerErrorCode",
     "BrokerFill",
+    "BrokerOperationError",
     "BrokerOrder",
+    "BrokerOrderOperationResult",
     "BrokerOrderStatus",
     "BrokerPosition",
     "BrokerProtectiveStop",
+    "BrokerProtectiveStopVerificationResult",
     "BrokerRestFallbackSnapshot",
     "BrokerSide",
     "BrokerSnapshot",
     "BrokerStreamEvent",
     "BrokerStreamEventType",
+    "FakeAlpacaClient",
     "REST_FALLBACK_INTERVAL_SECONDS",
+    "build_fake_alpaca_paper_adapter",
     "map_alpaca_trade_update",
 ]

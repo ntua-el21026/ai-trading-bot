@@ -7,7 +7,9 @@ models, and passive broker reconciliation inputs. The implementation is passive:
 rejects proposed new-risk entries, compares broker/internal snapshots, and returns structured reason
 codes and incident recommendations. It does not submit orders, call a broker, write from Temporal to
 managed database runtime, or enable live trading. Milestone 13 adds local/fake Temporal ledger
-activities for risk-check and incident persistence.
+activities for risk-check and incident persistence. Milestone 14 adds fake-tested paper broker
+boundaries for snapshots, idempotency lookup, protective-stop submit/verify, and ambiguity handling
+without starting paper operations.
 
 ## Foundation Defaults
 
@@ -60,6 +62,9 @@ risk-reducing exits. Missing protective stops follow the latest-spec thresholds:
 The implementation emits recommendations only. It does not cancel orders, submit flattening orders,
 or mutate kill-switch state directly.
 
+Milestone 14 fake broker snapshots can feed the reconciliation comparison service. These tests are
+contract validation only; they are not broker paper evidence and do not prove live readiness.
+
 ## AI Risk Intelligence Input
 
 `packages/ai/scoring.py` maps schema-validated AI news events into deterministic AI scores,
@@ -107,11 +112,11 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 
 ## Future Work
 
-Later milestones must connect these contracts to Temporal execution workflows, real Alpaca paper
-adapters, and managed database audit persistence. The ledger foundation now provides schema, local
-repository support, and local/fake Temporal activity boundaries for future risk-check and incident
-persistence. Any change to risk limits or risk semantics requires explicit approval and a
-corresponding spec update.
+Later milestones must connect these contracts to end-to-end Temporal execution workflows, explicit
+Alpaca paper smoke tests, and managed database audit persistence. The ledger foundation now provides
+schema, local repository support, and local/fake Temporal activity boundaries for future risk-check
+and incident persistence. Any change to risk limits or risk semantics requires explicit approval and
+a corresponding spec update.
 
 ## Level 4 Readiness Status
 

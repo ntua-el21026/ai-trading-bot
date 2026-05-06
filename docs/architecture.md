@@ -2,7 +2,7 @@
 
 This document describes the current foundation, data/backtest, database/audit-ledger, Temporal skeleton/activity, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 13 scaffolding and local persistence/activity foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, safe ledger-backed activity boundaries using fake/local repositories, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestones 00-14 scaffolding and local/fake integration foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, safe ledger-backed activity boundaries using fake/local repositories, paper-only Alpaca broker boundaries using fake clients by default, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -41,8 +41,14 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Position sizing implements the configured risk-per-trade and max-position-size formula with non-increasing multipliers.
 - Execution-core contracts define `ExecutionIntent`, deterministic client order ID roots, duplicate-intent helpers, passive order lifecycle transitions, and structured rejection models.
 - Broker contracts define account, order, fill, position, protective-stop, REST fallback, and stream event models.
-- The Alpaca paper adapter is a dependency-free safety skeleton. It refuses live-mode configuration and raises until an explicitly configured paper client is added in a later milestone.
-- Alpaca `trade_updates` fixture payloads can be mapped into internal broker stream events without credentials or websocket connections.
+- The Alpaca paper adapter is dependency-free and protocol-backed. It refuses live-mode/live-order
+  configuration, requires explicit paper credentials in runtime mode, and defaults to fake clients
+  in tests.
+- Fake Alpaca clients cover account/order/fill/position snapshots, idempotency lookup, paper entry
+  submit, cancel, protective-stop submit/verify, stream-event mapping, and REST fallback status
+  contracts without credentials or network calls.
+- Broker Temporal activity contracts are registered with fake-adapter defaults. They are boundaries
+  for later order lifecycle integration, not active paper orchestration.
 - Reconciliation contracts compare broker snapshots against passive internal ledger snapshots and classify mismatches into structured incidents with pause-new-risk or flatten-if-safe recommendations.
 - AI/news contracts define deterministic-shortlist-only news requests, provider protocols, article normalization/deduplication, strict AI output schemas, neutral fallbacks, deterministic AI event scoring, hard-block classification, and persistence payload contracts.
 - The AI prompt template is versioned under `packages/ai/prompts/` and explicitly forbids broker actions, order creation/modification, stop changes, strategy mutation, risk-limit changes, and full-universe scanning.
@@ -63,8 +69,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - No production API service is implemented.
 - No production worker deployment is implemented.
 - No production dashboard UI is implemented.
-- No broker-executable order submission is implemented.
-- No real Alpaca SDK/client integration is implemented.
+- No end-to-end paper trading orchestration is implemented.
+- No Alpaca SDK-backed runtime wiring or real paper smoke-test evidence is implemented.
 - No managed Postgres/Supabase runtime connection or migration execution is implemented.
 - No real managed Postgres/Supabase activity wiring is implemented.
 - No real AI/news provider integration is implemented.

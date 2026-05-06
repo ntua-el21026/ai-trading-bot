@@ -6,6 +6,9 @@ Milestone 12 added the database/audit-ledger foundation required by
 Milestone 13 connects safe Temporal activity boundaries to the local/fake ledger repository layer.
 Workflow code still does not import repositories or database sessions directly.
 
+Milestone 14 adds fake-tested paper broker boundaries that produce normalized broker payloads for
+future ledger persistence. Managed Postgres/Supabase runtime wiring is still deferred.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -120,19 +123,19 @@ SQLite compatibility differences:
 
 ## Safety Boundary
 
-Milestones 12-13 do not:
+Milestones 12-14 do not:
 
 - enable live trading;
 - enable autonomous execution;
 - add secrets or real database credentials;
 - call managed Postgres/Supabase services;
-- call broker APIs;
+- call real broker APIs in default tests;
 - call AI/news provider APIs;
-- submit paper or live broker orders;
+- submit real paper or live broker orders;
 - connect Temporal activities to real managed Postgres/Supabase runtime writes;
 - deploy a dashboard;
 - implement alert delivery.
 
-Paper trading still requires real managed database integration, real paper broker integration,
-provider integration, alerting, report generation, dashboard read models, Temporal test-server/replay
-evidence, and operational dry-run evidence.
+Paper trading still requires real managed database integration, explicit Alpaca paper smoke-test
+evidence, provider integration, alerting, report generation, dashboard read models, Temporal
+test-server/replay evidence, and operational dry-run evidence.

@@ -1,14 +1,16 @@
 """Side-effect activity contracts for Temporal workflow skeletons.
 
-Provider-facing functions intentionally remain placeholders with no broker, AI, news, alert, or
-network calls. Ledger activity functions are imported from `ledger.py` and use only safe local or
-fake repository-backed persistence.
+Provider-facing functions intentionally remain placeholders with no AI, news, alert, or network
+calls. Ledger activity functions are imported from `ledger.py` and use safe local or fake
+repository-backed persistence. Broker activity functions are imported from `broker.py` and default
+to fake Alpaca paper clients unless an explicit runtime adapter is injected.
 """
 
 from __future__ import annotations
 
 from temporalio import activity
 
+from apps.workers.app.activities.broker import BROKER_ACTIVITY_FUNCTIONS
 from apps.workers.app.activities.ledger import LEDGER_ACTIVITY_FUNCTIONS
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
 
@@ -151,4 +153,5 @@ ACTIVITY_FUNCTIONS = (
     apply_kill_switch_state,
     generate_report,
     *LEDGER_ACTIVITY_FUNCTIONS,
+    *BROKER_ACTIVITY_FUNCTIONS,
 )

@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 13 does not implement production services, active schedules, real broker clients, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, generated reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake ledger repositories.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 14 does not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, generated reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake repositories.
 
 ## Current Foundation Operations
 
@@ -22,8 +22,22 @@ Broker reconciliation is currently a pure comparison contract:
 5. Treat missing protective stops according to the configured warning, critical, and flatten
    thresholds.
 
-No current operation submits, cancels, or flattens broker orders. Flattening is represented only as a
+Milestone 14 includes fake-client submit/cancel/protective-stop boundaries, but no current operation
+submits, cancels, or flattens real broker orders. Flattening is represented only as a
 `flatten_if_safe` recommendation for later execution workflow handling.
+
+## Current Broker Operations
+
+Paper broker behavior is currently fake-client and contract based:
+
+1. Use `FakeAlpacaClient` for local account, order, fill, position, stream, and REST fallback tests.
+2. Use `AlpacaPaperAdapter` only with `system.environment="paper"` and live-order flags disabled.
+3. Runtime adapter construction requires explicit paper credentials and an injected client.
+4. Broker activities under `apps/workers/app/activities/broker.py` default to the fake adapter.
+5. Optional real Alpaca paper smoke tests remain deferred and must be explicitly marked when added.
+
+Default tests do not call Alpaca, do not require credentials, and do not submit real paper or live
+orders.
 
 ## Current AI Operations
 
@@ -36,7 +50,7 @@ AI/news intelligence is currently a fixture-safe contract:
    insufficient data.
 5. Persist only payload contracts for future managed database integration.
 
-No current operation calls AI providers, news providers, broker APIs, or managed databases. AI has no
+No current operation calls AI providers, news providers, real broker APIs, or managed databases. AI has no
 broker credentials and cannot create or modify orders, stops, strategy rules, risk limits, or kill
 switches.
 
@@ -68,6 +82,19 @@ Temporal ledger activities are currently local/fake-safe boundaries:
 These activities persist to local SQLite during tests. They do not call broker APIs, AI/news
 providers, managed databases, alerts, or frontend code. Real Temporal test-server/replay coverage is
 still deferred.
+
+## Current Temporal Broker Activity Operations
+
+Temporal broker activities are currently fake-safe boundaries:
+
+1. Activity names are registered for broker snapshots, broker lookups, paper entry submit, paper
+   cancel, paper protective-stop submit/verify, and trade-update mapping.
+2. The default service uses `build_fake_alpaca_paper_adapter`.
+3. Activity results report `external_calls_performed=false` in default tests.
+4. Workflow modules do not import broker SDKs or clients directly.
+
+These activities are not yet connected to a real order lifecycle workflow that can submit paper
+orders.
 
 ## Current Dashboard Operations
 
@@ -113,8 +140,8 @@ Supporting documentation-only artifacts:
 
 The runbook covers paper setup constraints, daily/weekly procedures, monitoring, incident response,
 reporting expectations, frozen paper acceptance criteria, and paper-to-Level-4 handoff gates. It is
-target-state readiness documentation only. It does not submit paper orders, call broker APIs, start
-provider integrations, enable live trading, or prove profitability.
+target-state readiness documentation only. It does not start paper trading operations, call real
+broker APIs by default, start provider integrations, enable live trading, or prove profitability.
 
 ## Level 4 Micro-Live Readiness
 
@@ -134,8 +161,8 @@ records. They do not enable live trading or autonomous live execution.
 
 ## Future Operations Scope
 
-Later milestones must implement real worker startup, Temporal schedules, paper trading procedures,
-real broker credential setup, real AI/news provider setup, managed database-backed reconciliation and
-AI research persistence, real Temporal test-server/replay coverage, real Temporal query/signal
-backend integration, dashboard deployment, alerting, evidence collection, and Level 4 micro-live
-readiness gates.
+Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
+tests, paper trading dry-run orchestration, real AI/news provider setup, managed database-backed
+reconciliation and AI research persistence, real Temporal test-server/replay coverage, real Temporal
+query/signal backend integration, dashboard deployment, alerting, evidence collection, and Level 4
+micro-live readiness gates.

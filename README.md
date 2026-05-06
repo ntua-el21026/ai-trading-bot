@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 13 Temporal ledger activity integration with safe fakes.
+This repository is at Milestone 14 paper-only Alpaca broker integration with fake-client defaults.
 
 Implemented pieces:
 
@@ -35,9 +35,13 @@ Implemented pieces:
 - position sizing from configured risk and position caps
 - kill-switch state models
 - passive `ExecutionIntent`, idempotency, order lifecycle, and rejection contracts
-- dependency-free broker adapter protocols and a safe Alpaca paper adapter skeleton
+- dependency-free broker adapter protocols and a paper-only Alpaca adapter behind explicit gates
 - normalized broker account/order/fill/position/protective-stop/stream models
 - fixture-only Alpaca `trade_updates` mapping to internal broker lifecycle events
+- fake Alpaca client support for account/order/fill/position snapshots, order lookup, paper entry
+  submit, cancel, protective-stop submit/verify, stream-event mapping, and REST fallback contracts
+- broker Temporal activity contracts that default to fake Alpaca paper adapters and perform no real
+  Alpaca calls in default tests
 - REST fallback snapshot contracts using the spec's 30-second fallback interval
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations
@@ -72,8 +76,9 @@ Implemented pieces:
 - Level 4 micro-live readiness documentation, credential separation checklist, kill-switch re-arm
   checklist, readiness checklist, and go/no-go template
 - unit tests for config, data models, features, universe filters, backtest metrics, Temporal contracts, strategy/regime/exit helpers, risk checks, sizing, kill switch, execution intent, and idempotency
-- unit tests for broker models, Alpaca stream mapping, safe adapter gating, REST fallback snapshots,
-  reconciliation clean state, mismatch detection, and incident recommendations
+- unit tests for broker models, Alpaca stream mapping, paper-only adapter gates, fake-client
+  submit/cancel/stop/verify boundaries, REST fallback snapshots, reconciliation clean state,
+  mismatch detection, and incident recommendations
 - unit tests for AI/news article validation, deduplication, prompt loading, strict parsing,
   fallbacks, scoring, hard-block policy, and persistence hashes
 - unit tests for dashboard read models, safe control actions, Temporal signal mapping, no order-entry
@@ -84,8 +89,9 @@ Implemented pieces:
 
 Not implemented yet:
 
-- executable broker order submission
-- real Alpaca SDK/client integration
+- end-to-end paper trading orchestration
+- real Alpaca SDK-backed runtime wiring
+- real Alpaca paper smoke-test evidence
 - real news provider integration
 - real AI provider integration
 - managed Postgres/Supabase runtime connection or migration execution
@@ -136,6 +142,12 @@ Run Milestone 13 ledger activity tests:
 uv run --group dev pytest tests/unit/test_ledger_activities.py tests/temporal/test_workflow_contracts.py
 ```
 
+Run Milestone 14 paper broker boundary tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_alpaca*.py tests/unit/test_broker*.py tests/unit/test_broker_activities.py
+```
+
 Optional local checks once dependencies are installed:
 
 ```bash
@@ -168,6 +180,14 @@ The runbook is target-state operational readiness documentation. It does not mea
 integrations, managed database runtime integration, paper broker execution, alerting, dashboard
 deployment, or live trading are complete.
 
+## Broker Integration
+
+Milestone 14 adds `packages/broker/alpaca.py`, `packages/broker/fakes.py`, and
+`apps/workers/app/activities/broker.py`. The adapter is paper-only, refuses live-mode or live-order
+flags, and requires explicit paper credentials in runtime mode. Default tests and default activity
+wiring use fakes and do not call Alpaca or submit real paper orders. Optional real Alpaca paper smoke
+tests remain deferred and must require explicit credentials and an explicit opt-in marker.
+
 ## Level 4 Micro-Live Readiness
 
 Milestone 11 adds readiness documentation only:
@@ -184,6 +204,6 @@ integration, real dashboard deployment, alerting, and live go/no-go approval.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Ledger and ledger-activity tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker, AI, managed ledger runtime, and control-plane methods remain protocol or repository boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute AI/news provider calls. Ledger and ledger-activity tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker tests use fake Alpaca clients by default and do not call Alpaca or submit real orders. Real provider wiring must be added explicitly through server-side Temporal activities or API services.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

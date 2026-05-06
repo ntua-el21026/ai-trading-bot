@@ -9,7 +9,9 @@ structured rejection models, broker adapter protocols, normalized broker state m
 order submission, live trading, or real Temporal order execution behavior. Milestone 12 adds
 database/audit-ledger schema and local repository foundations for later execution persistence.
 Milestone 13 adds local/fake Temporal ledger activity boundaries for execution intent, order, fill,
-and position audit persistence without submitting broker orders.
+and position audit persistence without submitting broker orders. Milestone 14 adds paper-only
+Alpaca adapter and broker activity boundaries behind explicit gates, using fake clients in default
+tests and without starting paper trading operations.
 
 ## Foundation Defaults
 
@@ -58,8 +60,9 @@ The helper also provides duplicate active-intent detection. The ledger foundatio
 Broker lookup before retry and managed database runtime evidence remain deferred to broker
 reconciliation and execution milestones.
 
-Milestone 13 adds local/fake activity persistence for execution intents and order/fill/position
-audit records. It does not perform broker lookup or order submission.
+Milestone 14 adds fake-tested broker lookup by `client_order_id` before paper submit retry. This is
+not yet wired into an end-to-end execution workflow and does not submit real broker orders in
+default tests.
 
 ## Order Lifecycle Abstractions
 
@@ -89,22 +92,33 @@ are auditable requests mapped to server-side Temporal signal names only.
 - REST fallback snapshot retrieval;
 - order submission, cancellation, protective-stop submission, and stream event consumption.
 
-`packages/broker/alpaca.py` currently provides a safe Alpaca paper adapter skeleton and fixture
-mapping for Alpaca `trade_updates`. The adapter refuses live-mode configuration and raises
-`BrokerAdapterNotConfigured` for all network/order methods until a later milestone wires an explicit
-paper client inside Temporal activities.
+`packages/broker/alpaca.py` provides a paper-only Alpaca adapter that depends on an injectable client
+protocol. It refuses non-paper environments, live-trading flags, autonomous-execution flags, and
+`allow_live_orders=true`. Runtime mode requires explicit paper credentials and an injected client.
+Default tests use `FakeAlpacaClient` and do not call Alpaca.
+
+Implemented fake-tested paper boundaries:
+
+- account, open-order, fill, and position snapshots;
+- lookup by broker order ID and `client_order_id`;
+- DAY limit entry-order request construction;
+- paper order cancellation;
+- protective-stop submission for filled quantity;
+- protective-stop verification;
+- structured ambiguous/failed results for timeouts, duplicate client IDs, rejected orders, missing
+  stops, stream disconnects, and REST fallback unavailability.
 
 ## Stream And REST Fallback
 
 Alpaca `trade_updates` fixture payloads are mapped to normalized `BrokerStreamEvent`,
 `BrokerOrder`, and `BrokerFill` contracts. REST fallback is represented by
 `BrokerRestFallbackSnapshot`, which uses the latest-spec 30-second fallback interval. Tests use
-fixtures only; no websocket, REST, or broker credential access occurs.
+fakes and fixtures only; no websocket, REST, real Alpaca, or broker credential access occurs.
 
 ## Level 4 Readiness Status
 
 `docs/level4_micro_live_readiness.md` documents the execution evidence required before Level 4
 micro-live: valid `ExecutionIntent`, broker reconciliation, idempotent `client_order_id`,
 protective-stop verification, partial-fill handling, duplicate-order prevention, alerts, and
-manual-control evidence. Current implementation remains passive and does not submit paper or live
-broker orders.
+manual-control evidence. Current implementation has paper-only broker boundaries, but no end-to-end
+paper orchestration, paper evidence, or live trading approval.

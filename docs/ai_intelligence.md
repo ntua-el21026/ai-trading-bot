@@ -31,6 +31,8 @@ AI cannot:
   tests without calling AI/news providers or managed databases.
 - `apps/workers/app/activities/ledger.py` can persist AI research output payloads through a
   local/fake Temporal activity boundary without calling AI/news providers.
+- Milestone 14 broker activity boundaries do not grant AI broker access. AI still has no order
+  submission, order modification, stop modification, or broker credential path.
 
 ## Fallback Policy
 

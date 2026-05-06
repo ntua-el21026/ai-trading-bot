@@ -1,26 +1,37 @@
-"""Alpaca paper-mode adapter skeleton and trade update mapping.
+"""Paper-only Alpaca adapter and normalized payload mapping.
 
-No Alpaca SDK dependency is required for Milestone 06. The adapter refuses live mode and raises
-until a later milestone supplies an explicitly configured paper client inside Temporal activities.
+This module intentionally avoids an Alpaca SDK dependency. The adapter depends on an injectable
+client protocol so default tests can use fakes and future runtime wiring can pass an SDK-backed
+wrapper behind explicit paper-mode gates.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Any, cast, get_args
+from typing import Any, Literal, Protocol, Self, cast, get_args
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from packages.broker.adapters import BrokerAdapterNotConfigured
 from packages.broker.models import (
+    REST_FALLBACK_INTERVAL_SECONDS,
     BrokerAccountSnapshot,
+    BrokerErrorCode,
     BrokerFill,
+    BrokerOperationError,
+    BrokerOperationStatus,
     BrokerOrder,
+    BrokerOrderOperationResult,
     BrokerOrderStatus,
     BrokerOrderType,
     BrokerPosition,
     BrokerProtectiveStop,
+    BrokerProtectiveStopVerificationResult,
     BrokerRestFallbackSnapshot,
+    BrokerRestFallbackStatus,
     BrokerSide,
+    BrokerStreamConnectionResult,
     BrokerStreamEvent,
     BrokerStreamEventType,
     BrokerTimeInForce,
@@ -29,6 +40,9 @@ from packages.core.config import ExecutionConfig, SystemConfig
 from packages.data.models import AssetClass
 from packages.data.payloads import hash_payload
 from packages.execution.models import ExecutionIntent
+
+ALPACA_PAPER_BASE_URL = "https://paper-api.alpaca.markets"
+AdapterRunMode = Literal["runtime", "test"]
 
 ALPACA_EVENT_TYPE_MAP: dict[str, BrokerStreamEventType] = {
     "new": "order_acknowledged",
@@ -44,91 +58,463 @@ ALPACA_EVENT_TYPE_MAP: dict[str, BrokerStreamEventType] = {
 }
 
 
-class AlpacaPaperAdapter:
-    """Safe paper-mode boundary.
+class AlpacaModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    The class exists to enforce configuration gates and define the future adapter shape. It does
-    not perform network I/O or submit orders in this milestone.
+
+class AlpacaPaperCredentials(AlpacaModel):
+    """Runtime-only credentials contract.
+
+    Tests use fake clients and do not instantiate this with real values.
     """
+
+    api_key: str = Field(min_length=1)
+    secret_key: str = Field(min_length=1)
+    base_url: str = Field(default=ALPACA_PAPER_BASE_URL, min_length=1)
+
+    @model_validator(mode="after")
+    def validate_paper_url(self) -> Self:
+        normalized = self.base_url.lower()
+        if "paper" not in normalized or "live" in normalized:
+            raise ValueError("Alpaca credentials must target the paper endpoint")
+        return self
+
+
+class AlpacaClientError(RuntimeError):
+    """Structured error raised by client implementations and normalized by the adapter."""
+
+    def __init__(
+        self,
+        code: BrokerErrorCode,
+        message: str,
+        *,
+        retryable: bool = False,
+        ambiguous: bool = False,
+        pause_new_risk: bool = False,
+        details: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.retryable = retryable
+        self.ambiguous = ambiguous
+        self.pause_new_risk = pause_new_risk
+        self.details = details or {}
+
+
+class AlpacaClientProtocol(Protocol):
+    """Minimal SDK-neutral client protocol used by the paper adapter."""
+
+    def get_account(self) -> Mapping[str, Any]:
+        """Return an Alpaca-like account payload."""
+
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        """Return Alpaca-like open order payloads."""
+
+    def get_order_by_id(self, broker_order_id: str) -> Mapping[str, Any] | None:
+        """Lookup an order by broker ID."""
+
+    def get_order_by_client_order_id(self, client_order_id: str) -> Mapping[str, Any] | None:
+        """Lookup an order by client order ID."""
+
+    def submit_order(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Submit an order and return the broker payload."""
+
+    def cancel_order(self, broker_order_id: str) -> Mapping[str, Any]:
+        """Cancel an order by broker ID and return the broker payload."""
+
+    def list_fills(self) -> Sequence[Mapping[str, Any]]:
+        """Return recent fill payloads."""
+
+    def list_positions(self) -> Sequence[Mapping[str, Any]]:
+        """Return current position payloads."""
+
+    def get_position(self, symbol: str) -> Mapping[str, Any] | None:
+        """Lookup one position by symbol."""
+
+    def consume_trade_updates(self) -> Iterable[Mapping[str, Any]]:
+        """Yield Alpaca-like trade update payloads."""
+
+
+class AlpacaPaperClient:
+    """SDK-neutral wrapper around an explicitly supplied Alpaca trading client object."""
+
+    def __init__(
+        self,
+        *,
+        credentials: AlpacaPaperCredentials,
+        trading_client: object,
+    ) -> None:
+        self._credentials = credentials
+        self._trading_client = trading_client
+
+    def get_account(self) -> Mapping[str, Any]:
+        return _as_mapping(self._call(("get_account", "account")))
+
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        value = self._call(("list_open_orders", "get_orders"), status="open")
+        return _as_mapping_sequence(value)
+
+    def get_order_by_id(self, broker_order_id: str) -> Mapping[str, Any] | None:
+        value = self._call_optional(("get_order_by_id", "get_order"), broker_order_id)
+        return None if value is None else _as_mapping(value)
+
+    def get_order_by_client_order_id(self, client_order_id: str) -> Mapping[str, Any] | None:
+        value = self._call_optional(
+            ("get_order_by_client_order_id", "get_order_by_client_id"),
+            client_order_id,
+        )
+        return None if value is None else _as_mapping(value)
+
+    def submit_order(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        return _as_mapping(self._call(("submit_order",), dict(request)))
+
+    def cancel_order(self, broker_order_id: str) -> Mapping[str, Any]:
+        return _as_mapping(self._call(("cancel_order", "cancel_order_by_id"), broker_order_id))
+
+    def list_fills(self) -> Sequence[Mapping[str, Any]]:
+        value = self._call(("list_fills", "get_fills"))
+        return _as_mapping_sequence(value)
+
+    def list_positions(self) -> Sequence[Mapping[str, Any]]:
+        value = self._call(("list_positions", "get_all_positions"))
+        return _as_mapping_sequence(value)
+
+    def get_position(self, symbol: str) -> Mapping[str, Any] | None:
+        value = self._call_optional(("get_position",), symbol)
+        return None if value is None else _as_mapping(value)
+
+    def consume_trade_updates(self) -> Iterable[Mapping[str, Any]]:
+        value = self._call_optional(("consume_trade_updates", "trade_updates"), None)
+        if value is None:
+            raise AlpacaClientError(
+                "stream_disconnect",
+                "trade update stream client is not configured",
+                retryable=True,
+                ambiguous=True,
+                pause_new_risk=True,
+            )
+        return _as_mapping_sequence(value)
+
+    def _call(self, names: tuple[str, ...], *args: object, **kwargs: object) -> object:
+        for name in names:
+            method = getattr(self._trading_client, name, None)
+            if callable(method):
+                return method(*args, **kwargs)
+        joined = ", ".join(names)
+        raise AlpacaClientError(
+            "client_not_configured",
+            f"configured Alpaca client does not expose any of: {joined}",
+        )
+
+    def _call_optional(self, names: tuple[str, ...], *args: object) -> object | None:
+        try:
+            return self._call(names, *tuple(arg for arg in args if arg is not None))
+        except KeyError:
+            return None
+
+
+class AlpacaPaperAdapter:
+    """Paper-mode broker adapter with explicit safety gates and injectable client behavior."""
 
     def __init__(
         self,
         *,
         system_config: SystemConfig,
         execution_config: ExecutionConfig,
-        client: object | None = None,
+        client: AlpacaClientProtocol | None = None,
+        credentials: AlpacaPaperCredentials | None = None,
+        run_mode: AdapterRunMode = "runtime",
     ) -> None:
-        if system_config.environment != "paper":
-            raise BrokerAdapterNotConfigured("AlpacaPaperAdapter only supports paper mode")
-        if system_config.live_trading_enabled or execution_config.allow_live_orders:
-            raise BrokerAdapterNotConfigured("live order flags must remain disabled")
+        _validate_paper_gates(system_config=system_config, execution_config=execution_config)
+        if run_mode == "runtime" and credentials is None:
+            raise BrokerAdapterNotConfigured(
+                "explicit Alpaca paper credentials are required in runtime mode"
+            )
+        if client is None:
+            raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
         self._client = client
+        self._credentials = credentials
+        self._run_mode = run_mode
 
     def account_snapshot(self) -> BrokerAccountSnapshot:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+        return map_alpaca_account(self._client.get_account(), environment="paper")
 
-    def open_orders(self) -> Sequence[BrokerOrder]:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+    def open_orders(self) -> tuple[BrokerOrder, ...]:
+        return tuple(map_alpaca_order(payload) for payload in self._client.list_open_orders())
 
     def order_by_broker_order_id(self, broker_order_id: str) -> BrokerOrder | None:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+        payload = self._client.get_order_by_id(broker_order_id)
+        return None if payload is None else map_alpaca_order(payload)
 
     def order_by_client_order_id(self, client_order_id: str) -> BrokerOrder | None:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+        payload = self._client.get_order_by_client_order_id(client_order_id)
+        return None if payload is None else map_alpaca_order(payload)
 
-    def recent_fills(self) -> Sequence[BrokerFill]:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+    def recent_fills(self) -> tuple[BrokerFill, ...]:
+        return tuple(map_alpaca_fill(payload) for payload in self._client.list_fills())
 
-    def positions(self) -> Sequence[BrokerPosition]:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+    def positions(self) -> tuple[BrokerPosition, ...]:
+        return tuple(map_alpaca_position(payload) for payload in self._client.list_positions())
 
-    def protective_stops(self, symbol: str | None = None) -> Sequence[BrokerProtectiveStop]:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+    def protective_stops(self, symbol: str | None = None) -> tuple[BrokerProtectiveStop, ...]:
+        stops = tuple(
+            map_alpaca_protective_stop(order)
+            for order in self._client.list_open_orders()
+            if _order_type(order.get("order_type") or order.get("type")) in {"stop", "stop_limit"}
+        )
+        if symbol is None:
+            return stops
+        return tuple(stop for stop in stops if stop.symbol == symbol.upper())
 
     def rest_fallback_snapshot(self) -> BrokerRestFallbackSnapshot:
-        raise BrokerAdapterNotConfigured("Alpaca paper client is not configured")
+        as_of = datetime.now(UTC)
+        return BrokerRestFallbackSnapshot(
+            account=self.account_snapshot(),
+            open_orders=self.open_orders(),
+            recent_fills=self.recent_fills(),
+            positions=self.positions(),
+            protective_stops=self.protective_stops(),
+            as_of=as_of,
+            poll_interval_seconds=REST_FALLBACK_INTERVAL_SECONDS,
+        )
 
-    def submit_order(self, intent: ExecutionIntent) -> BrokerOrder:
-        raise BrokerAdapterNotConfigured("order submission is not implemented in Milestone 06")
+    def rest_fallback_status(self) -> BrokerRestFallbackStatus:
+        try:
+            self.rest_fallback_snapshot()
+        except AlpacaClientError as exc:
+            return BrokerRestFallbackStatus(
+                available=False,
+                error=_operation_error(exc, fallback_code="rest_fallback_unavailable"),
+            )
+        return BrokerRestFallbackStatus(available=True)
 
-    def cancel_order(self, client_order_id: str) -> BrokerOrder:
-        raise BrokerAdapterNotConfigured("order cancellation is not implemented in Milestone 06")
+    def submit_entry_order(self, intent: ExecutionIntent) -> BrokerOrderOperationResult:
+        validation_error = _validate_entry_intent(intent)
+        if validation_error is not None:
+            return _order_failure(
+                "submit_paper_entry_order",
+                status="failed",
+                error=validation_error,
+            )
+
+        try:
+            existing_order = self.order_by_client_order_id(intent.client_order_id_root)
+        except AlpacaClientError as exc:
+            return _order_failure(
+                "submit_paper_entry_order",
+                status=_status_from_error(exc),
+                error=_operation_error(exc),
+            )
+        if existing_order is not None:
+            return _result_from_existing_order(existing_order, operation="submit_paper_entry_order")
+
+        request = build_paper_entry_order_request(intent)
+        try:
+            order = map_alpaca_order(self._client.submit_order(request))
+        except AlpacaClientError as exc:
+            return _order_failure(
+                "submit_paper_entry_order",
+                status=_status_from_error(exc),
+                error=_operation_error(exc),
+            )
+        if order.status == "rejected":
+            return _order_failure(
+                "submit_paper_entry_order",
+                status="failed",
+                error=BrokerOperationError(
+                    code="rejected_order",
+                    message="Alpaca rejected the paper entry order",
+                    pause_new_risk=True,
+                    details={"client_order_id": order.client_order_id},
+                ),
+                order=order,
+            )
+        return _order_success("submit_paper_entry_order", order)
+
+    def submit_order(self, intent: ExecutionIntent) -> BrokerOrderOperationResult:
+        return self.submit_entry_order(intent)
+
+    def cancel_order(self, client_order_id: str) -> BrokerOrderOperationResult:
+        try:
+            order = self.order_by_client_order_id(client_order_id)
+        except AlpacaClientError as exc:
+            return _order_failure(
+                "cancel_paper_order",
+                status=_status_from_error(exc),
+                error=_operation_error(exc),
+            )
+        if order is None:
+            return _order_failure(
+                "cancel_paper_order",
+                status="not_found",
+                error=BrokerOperationError(
+                    code="order_not_found",
+                    message="paper order was not found by client_order_id",
+                    details={"client_order_id": client_order_id},
+                ),
+            )
+        try:
+            cancelled = map_alpaca_order(self._client.cancel_order(order.broker_order_id))
+        except AlpacaClientError as exc:
+            return _order_failure(
+                "cancel_paper_order",
+                status=_status_from_error(exc),
+                error=_operation_error(exc),
+            )
+        return _order_success("cancel_paper_order", cancelled)
 
     def submit_protective_stop(
         self,
         intent: ExecutionIntent,
         filled_quantity: float,
-    ) -> BrokerOrder:
-        raise BrokerAdapterNotConfigured("stop submission is not implemented in Milestone 06")
+    ) -> BrokerOrderOperationResult:
+        if filled_quantity <= 0:
+            return _order_failure(
+                "submit_paper_protective_stop",
+                status="failed",
+                error=BrokerOperationError(
+                    code="invalid_order_request",
+                    message="protective stop filled_quantity must be positive",
+                ),
+            )
+        if filled_quantity > intent.quantity:
+            return _order_failure(
+                "submit_paper_protective_stop",
+                status="failed",
+                error=BrokerOperationError(
+                    code="invalid_order_request",
+                    message="protective stop quantity cannot exceed intent quantity",
+                ),
+            )
+        if intent.stop_loss_price is None:
+            return _order_failure(
+                "submit_paper_protective_stop",
+                status="failed",
+                error=BrokerOperationError(
+                    code="missing_protective_stop",
+                    message="execution intent does not include a stop loss price",
+                    pause_new_risk=True,
+                ),
+            )
+        request = build_paper_protective_stop_request(intent, filled_quantity=filled_quantity)
+        try:
+            order = map_alpaca_order(self._client.submit_order(request))
+        except AlpacaClientError as exc:
+            return _order_failure(
+                "submit_paper_protective_stop",
+                status=_status_from_error(exc),
+                error=_operation_error(exc),
+            )
+        return _order_success("submit_paper_protective_stop", order)
+
+    def verify_protective_stop(
+        self,
+        *,
+        symbol: str,
+        required_quantity: float,
+        client_order_id: str | None = None,
+    ) -> BrokerProtectiveStopVerificationResult:
+        normalized_symbol = symbol.upper()
+        stops = self.protective_stops(normalized_symbol)
+        for stop in stops:
+            client_match = client_order_id is None or stop.client_order_id == client_order_id
+            covers_quantity = stop.quantity >= required_quantity
+            if client_match and stop.confirmed and stop.is_open and covers_quantity:
+                return BrokerProtectiveStopVerificationResult(
+                    symbol=normalized_symbol,
+                    required_quantity=required_quantity,
+                    protected=True,
+                    stop=stop,
+                    status="succeeded",
+                )
+        return BrokerProtectiveStopVerificationResult(
+            symbol=normalized_symbol,
+            required_quantity=required_quantity,
+            protected=False,
+            status="failed",
+            error=BrokerOperationError(
+                code="missing_protective_stop",
+                message="no confirmed open protective stop covers the required quantity",
+                pause_new_risk=True,
+                details={"required_quantity": f"{required_quantity:.6f}"},
+            ),
+        )
 
     def stream_events(self) -> Iterable[BrokerStreamEvent]:
-        raise BrokerAdapterNotConfigured("stream consumption is not implemented in Milestone 06")
+        for payload in self._client.consume_trade_updates():
+            yield map_alpaca_trade_update(payload)
+
+    def stream_connection_result(self) -> BrokerStreamConnectionResult:
+        try:
+            return BrokerStreamConnectionResult(connected=True, events=tuple(self.stream_events()))
+        except AlpacaClientError as exc:
+            return BrokerStreamConnectionResult(
+                connected=False,
+                error=_operation_error(exc, fallback_code="stream_disconnect"),
+            )
 
 
-def map_alpaca_trade_update(payload: Mapping[str, Any]) -> BrokerStreamEvent:
-    """Map one Alpaca trade_updates payload into normalized broker stream contracts."""
+def build_paper_entry_order_request(intent: ExecutionIntent) -> dict[str, Any]:
+    return {
+        "symbol": intent.symbol,
+        "side": intent.side,
+        "type": "limit",
+        "time_in_force": "day",
+        "qty": str(intent.quantity),
+        "limit_price": str(intent.limit_price),
+        "client_order_id": intent.client_order_id_root,
+        "extended_hours": False,
+    }
 
-    order_payload = _mapping(payload.get("order"))
-    event_name = str(payload.get("event", "unknown"))
-    event_type = ALPACA_EVENT_TYPE_MAP.get(event_name, "unknown")
-    event_at = _datetime(payload.get("timestamp") or payload.get("at"))
-    raw_hash = hash_payload(payload)
-    broker_order = _map_order(order_payload, raw_hash)
-    fill = (
-        _map_fill(payload, broker_order, event_at, raw_hash)
-        if event_type in {"fill", "partial_fill"}
-        else None
+
+def build_paper_protective_stop_request(
+    intent: ExecutionIntent,
+    *,
+    filled_quantity: float,
+) -> dict[str, Any]:
+    if intent.stop_loss_price is None:
+        raise ValueError("protective stop requires stop_loss_price")
+    return {
+        "symbol": intent.symbol,
+        "side": "sell" if intent.side == "buy" else "buy",
+        "type": "stop",
+        "time_in_force": "gtc",
+        "qty": str(filled_quantity),
+        "stop_price": str(intent.stop_loss_price),
+        "client_order_id": f"{intent.client_order_id_root}-stop",
+        "extended_hours": False,
+    }
+
+
+def map_alpaca_account(
+    payload: Mapping[str, Any],
+    *,
+    environment: Literal["paper", "live"] = "paper",
+    as_of: datetime | None = None,
+) -> BrokerAccountSnapshot:
+    timestamp = (
+        _optional_datetime(payload.get("as_of"))
+        or _optional_datetime(payload.get("updated_at"))
+        or as_of
+        or datetime.now(UTC)
     )
-    return BrokerStreamEvent(
-        event_type=event_type,
-        broker_order=broker_order,
-        fill=fill,
-        event_at=event_at,
-        raw_payload_hash=raw_hash,
+    return BrokerAccountSnapshot(
+        account_id=str(payload.get("id") or payload.get("account_id")),
+        environment=environment,
+        equity=float(payload["equity"]),
+        cash=float(payload["cash"]),
+        buying_power=_optional_float(payload.get("buying_power")),
+        currency=str(payload.get("currency", "USD")).upper(),
+        as_of=timestamp,
+        raw_payload_hash=hash_payload(payload),
     )
 
 
-def _map_order(order_payload: Mapping[str, Any], raw_payload_hash: str) -> BrokerOrder:
+def map_alpaca_order(
+    order_payload: Mapping[str, Any],
+    *,
+    raw_payload_hash: str | None = None,
+) -> BrokerOrder:
     order_type = _order_type(order_payload.get("order_type") or order_payload.get("type"))
     status = _order_status(order_payload.get("status"))
     return BrokerOrder(
@@ -147,11 +533,83 @@ def _map_order(order_payload: Mapping[str, Any], raw_payload_hash: str) -> Broke
         limit_price=_optional_float(order_payload.get("limit_price")),
         stop_price=_optional_float(order_payload.get("stop_price")),
         purpose="protective_stop" if order_type in {"stop", "stop_limit"} else "entry",
-        raw_payload_hash=raw_payload_hash,
+        raw_payload_hash=raw_payload_hash or hash_payload(order_payload),
     )
 
 
-def _map_fill(
+def map_alpaca_fill(
+    payload: Mapping[str, Any],
+    *,
+    raw_payload_hash: str | None = None,
+) -> BrokerFill:
+    filled_at = _datetime(payload.get("filled_at") or payload.get("transaction_time"))
+    return BrokerFill(
+        broker_order_id=str(payload["order_id"]),
+        client_order_id=str(payload["client_order_id"]),
+        symbol=str(payload["symbol"]).upper(),
+        side=_side(payload.get("side")),
+        quantity=_required_float(payload.get("qty") or payload.get("quantity"), "quantity"),
+        price=float(payload["price"]),
+        filled_at=filled_at,
+        broker_fill_id=None if payload.get("id") is None else str(payload["id"]),
+        raw_payload_hash=raw_payload_hash or hash_payload(payload),
+    )
+
+
+def map_alpaca_position(payload: Mapping[str, Any]) -> BrokerPosition:
+    return BrokerPosition(
+        symbol=str(payload["symbol"]).upper(),
+        asset_class=_asset_class(payload.get("asset_class")),
+        quantity=_required_float(payload.get("qty") or payload.get("quantity"), "quantity"),
+        avg_entry_price=float(payload["avg_entry_price"]),
+        market_value=_optional_float(payload.get("market_value")),
+        opened_at=_optional_datetime(payload.get("opened_at")),
+        raw_payload_hash=hash_payload(payload),
+    )
+
+
+def map_alpaca_protective_stop(payload: Mapping[str, Any]) -> BrokerProtectiveStop:
+    order = map_alpaca_order(payload)
+    if order.stop_price is None:
+        raise ValueError("protective stop order must include stop_price")
+    return BrokerProtectiveStop(
+        broker_order_id=order.broker_order_id,
+        client_order_id=order.client_order_id,
+        symbol=order.symbol,
+        quantity=order.quantity,
+        stop_price=order.stop_price,
+        status=order.status,
+        confirmed=order.is_open,
+        submitted_at=order.submitted_at,
+        updated_at=order.updated_at,
+        raw_payload_hash=order.raw_payload_hash,
+    )
+
+
+def map_alpaca_trade_update(payload: Mapping[str, Any]) -> BrokerStreamEvent:
+    """Map one Alpaca trade_updates payload into normalized broker stream contracts."""
+
+    order_payload = _mapping(payload.get("order"))
+    event_name = str(payload.get("event", "unknown"))
+    event_type = ALPACA_EVENT_TYPE_MAP.get(event_name, "unknown")
+    event_at = _datetime(payload.get("timestamp") or payload.get("at"))
+    raw_hash = hash_payload(payload)
+    broker_order = map_alpaca_order(order_payload, raw_payload_hash=raw_hash)
+    fill = (
+        _map_stream_fill(payload, broker_order, event_at, raw_hash)
+        if event_type in {"fill", "partial_fill"}
+        else None
+    )
+    return BrokerStreamEvent(
+        event_type=event_type,
+        broker_order=broker_order,
+        fill=fill,
+        event_at=event_at,
+        raw_payload_hash=raw_hash,
+    )
+
+
+def _map_stream_fill(
     payload: Mapping[str, Any],
     broker_order: BrokerOrder,
     event_at: datetime,
@@ -170,7 +628,123 @@ def _map_fill(
         quantity=float(payload.get("qty") or broker_order.filled_quantity),
         price=fill_price,
         filled_at=event_at,
+        broker_fill_id=None if payload.get("id") is None else str(payload["id"]),
         raw_payload_hash=raw_payload_hash,
+    )
+
+
+def _validate_paper_gates(
+    *,
+    system_config: SystemConfig,
+    execution_config: ExecutionConfig,
+) -> None:
+    if system_config.environment != "paper":
+        raise BrokerAdapterNotConfigured("AlpacaPaperAdapter only supports paper mode")
+    if system_config.live_trading_enabled:
+        raise BrokerAdapterNotConfigured("live_trading_enabled must remain false")
+    if system_config.autonomous_execution_enabled or execution_config.autonomous_execution_enabled:
+        raise BrokerAdapterNotConfigured("autonomous execution must remain disabled")
+    if execution_config.allow_live_orders:
+        raise BrokerAdapterNotConfigured("allow_live_orders must remain false")
+
+
+def _validate_entry_intent(intent: ExecutionIntent) -> BrokerOperationError | None:
+    if getattr(intent, "entry_order_type", None) != "limit":
+        return BrokerOperationError(
+            code="unsupported_order_type",
+            message="new-risk paper entries must use DAY limit orders",
+            pause_new_risk=True,
+        )
+    if getattr(intent, "time_in_force", None) != "day":
+        return BrokerOperationError(
+            code="invalid_order_request",
+            message="new-risk paper entries must use DAY time in force",
+            pause_new_risk=True,
+        )
+    if getattr(intent, "requires_protective_stop", False) and intent.stop_loss_price is None:
+        return BrokerOperationError(
+            code="missing_protective_stop",
+            message="paper entry intent requires a protective stop price",
+            pause_new_risk=True,
+        )
+    return None
+
+
+def _result_from_existing_order(
+    order: BrokerOrder,
+    *,
+    operation: str,
+) -> BrokerOrderOperationResult:
+    if order.status == "rejected":
+        return _order_failure(
+            operation,
+            status="failed",
+            error=BrokerOperationError(
+                code="rejected_order",
+                message="idempotency lookup found a rejected broker order",
+                pause_new_risk=True,
+                details={"client_order_id": order.client_order_id},
+            ),
+            order=order,
+            idempotency_reused=True,
+        )
+    return _order_success(operation, order, idempotency_reused=True)
+
+
+def _order_success(
+    operation: str,
+    order: BrokerOrder,
+    *,
+    idempotency_reused: bool = False,
+) -> BrokerOrderOperationResult:
+    return BrokerOrderOperationResult(
+        operation=operation,
+        status="succeeded",
+        order=order,
+        idempotency_reused=idempotency_reused,
+        protective_stop_required_quantity=(
+            order.filled_quantity if order.filled_quantity > 0 else None
+        ),
+    )
+
+
+def _order_failure(
+    operation: str,
+    *,
+    status: BrokerOperationStatus,
+    error: BrokerOperationError,
+    order: BrokerOrder | None = None,
+    idempotency_reused: bool = False,
+) -> BrokerOrderOperationResult:
+    return BrokerOrderOperationResult(
+        operation=operation,
+        status=status,
+        order=order,
+        error=error,
+        idempotency_reused=idempotency_reused,
+    )
+
+
+def _status_from_error(exc: AlpacaClientError) -> BrokerOperationStatus:
+    if exc.ambiguous:
+        return "ambiguous"
+    if exc.code == "order_not_found":
+        return "not_found"
+    return "failed"
+
+
+def _operation_error(
+    exc: AlpacaClientError,
+    *,
+    fallback_code: BrokerErrorCode | None = None,
+) -> BrokerOperationError:
+    return BrokerOperationError(
+        code=fallback_code or exc.code,
+        message=str(exc),
+        retryable=exc.retryable,
+        ambiguous=exc.ambiguous,
+        pause_new_risk=exc.pause_new_risk or exc.ambiguous,
+        details=exc.details,
     )
 
 
@@ -178,6 +752,37 @@ def _mapping(value: object) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError("Alpaca trade update payload must contain an order mapping")
     return cast(Mapping[str, Any], value)
+
+
+def _as_mapping(value: object) -> Mapping[str, Any]:
+    if isinstance(value, Mapping):
+        return cast(Mapping[str, Any], value)
+    if isinstance(value, BaseModel):
+        return value.model_dump()
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        mapped = model_dump()
+        if isinstance(mapped, Mapping):
+            return cast(Mapping[str, Any], mapped)
+    if hasattr(value, "__dict__"):
+        return {
+            key: item
+            for key, item in vars(value).items()
+            if not key.startswith("_") and not callable(item)
+        }
+    raise AlpacaClientError(
+        "invalid_order_request",
+        f"expected mapping-like Alpaca payload, got {type(value).__name__}",
+    )
+
+
+def _as_mapping_sequence(value: object) -> tuple[Mapping[str, Any], ...]:
+    if isinstance(value, str | bytes) or not isinstance(value, Sequence):
+        raise AlpacaClientError(
+            "invalid_order_request",
+            f"expected sequence of Alpaca payloads, got {type(value).__name__}",
+        )
+    return tuple(_as_mapping(item) for item in value)
 
 
 def _datetime(value: object) -> datetime:
@@ -206,6 +811,13 @@ def _optional_float(value: object) -> float | None:
     if not isinstance(value, str | int | float):
         raise ValueError(f"expected numeric value, got {type(value).__name__}")
     return float(value)
+
+
+def _required_float(value: object, field_name: str) -> float:
+    parsed = _optional_float(value)
+    if parsed is None:
+        raise ValueError(f"{field_name} is required")
+    return parsed
 
 
 def _side(value: object) -> BrokerSide:
