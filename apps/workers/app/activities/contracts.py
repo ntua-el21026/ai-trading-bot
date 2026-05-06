@@ -12,6 +12,7 @@ from temporalio import activity
 
 from apps.workers.app.activities.broker import BROKER_ACTIVITY_FUNCTIONS
 from apps.workers.app.activities.ledger import LEDGER_ACTIVITY_FUNCTIONS
+from apps.workers.app.activities.reporting import REPORTING_ACTIVITY_FUNCTIONS
 from apps.workers.app.types import ActivityPlaceholderInput, ActivityPlaceholderResult
 
 
@@ -154,4 +155,5 @@ ACTIVITY_FUNCTIONS = (
     generate_report,
     *LEDGER_ACTIVITY_FUNCTIONS,
     *BROKER_ACTIVITY_FUNCTIONS,
+    *REPORTING_ACTIVITY_FUNCTIONS,
 )

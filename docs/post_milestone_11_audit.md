@@ -496,3 +496,19 @@ Results:
 - Adding real broker integration before Temporal activity and idempotency/reconciliation persistence would create unsafe execution ambiguity.
 - Adding dashboard controls before real server-side Temporal query/signal integration would produce non-operational controls.
 - Level 4 micro-live remains blocked until real paper evidence and go/no-go approval exist.
+
+## Post-Milestone 15 Status Update
+
+Milestones 12-15 have now advanced the scaffold beyond the original post-Milestone-11 audit:
+
+- Milestone 12 added the Postgres-oriented audit-ledger DDL and local SQLite repository foundation.
+- Milestone 13 connected safe Temporal activity boundaries to ledger repositories/fakes.
+- Milestone 14 added paper-only Alpaca adapter boundaries with fake-client defaults.
+- Milestone 15 added report generation, fake-safe alert contracts, ledger-backed dashboard read
+  models, and reporting/alerting/dashboard activity boundaries.
+
+The repository is still not ready for real paper trading or Level 4 micro-live. Remaining blockers
+include managed Postgres/Supabase runtime integration, real Temporal test-server/replay evidence,
+real Alpaca paper smoke tests, real AI/news provider integrations, real alert delivery, deployed
+dashboard evidence, end-to-end paper dry-run orchestration, actual paper trading operations, frozen
+paper evidence, and go/no-go approval. Live trading remains disabled.

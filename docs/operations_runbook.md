@@ -2,7 +2,15 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 14 does not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, generated reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake repositories.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 15 does
+not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news
+provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend
+integration, real alert delivery, paper trading runs, Level 4 live readiness evidence, or live
+trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news,
+reporting, alerting, dashboard/control-plane, validation/testing contracts, paper trading operations
+documentation, Level 4 readiness documentation with incident/fallback recommendations, a local
+database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
+repositories.
 
 ## Current Foundation Operations
 
@@ -96,18 +104,34 @@ Temporal broker activities are currently fake-safe boundaries:
 These activities are not yet connected to a real order lifecycle workflow that can submit paper
 orders.
 
+## Current Reporting And Alerting Operations
+
+Reporting and alerting are currently local/fake-safe boundaries:
+
+1. Generate daily or weekly reports from supplied ledger/read-model snapshots through
+   `packages.reporting`.
+2. Render deterministic Markdown and persist report payloads through the ledger repository.
+3. Dispatch alerts through `AlertRouter` with `FakeAlertAdapter` by default.
+4. Treat Telegram/email adapters as fail-closed skeletons until a future approved milestone adds
+   real delivery configuration and tests.
+5. Use `apps/workers/app/activities/reporting.py` for Temporal activity boundaries that report
+   `external_calls_performed=false` in default tests.
+
+No current operation sends Telegram/email messages, calls external alert services, claims production
+reporting evidence, or starts paper trading operations.
+
 ## Current Dashboard Operations
 
 Dashboard/control-plane behavior is currently contract-only:
 
-1. Read dashboard snapshots from fixture or future database/Temporal read-model providers.
+1. Read dashboard snapshots from fixture providers or the local ledger-backed read-model provider.
 2. Represent safe manual controls as auditable command objects.
 3. Map safe controls to existing Temporal signal names through server-side contracts.
 4. Expose only explicitly safe public dashboard environment values.
 
 No current dashboard operation submits broker orders, calls broker APIs, calls AI/news providers,
-calls Temporal from browser code, exposes broker/AI provider secrets, or changes risk/autonomy
-configuration.
+calls Temporal from browser code, sends alerts, exposes broker/AI provider secrets, or changes
+risk/autonomy configuration.
 
 ## Current Validation Operations
 
@@ -164,5 +188,5 @@ records. They do not enable live trading or autonomous live execution.
 Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
 tests, paper trading dry-run orchestration, real AI/news provider setup, managed database-backed
 reconciliation and AI research persistence, real Temporal test-server/replay coverage, real Temporal
-query/signal backend integration, dashboard deployment, alerting, evidence collection, and Level 4
-micro-live readiness gates.
+query/signal backend integration, dashboard deployment, real alert delivery, evidence collection,
+and Level 4 micro-live readiness gates.

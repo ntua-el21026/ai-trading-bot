@@ -2,18 +2,18 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 08 implements dashboard/control-plane contracts only. Vercel is dashboard-only; autonomous
-execution workers must run outside Vercel.
+Milestone 15 implements dashboard/control-plane contracts plus a ledger-backed backend read-model
+provider. Vercel is dashboard-only; autonomous execution workers must run outside Vercel.
 
 ## Implemented Contracts
 
 - `packages/control_plane/models.py` defines read-only dashboard view models and auditable control
   action requests.
-- `packages/control_plane/service.py` defines read-model and control-dispatch protocols plus fixture
-  providers for tests.
+- `packages/control_plane/service.py` defines read-model and control-dispatch protocols, fixture
+  providers for tests, and `LedgerDashboardReadModelProvider` for repository-backed snapshots.
 - `packages/control_plane/security.py` defines frontend secret-reference guardrails.
 - `apps/api/app/control_plane.py` is a server-side API contract that maps safe control actions to
-  existing Temporal signal names.
+  existing Temporal signal names and can read snapshots from the ledger provider.
 - `apps/dashboard/` is a minimal scaffold with safe public environment selection and no frontend
   framework dependency.
 
@@ -59,7 +59,26 @@ Dashboard/frontend code may only expose explicitly safe public values. It must n
 credentials, AI/news provider keys, privileged database URLs, or Temporal API keys.
 
 Current implementation does not add Vercel deployment files, frontend dependencies, real Temporal
-clients, database-backed read-model providers, or production dashboard deployment.
+clients, browser-side Temporal calls, frontend secrets, or production dashboard deployment.
+
+## Ledger Read Models
+
+`LedgerDashboardReadModelProvider` builds dashboard snapshots from repository records for:
+
+- latest system state from safe config;
+- active execution intents;
+- open orders;
+- open positions;
+- recent incidents;
+- latest reconciliation status;
+- kill-switch and risk status;
+- candidates/signals;
+- AI outputs;
+- reports.
+
+The provider performs repository reads only. It does not call broker APIs, AI/news providers,
+Temporal, alert adapters, frontend code, or secret sources. Missing data returns explicit empty or
+unavailable-safe statuses rather than production claims.
 
 ## Level 4 Readiness Evidence
 
@@ -67,4 +86,5 @@ clients, database-backed read-model providers, or production dashboard deploymen
 micro-live decision: safe read models, no frontend secrets, no browser-side broker/AI/news/Temporal
 calls, no order-entry controls, server-side control routing, and operator-tested kill-switch,
 pause-new-risk, force-reconciliation, force-report, acknowledge-incident, and resume-after-review
-paths. Current dashboard/control-plane implementation is contract-only and not deployed.
+paths. Current dashboard/control-plane implementation has local ledger read models and contract
+tests, but it is not deployed and does not provide real Temporal backend evidence.

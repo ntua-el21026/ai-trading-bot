@@ -9,6 +9,9 @@ Workflow code still does not import repositories or database sessions directly.
 Milestone 14 adds fake-tested paper broker boundaries that produce normalized broker payloads for
 future ledger persistence. Managed Postgres/Supabase runtime wiring is still deferred.
 
+Milestone 15 adds report generation/persistence helpers and ledger-backed dashboard read-model
+queries. It does not add managed Postgres/Supabase runtime wiring or external alert delivery.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -30,6 +33,9 @@ Implemented:
 - Unit tests for schema, round trips, uniqueness constraints, rollback behavior, and safety flags:
   - `tests/unit/test_ledger_schema.py`
   - `tests/unit/test_ledger_repositories.py`
+- Unit tests for report persistence and dashboard read models:
+  - `tests/unit/test_reporting.py`
+  - `tests/unit/test_dashboard_read_models.py`
 - Safe Temporal ledger activity contracts and tests:
   - `apps/workers/app/activities/models.py`
   - `apps/workers/app/activities/ledger.py`
@@ -94,6 +100,8 @@ The local repository supports:
 - system event insert/list;
 - report insert/get.
 - active execution intent, open position, recent incident, and latest reconciliation read helpers.
+- report, AI output, candidate, decision, risk-check, order, fill, and reconciliation list helpers
+  used by reporting and dashboard read-model services.
 
 Temporal ledger activities support:
 
@@ -106,6 +114,9 @@ Temporal ledger activities support:
 Repositories are side-effect limited to database access against the provided connection. They do not
 call broker APIs, AI/news provider APIs, Temporal, alert services, or managed database APIs.
 Activity implementations call only these repository boundaries and local/fake SQLite by default.
+Reporting helpers persist generated daily/weekly report payloads through the same repository
+boundary. Dashboard read models use repository reads only and do not call broker, AI/news, alert, or
+Temporal clients.
 
 ## Local Test Strategy
 
@@ -134,8 +145,9 @@ Milestones 12-14 do not:
 - submit real paper or live broker orders;
 - connect Temporal activities to real managed Postgres/Supabase runtime writes;
 - deploy a dashboard;
-- implement alert delivery.
+- implement real alert delivery;
+- start paper trading operations.
 
 Paper trading still requires real managed database integration, explicit Alpaca paper smoke-test
-evidence, provider integration, alerting, report generation, dashboard read models, Temporal
+evidence, provider integration, real alert delivery, deployed dashboard evidence, Temporal
 test-server/replay evidence, and operational dry-run evidence.

@@ -251,6 +251,21 @@ class SQLiteLedgerRepository:
         row = self._fetch_one("SELECT * FROM ai_research_outputs WHERE output_id = ?", (output_id,))
         return None if row is None else _ai_research_output_record(row)
 
+    def list_ai_research_outputs(
+        self,
+        *,
+        limit: int = 100,
+    ) -> tuple[AIResearchOutputRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM ai_research_outputs
+            ORDER BY created_at DESC, output_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_ai_research_output_record(row) for row in rows)
+
     def insert_execution_intent(
         self,
         intent: ExecutionIntent,
@@ -408,6 +423,17 @@ class SQLiteLedgerRepository:
             raise LedgerRepositoryError("trade candidate insert did not return a row")
         return _trade_candidate_record(row)
 
+    def list_trade_candidates(self, *, limit: int = 100) -> tuple[TradeCandidateRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM trade_candidates
+            ORDER BY trading_date DESC, created_at DESC, candidate_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_trade_candidate_record(row) for row in rows)
+
     def insert_trade_decision(
         self,
         *,
@@ -451,6 +477,17 @@ class SQLiteLedgerRepository:
         if row is None:
             raise LedgerRepositoryError("trade decision insert did not return a row")
         return _trade_decision_record(row)
+
+    def list_trade_decisions(self, *, limit: int = 100) -> tuple[TradeDecisionRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM trade_decisions
+            ORDER BY created_at DESC, decision_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_trade_decision_record(row) for row in rows)
 
     def insert_risk_check(
         self,
@@ -501,6 +538,17 @@ class SQLiteLedgerRepository:
         if row is None:
             raise LedgerRepositoryError("risk check insert did not return a row")
         return _risk_check_record(row)
+
+    def list_recent_risk_checks(self, *, limit: int = 100) -> tuple[RiskCheckRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM risk_checks
+            ORDER BY created_at DESC, risk_check_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_risk_check_record(row) for row in rows)
 
     def insert_order(
         self,
@@ -576,6 +624,28 @@ class SQLiteLedgerRepository:
         )
         return None if row is None else _order_record(row)
 
+    def list_orders(self, *, limit: int = 100) -> tuple[OrderRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM orders
+            ORDER BY updated_at DESC, order_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_order_record(row) for row in rows)
+
+    def list_open_orders(
+        self,
+        *,
+        statuses: Sequence[str] = ("new", "accepted", "pending_new", "partially_filled"),
+        limit: int = 100,
+    ) -> tuple[OrderRecord, ...]:
+        allowed_statuses = set(statuses)
+        return tuple(
+            order for order in self.list_orders(limit=limit) if order.status in allowed_statuses
+        )
+
     def insert_fill(
         self,
         *,
@@ -625,6 +695,17 @@ class SQLiteLedgerRepository:
         if row is None:
             raise LedgerRepositoryError("fill insert did not return a row")
         return _fill_record(row)
+
+    def list_fills(self, *, limit: int = 100) -> tuple[FillRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM fills
+            ORDER BY filled_at DESC, fill_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_fill_record(row) for row in rows)
 
     def upsert_position(
         self,
@@ -818,6 +899,21 @@ class SQLiteLedgerRepository:
         )
         return None if row is None else _broker_reconciliation_record(row)
 
+    def list_broker_reconciliations(
+        self,
+        *,
+        limit: int = 100,
+    ) -> tuple[BrokerReconciliationRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM broker_reconciliations
+            ORDER BY created_at DESC, reconciliation_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_broker_reconciliation_record(row) for row in rows)
+
     def insert_system_event(
         self,
         *,
@@ -937,6 +1033,17 @@ class SQLiteLedgerRepository:
     def get_report(self, report_id: str) -> ReportRecord | None:
         row = self._fetch_one("SELECT * FROM reports WHERE report_id = ?", (report_id,))
         return None if row is None else _report_record(row)
+
+    def list_reports(self, *, limit: int = 100) -> tuple[ReportRecord, ...]:
+        rows = self._connection.execute(
+            """
+            SELECT * FROM reports
+            ORDER BY created_at DESC, report_id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return tuple(_report_record(row) for row in rows)
 
     def _get_required_execution_intent(self, execution_intent_id: str) -> ExecutionIntentRecord:
         record = self.get_execution_intent_by_id(execution_intent_id)

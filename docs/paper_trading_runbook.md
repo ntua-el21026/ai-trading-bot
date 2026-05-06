@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 14 adds paper-only Alpaca adapter and broker activity boundaries with fake-client defaults,
-while paper trading remains disabled. The repository still does not implement actual paper trading
-operations, real Alpaca paper smoke-test evidence, managed database runtime integration, real
-AI/news provider calls, production dashboard deployment, or live trading.
+Milestone 15 adds report generation, fake-safe alert contracts, and ledger-backed dashboard read
+models while paper trading remains disabled. The repository still does not implement actual paper
+trading operations, real Alpaca paper smoke-test evidence, managed database runtime integration,
+real AI/news provider calls, real alert delivery, production dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -30,10 +30,11 @@ frozen, versioned, reproducible, and operationally clean.
 
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
 for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validation, control-plane
-actions, failure simulation, paper dry-run checks, local ledger repository tests, safe local/fake
-Temporal ledger activity tests, and fake broker activity tests. It does not connect those contracts
-to real provider clients, managed Postgres/Supabase runtime persistence, or end-to-end paper
-execution orchestration yet.
+actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
+dry-run checks, local ledger repository tests, safe local/fake Temporal activity tests, and fake
+broker activity tests. It does not connect those contracts to real provider clients, real alert
+delivery, managed Postgres/Supabase runtime persistence, or end-to-end paper execution
+orchestration yet.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -113,7 +114,8 @@ Complete this checklist before every paper session:
   leveraged ETFs, inverse ETFs, or prediction markets.
 - Confirm AI has no broker credentials and no broker API access.
 - Confirm dashboard/frontend code has no broker or AI/news provider secrets.
-- Confirm alert channels are configured, or record that alerting is not yet implemented.
+- Confirm alert channels are configured, or record that only fake/fail-closed alert contracts are
+  implemented.
 - Confirm operator knows the manual kill-switch and pause-new-risk control paths.
 
 ## Startup Procedure
@@ -133,7 +135,7 @@ This procedure is target-state documentation until real services are wired.
 5. Confirm dashboard/control-plane read models load from safe backend contracts.
 6. Confirm broker paper account mode through server-side broker activity once implemented.
 7. Confirm managed database/audit-ledger connectivity once implemented.
-8. Confirm alert channel delivery once implemented.
+8. Confirm real alert channel delivery once implemented.
 9. Run forced reconciliation before allowing new paper risk once real broker state is connected.
 10. Record config version, code commit, spec version, and operator.
 
@@ -226,6 +228,8 @@ readiness and expected future operations, not active trading capability.
 - Reconcile broker account, orders, fills, positions, and protective stops against internal ledger.
 - Create incidents for mismatches.
 - Generate daily report with workflow, execution, AI, risk, reconciliation, and incident sections.
+- Current report generation can render and persist local/fake reports; operational paper evidence
+  still requires real run data and managed runtime persistence.
 - Keep unresolved critical incidents paused for manual review.
 
 ## Weekly Procedure
@@ -375,7 +379,7 @@ Before micro-live readiness review, collect and approve:
 - real Alpaca paper smoke-test evidence and broker paper evidence;
 - real AI/news provider integration and schema-validity evidence;
 - real dashboard deployment evidence;
-- alerting implementation and delivery evidence;
+- real alert delivery evidence;
 - frozen paper evidence satisfying every acceptance criterion;
 - incident-free control history for the required sessions;
 - documented resolution of all Sev-1/critical incidents;

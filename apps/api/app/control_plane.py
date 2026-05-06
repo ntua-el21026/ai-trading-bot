@@ -19,7 +19,12 @@ from packages.control_plane.models import (
     ControlActionRequest,
     DashboardSnapshot,
 )
-from packages.control_plane.service import ControlActionDispatcher, DashboardReadModelProvider
+from packages.control_plane.service import (
+    ControlActionDispatcher,
+    DashboardReadModelProvider,
+    LedgerDashboardReadModelProvider,
+)
+from packages.ledger.repositories import SQLiteLedgerRepository
 
 CONTROL_ACTION_SIGNAL_MAP: dict[str, str] = {
     "manual_kill_switch": MANUAL_KILL_SWITCH,
@@ -35,6 +40,12 @@ def read_dashboard_snapshot(provider: DashboardReadModelProvider) -> DashboardSn
     """Read a dashboard snapshot from a backend read-model provider."""
 
     return provider.snapshot()
+
+
+def read_ledger_dashboard_snapshot(repository: SQLiteLedgerRepository) -> DashboardSnapshot:
+    """Read a dashboard snapshot from the ledger repository boundary."""
+
+    return LedgerDashboardReadModelProvider(repository).snapshot()
 
 
 def dispatch_control_action(

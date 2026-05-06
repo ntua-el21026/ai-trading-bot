@@ -84,6 +84,12 @@ def test_activity_contracts_include_ledger_boundaries_without_external_calls() -
     assert "submit_paper_protective_stop" in activity_names
     assert "verify_paper_protective_stop" in activity_names
     assert "map_trade_update_event" in activity_names
+    assert "generate_daily_report" in activity_names
+    assert "generate_weekly_report" in activity_names
+    assert "dispatch_alert" in activity_names
+    assert "dispatch_incident_alert" in activity_names
+    assert "dispatch_report_alert" in activity_names
+    assert "build_dashboard_snapshot" in activity_names
     assert "fetch_candidate_news" in activity_names
     assert "run_ai_trade_research" in activity_names
     assert "validate_ai_research_output" in activity_names
@@ -117,7 +123,7 @@ def test_workflow_skeletons_call_ledger_activity_boundaries() -> None:
         "position_lifecycle.py": "persist_position_snapshot",
         "reconciliation.py": "persist_broker_reconciliation",
         "kill_switch.py": "persist_system_event",
-        "reporting.py": "persist_report",
+        "reporting.py": "generate_daily_report",
     }
     workflow_dir = Path("apps/workers/app/workflows")
 
@@ -214,6 +220,7 @@ def test_workflow_modules_do_not_directly_import_side_effect_providers() -> None
         "alpaca_trade_api",
         "alpaca.trading",
         "packages.ledger",
+        "packages.alerting",
         "sqlite3",
         "DATABASE_URL",
         "os.environ",

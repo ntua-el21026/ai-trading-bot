@@ -2,13 +2,15 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 14 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Milestone 15 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
-contracts using fake Alpaca clients by default, provider placeholder activity boundaries, signal
-names, query names, dashboard/control-plane signal mapping contracts, validation-oriented workflow
-boundary tests, and contract tests. It does not implement end-to-end paper orchestration, managed
-Postgres/Supabase runtime wiring, AI calls, market/news provider calls, production schedule
-activation, browser-side Temporal calls, real paper orders, or live trading.
+contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
+contracts using local ledger repositories and fake alert adapters by default, provider placeholder
+activity boundaries, signal names, query names, dashboard/control-plane signal mapping contracts,
+validation-oriented workflow boundary tests, and contract tests. It does not implement end-to-end
+paper orchestration, managed Postgres/Supabase runtime wiring, AI calls, market/news provider
+calls, real alert delivery, production schedule activation, browser-side Temporal calls, real paper
+orders, or live trading.
 
 ## Configuration
 
@@ -51,7 +53,9 @@ Current activity contracts are registered from `apps/workers/app/activities/cont
 Ledger-backed activity implementations live in `apps/workers/app/activities/ledger.py`; typed
 ledger request/response models live in `apps/workers/app/activities/models.py`; fake/local service
 helpers live in `apps/workers/app/activities/fakes.py`. Paper broker activity contracts live in
-`apps/workers/app/activities/broker.py` and default to `FakeAlpacaClient`.
+`apps/workers/app/activities/broker.py` and default to `FakeAlpacaClient`. Reporting, alerting, and
+dashboard read-model activity contracts live in `apps/workers/app/activities/reporting.py` and
+default to local SQLite ledger repositories plus fake alert adapters.
 
 Milestone 13 adds safe ledger activity boundaries for:
 
@@ -85,6 +89,20 @@ Milestone 14 adds fake-safe paper broker activity boundaries for:
 
 These activities are registered with the worker but default to a fake adapter. They are not wired
 into a live/paper order-submission workflow path and do not call Alpaca in default tests.
+
+Milestone 15 adds fake/local reporting and alerting activity boundaries for:
+
+- daily report generation and ledger persistence;
+- weekly report generation and ledger persistence;
+- alert dispatch through fake/fail-closed adapters;
+- incident alert dispatch;
+- report-generated alert dispatch;
+- dashboard snapshot construction from ledger read models.
+
+The `ReportingWorkflow` now calls the `generate_daily_report` activity by stable name while keeping
+workflow code deterministic and free of database, alert, broker, AI/news, network, wall-clock, and
+random imports. The activity performs local ledger reads/writes and returns
+`external_calls_performed=false` by default.
 
 Milestone 06 adds placeholder boundaries for:
 
@@ -184,6 +202,10 @@ uv run --group dev pytest tests/unit tests/temporal
 Milestone 14 also statically checks that workflow modules do not directly import broker clients,
 broker SDKs, AI/news, ledger/database, network-provider, wall-clock, or random side-effect code.
 Side effects remain activity responsibilities.
+
+Milestone 15 adds fixture tests for report activities, alert dispatch activities, dashboard snapshot
+activity output, and workflow activity-name alignment. Real Temporal test-server/replay execution is
+still deferred.
 
 Full Temporal replay or local test-server execution is deferred. A future command should use
 Temporal's testing environment, for example:

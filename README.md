@@ -10,7 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 14 paper-only Alpaca broker integration with fake-client defaults.
+This repository is at Milestone 15 reporting, alerting, and dashboard backend/read-model
+foundation with fake/local defaults.
 
 Implemented pieces:
 
@@ -42,6 +43,13 @@ Implemented pieces:
   submit, cancel, protective-stop submit/verify, stream-event mapping, and REST fallback contracts
 - broker Temporal activity contracts that default to fake Alpaca paper adapters and perform no real
   Alpaca calls in default tests
+- pure daily and weekly report generation from supplied ledger/read-model snapshots under
+  `packages/reporting/`
+- deterministic Markdown report rendering and report persistence through the ledger repository
+- alerting contracts, severity/category routing, fake alert adapter, and fail-closed Telegram/email
+  adapter skeletons under `packages/alerting/`
+- reporting/alerting/dashboard Temporal activity contracts that use local ledger repositories and
+  fake alert adapters by default
 - REST fallback snapshot contracts using the spec's 30-second fallback interval
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations
@@ -97,6 +105,7 @@ Not implemented yet:
 - managed Postgres/Supabase runtime connection or migration execution
 - real Temporal test-server/replay execution
 - production dashboard UI/deployment
+- real Telegram/email alert delivery
 - real Temporal query/signal backend integration
 - actual paper trading operations
 - Level 4 micro-live readiness evidence
@@ -148,6 +157,12 @@ Run Milestone 14 paper broker boundary tests:
 uv run --group dev pytest tests/unit/test_alpaca*.py tests/unit/test_broker*.py tests/unit/test_broker_activities.py
 ```
 
+Run Milestone 15 reporting, alerting, and dashboard read-model tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_reporting*.py tests/unit/test_alerting*.py tests/unit/test_dashboard*.py tests/unit/test_control_plane*.py tests/temporal/test_workflow_contracts.py
+```
+
 Optional local checks once dependencies are installed:
 
 ```bash
@@ -188,6 +203,15 @@ flags, and requires explicit paper credentials in runtime mode. Default tests an
 wiring use fakes and do not call Alpaca or submit real paper orders. Optional real Alpaca paper smoke
 tests remain deferred and must require explicit credentials and an explicit opt-in marker.
 
+## Reporting And Alerting
+
+Milestone 15 adds `packages/reporting/`, `packages/alerting/`, and
+`apps/workers/app/activities/reporting.py`. Reports are generated from supplied ledger/read-model
+snapshots, rendered deterministically, and persisted through the ledger repository. Alert delivery
+uses fake adapters by default; Telegram/email skeletons fail closed and do not send network
+messages in this milestone. Dashboard read models can be built from ledger repositories, but a real
+dashboard deployment and real Temporal query/signal backend are still deferred.
+
 ## Level 4 Micro-Live Readiness
 
 Milestone 11 adds readiness documentation only:
@@ -204,6 +228,6 @@ integration, real dashboard deployment, alerting, and live go/no-go approval.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute AI/news provider calls. Ledger and ledger-activity tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker tests use fake Alpaca clients by default and do not call Alpaca or submit real orders. Real provider wiring must be added explicitly through server-side Temporal activities or API services.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute AI/news provider calls. Ledger, reporting, alerting, and activity tests use local in-memory SQLite or fake adapters and do not require `DATABASE_URL`, managed Postgres/Supabase credentials, or alert credentials. Broker tests use fake Alpaca clients by default and do not call Alpaca or submit real orders. Real provider wiring must be added explicitly through server-side Temporal activities or API services.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

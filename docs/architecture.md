@@ -1,8 +1,22 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, database/audit-ledger, Temporal skeleton/activity, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
+This document describes the current foundation, data/backtest, database/audit-ledger, Temporal
+skeleton/activity, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news
+intelligence, reporting/alerting, dashboard/control-plane, validation/testing, paper-operations,
+and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestones 00-14 scaffolding and local/fake integration foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, safe ledger-backed activity boundaries using fake/local repositories, paper-only Alpaca broker boundaries using fake clients by default, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current
+repository implementation is limited to Milestones 00-15 scaffolding and local/fake integration
+foundation: project metadata, safe configuration defaults, typed config loading, structured logging
+helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal
+backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests,
+Temporal workflow/worker skeletons, safe ledger-backed activity boundaries using fake/local
+repositories, paper-only Alpaca broker boundaries using fake clients by default, deterministic
+strategy/regime/signal helpers, passive risk/execution-core contracts, normalized broker models,
+pure reconciliation comparison, bounded AI/news intelligence contracts, pure report generation,
+fake-safe alert contracts, ledger-backed dashboard read models, dashboard/control-plane read/action
+contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live
+readiness documentation.
 
 ## Target Shape
 
@@ -54,8 +68,22 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - The AI prompt template is versioned under `packages/ai/prompts/` and explicitly forbids broker actions, order creation/modification, stop changes, strategy mutation, risk-limit changes, and full-universe scanning.
 - AI/news provider activity boundaries are placeholders only and perform no external provider, AI,
   broker, or network calls.
+- `packages/reporting/` defines daily/weekly report models, pure report generators, deterministic
+  Markdown rendering, and ledger persistence helpers. These generators read supplied snapshots only
+  and do not call broker, AI/news, market-data, alert, or network providers.
+- `packages/alerting/` defines alert message models, severity/category routing, a fake adapter, and
+  fail-closed Telegram/email adapter skeletons. Default routing captures messages locally and
+  performs no external delivery.
+- `apps/workers/app/activities/reporting.py` registers activity boundaries for daily/weekly report
+  generation, alert dispatch, incident/report alert dispatch, and dashboard snapshot construction.
+  They use local ledger repositories and fake alert adapters by default.
 - Control-plane contracts define read-only dashboard views and auditable safe control requests.
-- `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal names. It does not call Temporal, broker adapters, AI/news providers, or databases yet.
+- `packages/control_plane/service.py` includes a ledger-backed read-model provider that constructs
+  dashboard snapshots from repository records without broker, AI/news, alert, frontend, or Temporal
+  calls.
+- `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal
+  names and exposes a helper for ledger-backed dashboard snapshots. It does not call broker
+  adapters, AI/news providers, alert services, or browser-side Temporal paths.
 - `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No frontend framework or deployment files are added.
 - Validation contracts under `packages/validation/` define the spec-required backtest split, benchmark,
   fee/slippage, ablation, Monte Carlo placeholder, failure-simulation, and paper dry-run check
@@ -69,6 +97,7 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - No production API service is implemented.
 - No production worker deployment is implemented.
 - No production dashboard UI is implemented.
+- No real alert delivery is implemented.
 - No end-to-end paper trading orchestration is implemented.
 - No Alpaca SDK-backed runtime wiring or real paper smoke-test evidence is implemented.
 - No managed Postgres/Supabase runtime connection or migration execution is implemented.

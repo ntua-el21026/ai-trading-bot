@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 14 adds paper-only Alpaca broker boundaries and fake broker activities while preserving
-the readiness boundary. It does not enable live trading, autonomous live execution, live
-credentials, real Alpaca calls in default tests, paper or live orders, production schedules,
-expanded Level 4, or Level 5.
+Milestone 15 adds report generation, fake-safe alert contracts, reporting activities, and
+ledger-backed dashboard read models while preserving the readiness boundary. It does not enable live
+trading, autonomous live execution, live credentials, real Alpaca calls in default tests, real alert
+delivery, paper or live orders, production schedules, expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -35,7 +35,7 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-14 are complete.
+- Milestones 00-15 are complete.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
@@ -45,7 +45,7 @@ Known status:
 - Real Temporal query/signal backend integration is deferred.
 - Real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
-- Alerting is absent.
+- Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
 - Live trading remains disabled.
 - Autonomous live execution remains disabled.
 
@@ -56,7 +56,7 @@ Hard blockers:
 - No real Alpaca paper smoke-test evidence or paper execution evidence.
 - No real AI/news provider integration evidence.
 - No real Temporal query/signal backend evidence.
-- No alert delivery evidence.
+- No real alert delivery evidence.
 - No frozen paper run evidence.
 - No Level 4 go/no-go report.
 
@@ -183,8 +183,9 @@ Before Level 4 micro-live, dry-run or controlled-paper evidence must demonstrate
 - Alert delivery works for orders, fills, exits, kill switch, reconciliation mismatches, missing
   stops, worker failure, and provider outage.
 
-Current status: contract tests exist for signal names and safe control models, but real Temporal
-signal/query backend integration and alert delivery evidence are pending.
+Current status: contract tests exist for signal names and safe control models, and fake alert
+routing is fixture-tested. Real Temporal signal/query backend integration and real alert delivery
+evidence are pending.
 
 ## Broker And Reconciliation Evidence
 
@@ -268,8 +269,9 @@ Required evidence:
 - Operator can use kill switch, pause new risk, force reconciliation, force report, acknowledge
   incidents, and resume after review through approved server-side paths.
 
-Current status: read models, safe control contracts, fixture dispatch, and frontend env guardrails
-exist. Real deployment and real Temporal backend evidence are pending.
+Current status: read models, ledger-backed dashboard snapshots, safe control contracts, fixture
+dispatch, and frontend env guardrails exist. Real dashboard deployment and real Temporal backend
+evidence are pending.
 
 ## Slippage And Fill-Quality Evidence
 

@@ -17,7 +17,8 @@ AI_Trading_Bot/
 │   │   │   │   ├── contracts.py
 │   │   │   │   ├── fakes.py
 │   │   │   │   ├── ledger.py
-│   │   │   │   └── models.py
+│   │   │   │   ├── models.py
+│   │   │   │   └── reporting.py
 │   │   │   ├── workflows/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── _shared.py
@@ -64,6 +65,8 @@ AI_Trading_Bot/
 │   │   ├── Crypto Customer Agreement.pdf
 │   │   └── W-8BEN_Form.pdf
 │   ├── app/
+│   │   ├── image/
+│   │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
 │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 │   ├── checklists/
@@ -98,6 +101,7 @@ AI_Trading_Bot/
 │   │   ├── paper_daily_report_template.md
 │   │   └── paper_incident_report_template.md
 │   ├── ai_intelligence.md
+│   ├── alerting.md
 │   ├── architecture.md
 │   ├── broker_integration.md
 │   ├── dashboard_control_plane.md
@@ -107,6 +111,7 @@ AI_Trading_Bot/
 │   ├── operations_runbook.md
 │   ├── paper_trading_runbook.md
 │   ├── post_milestone_11_audit.md
+│   ├── reporting.md
 │   ├── risk_policy.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
@@ -123,6 +128,11 @@ AI_Trading_Bot/
 │   │   ├── persistence.py
 │   │   ├── prompts.py
 │   │   └── scoring.py
+│   ├── alerting/
+│   │   ├── __init__.py
+│   │   ├── adapters.py
+│   │   ├── models.py
+│   │   └── routing.py
 │   ├── backtesting/
 │   │   ├── __init__.py
 │   │   ├── engine.py
@@ -160,6 +170,12 @@ AI_Trading_Bot/
 │   │   ├── __init__.py
 │   │   ├── models.py
 │   │   └── service.py
+│   ├── reporting/
+│   │   ├── __init__.py
+│   │   ├── generators.py
+│   │   ├── ledger.py
+│   │   ├── models.py
+│   │   └── renderers.py
 │   ├── risk/
 │   │   ├── __init__.py
 │   │   ├── checks.py
@@ -190,6 +206,7 @@ AI_Trading_Bot/
 │       ├── test_ai_parser.py
 │       ├── test_ai_persistence.py
 │       ├── test_ai_scoring.py
+│       ├── test_alerting.py
 │       ├── test_alpaca_mapping.py
 │       ├── test_alpaca_paper_adapter.py
 │       ├── test_backtesting_metrics.py
@@ -199,6 +216,7 @@ AI_Trading_Bot/
 │       ├── test_control_plane_api.py
 │       ├── test_control_plane_models.py
 │       ├── test_dashboard_env_security.py
+│       ├── test_dashboard_read_models.py
 │       ├── test_data_models.py
 │       ├── test_execution_intent.py
 │       ├── test_failure_simulations.py
@@ -212,6 +230,8 @@ AI_Trading_Bot/
 │       ├── test_position_sizing.py
 │       ├── test_reconciliation.py
 │       ├── test_regime.py
+│       ├── test_reporting.py
+│       ├── test_reporting_activities.py
 │       ├── test_risk_checks.py
 │       ├── test_strategy_exits.py
 │       ├── test_strategy_signals.py
@@ -227,4 +247,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 38, Total files: 190
+Total directories: 42, Total files: 206
