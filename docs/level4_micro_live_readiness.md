@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 15 adds report generation, fake-safe alert contracts, reporting activities, and
-ledger-backed dashboard read models while preserving the readiness boundary. It does not enable live
-trading, autonomous live execution, live credentials, real Alpaca calls in default tests, real alert
-delivery, paper or live orders, production schedules, expanded Level 4, or Level 5.
+Milestone 16 adds fake/local end-to-end paper dry-run orchestration while preserving the readiness
+boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
+calls in default tests, real alert delivery, paper or live orders, production schedules, expanded
+Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -35,13 +35,15 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-15 are complete.
+- Milestones 00-16 are complete.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
   Postgres/Supabase runtime integration is absent.
 - Paper-only Alpaca adapter and fake broker activity boundaries exist; real paper smoke-test
   evidence is absent.
+- Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
+  but it is not actual paper trading evidence.
 - Real Temporal query/signal backend integration is deferred.
 - Real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
@@ -54,6 +56,7 @@ Hard blockers:
 - No managed database runtime or migration execution evidence.
 - No real Temporal test-server/replay evidence.
 - No real Alpaca paper smoke-test evidence or paper execution evidence.
+- No controlled real paper operations evidence.
 - No real AI/news provider integration evidence.
 - No real Temporal query/signal backend evidence.
 - No real alert delivery evidence.

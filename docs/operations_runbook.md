@@ -2,15 +2,15 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 15 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 16 does
 not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news
 provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend
 integration, real alert delivery, paper trading runs, Level 4 live readiness evidence, or live
 trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news,
-reporting, alerting, dashboard/control-plane, validation/testing contracts, paper trading operations
-documentation, Level 4 readiness documentation with incident/fallback recommendations, a local
-database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
-repositories.
+reporting, alerting, dashboard/control-plane, validation/testing contracts, fake/local paper
+dry-run orchestration, paper trading operations documentation, Level 4 readiness documentation with
+incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal
+activity boundaries backed by local/fake repositories.
 
 ## Current Foundation Operations
 
@@ -104,6 +104,20 @@ Temporal broker activities are currently fake-safe boundaries:
 These activities are not yet connected to a real order lifecycle workflow that can submit paper
 orders.
 
+## Current Paper Dry-Run Operations
+
+The current executable dry-run is fake/local only:
+
+1. Run `uv run python scripts/run_paper_dry_run.py`.
+2. Confirm the output warning: `This is a fake/local dry run. No broker orders are submitted.`
+3. Review the returned `DryRunResult` for fake broker mode, no external calls, report ID, dashboard
+   snapshot status, reconciliation status, and captured fake alerts.
+
+The dry run uses `packages/paper/`, in-memory SQLite, fixture data, neutral/fake AI output,
+`FakeAlpacaClient`, `FakeAlertAdapter`, daily report generation, and ledger-backed dashboard read
+models. It does not call Alpaca, AI/news, market-data, Telegram/email, managed Postgres/Supabase, or
+Temporal services, and it does not submit real paper or live broker orders.
+
 ## Current Reporting And Alerting Operations
 
 Reporting and alerting are currently local/fake-safe boundaries:
@@ -186,7 +200,7 @@ records. They do not enable live trading or autonomous live execution.
 ## Future Operations Scope
 
 Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
-tests, paper trading dry-run orchestration, real AI/news provider setup, managed database-backed
+tests, actual paper trading orchestration, real AI/news provider setup, managed database-backed
 reconciliation and AI research persistence, real Temporal test-server/replay coverage, real Temporal
 query/signal backend integration, dashboard deployment, real alert delivery, evidence collection,
 and Level 4 micro-live readiness gates.

@@ -2,9 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 14 adds paper-only Alpaca broker boundaries. It does not start paper trading operations,
-does not activate Temporal schedules, does not add real credentials, and does not enable live
-trading.
+Milestone 14 adds paper-only Alpaca broker boundaries. Milestone 16 uses those boundaries through
+`FakeAlpacaClient` in a fake/local dry-run path. The repository does not start paper trading
+operations, does not activate Temporal schedules, does not add real credentials, and does not
+enable live trading.
 
 ## Current Implementation
 
@@ -63,6 +64,13 @@ libraries directly.
 
 These activity contracts are not end-to-end paper orchestration. They are side-effect boundaries for
 later Temporal order lifecycle integration.
+
+## Fake/Local Dry-Run Use
+
+`packages/paper/` uses `FakeAlpacaClient` and the paper adapter gate behavior to exercise entry
+acknowledgement, fill persistence, partial-fill stop quantity, protective-stop verification, broker
+ambiguity, missing-stop incidents, and reconciliation mismatches. This is not a real Alpaca paper
+smoke test and it does not submit broker orders.
 
 ## Optional Paper Smoke Tests
 

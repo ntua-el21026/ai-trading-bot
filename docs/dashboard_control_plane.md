@@ -5,6 +5,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 Milestone 15 implements dashboard/control-plane contracts plus a ledger-backed backend read-model
 provider. Vercel is dashboard-only; autonomous execution workers must run outside Vercel.
 
+Milestone 16 builds a dashboard/read-model snapshot from local dry-run ledger records after the
+fake/local paper dry run completes. This is not a deployed dashboard.
+
 ## Implemented Contracts
 
 - `packages/control_plane/models.py` defines read-only dashboard view models and auditable control
@@ -79,6 +82,10 @@ clients, browser-side Temporal calls, frontend secrets, or production dashboard 
 The provider performs repository reads only. It does not call broker APIs, AI/news providers,
 Temporal, alert adapters, frontend code, or secret sources. Missing data returns explicit empty or
 unavailable-safe statuses rather than production claims.
+
+`packages/paper/dry_run.py` uses this provider after the fake/local dry run to verify that report,
+incident, reconciliation, order, position, AI, candidate, and execution-intent records can be read
+through backend read-model contracts without frontend secrets or external provider calls.
 
 ## Level 4 Readiness Evidence
 

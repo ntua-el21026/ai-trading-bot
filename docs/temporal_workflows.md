@@ -2,15 +2,15 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 15 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Milestone 16 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
-contracts using local ledger repositories and fake alert adapters by default, provider placeholder
-activity boundaries, signal names, query names, dashboard/control-plane signal mapping contracts,
-validation-oriented workflow boundary tests, and contract tests. It does not implement end-to-end
-paper orchestration, managed Postgres/Supabase runtime wiring, AI calls, market/news provider
-calls, real alert delivery, production schedule activation, browser-side Temporal calls, real paper
-orders, or live trading.
+contracts using local ledger repositories and fake alert adapters by default, fake/local paper
+dry-run orchestration, provider placeholder activity boundaries, signal names, query names,
+dashboard/control-plane signal mapping contracts, validation-oriented workflow boundary tests, and
+contract tests. It does not implement actual paper trading orchestration, managed
+Postgres/Supabase runtime wiring, AI calls, market/news provider calls, real alert delivery,
+production schedule activation, browser-side Temporal calls, real paper orders, or live trading.
 
 ## Configuration
 
@@ -103,6 +103,12 @@ The `ReportingWorkflow` now calls the `generate_daily_report` activity by stable
 workflow code deterministic and free of database, alert, broker, AI/news, network, wall-clock, and
 random imports. The activity performs local ledger reads/writes and returns
 `external_calls_performed=false` by default.
+
+Milestone 16 adds `packages/paper/` as a fake/local dry-run orchestration service. It may call
+existing activity-adjacent package boundaries directly for local validation, but it does not require
+a live Temporal server and does not activate schedules. Workflow code remains deterministic and
+continues to avoid direct database, broker, AI/news, provider, network, clock, or random side
+effects.
 
 Milestone 06 adds placeholder boundaries for:
 
@@ -206,6 +212,9 @@ Side effects remain activity responsibilities.
 Milestone 15 adds fixture tests for report activities, alert dispatch activities, dashboard snapshot
 activity output, and workflow activity-name alignment. Real Temporal test-server/replay execution is
 still deferred.
+
+Milestone 16 adds fake/local dry-run orchestration tests and CLI safety tests. These do not provide
+real Temporal test-server or replay evidence.
 
 Full Temporal replay or local test-server execution is deferred. A future command should use
 Temporal's testing environment, for example:

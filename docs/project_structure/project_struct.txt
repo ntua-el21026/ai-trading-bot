@@ -109,6 +109,7 @@ AI_Trading_Bot/
 │   ├── execution_policy.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
+│   ├── paper_dry_run_orchestration.md
 │   ├── paper_trading_runbook.md
 │   ├── post_milestone_11_audit.md
 │   ├── reporting.md
@@ -166,6 +167,11 @@ AI_Trading_Bot/
 │   │   ├── models.py
 │   │   ├── repositories.py
 │   │   └── schema.py
+│   ├── paper/
+│   │   ├── __init__.py
+│   │   ├── dry_run.py
+│   │   ├── fixtures.py
+│   │   └── models.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -196,6 +202,7 @@ AI_Trading_Bot/
 │   │   └── paper.py
 │   └── __init__.py
 ├── scripts/
+│   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
 ├── tests/
@@ -218,6 +225,7 @@ AI_Trading_Bot/
 │       ├── test_dashboard_env_security.py
 │       ├── test_dashboard_read_models.py
 │       ├── test_data_models.py
+│       ├── test_dry_run_cli.py
 │       ├── test_execution_intent.py
 │       ├── test_failure_simulations.py
 │       ├── test_features.py
@@ -227,6 +235,7 @@ AI_Trading_Bot/
 │       ├── test_ledger_repositories.py
 │       ├── test_ledger_schema.py
 │       ├── test_paper_dry_run.py
+│       ├── test_paper_dry_run_orchestration.py
 │       ├── test_position_sizing.py
 │       ├── test_reconciliation.py
 │       ├── test_regime.py
@@ -247,4 +256,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 42, Total files: 206
+Total directories: 43, Total files: 214

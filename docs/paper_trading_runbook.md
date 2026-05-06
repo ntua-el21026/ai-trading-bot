@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 15 adds report generation, fake-safe alert contracts, and ledger-backed dashboard read
-models while paper trading remains disabled. The repository still does not implement actual paper
-trading operations, real Alpaca paper smoke-test evidence, managed database runtime integration,
-real AI/news provider calls, real alert delivery, production dashboard deployment, or live trading.
+Milestone 16 adds fake/local end-to-end paper dry-run orchestration while paper trading remains
+disabled. The repository still does not implement actual paper trading operations, real Alpaca
+paper smoke-test evidence, managed database runtime integration, real AI/news provider calls, real
+alert delivery, production dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -31,10 +31,19 @@ frozen, versioned, reproducible, and operationally clean.
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
 for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validation, control-plane
 actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
-dry-run checks, local ledger repository tests, safe local/fake Temporal activity tests, and fake
-broker activity tests. It does not connect those contracts to real provider clients, real alert
-delivery, managed Postgres/Supabase runtime persistence, or end-to-end paper execution
-orchestration yet.
+dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, safe
+local/fake Temporal activity tests, and fake broker activity tests. It does not connect those
+contracts to real provider clients, real alert delivery, managed Postgres/Supabase runtime
+persistence, or actual paper execution orchestration yet.
+
+The safe local dry-run command is:
+
+```bash
+uv run python scripts/run_paper_dry_run.py
+```
+
+It prints `This is a fake/local dry run. No broker orders are submitted.`, uses in-memory SQLite
+and fake adapters, and does not call external services.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.

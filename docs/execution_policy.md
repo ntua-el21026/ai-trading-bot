@@ -11,7 +11,9 @@ database/audit-ledger schema and local repository foundations for later executio
 Milestone 13 adds local/fake Temporal ledger activity boundaries for execution intent, order, fill,
 and position audit persistence without submitting broker orders. Milestone 14 adds paper-only
 Alpaca adapter and broker activity boundaries behind explicit gates, using fake clients in default
-tests and without starting paper trading operations.
+tests and without starting paper trading operations. Milestone 16 adds fake/local dry-run
+orchestration that creates and persists an `ExecutionIntent`, fake order/fill/position records, and
+protective-stop verification evidence without real broker orders.
 
 ## Foundation Defaults
 
@@ -63,6 +65,9 @@ reconciliation and execution milestones.
 Milestone 14 adds fake-tested broker lookup by `client_order_id` before paper submit retry. This is
 not yet wired into an end-to-end execution workflow and does not submit real broker orders in
 default tests.
+
+Milestone 16 exercises this idempotent client-order path through `FakeAlpacaClient` in the
+fake/local dry run only. It is not actual paper broker execution.
 
 ## Order Lifecycle Abstractions
 
@@ -121,4 +126,5 @@ fakes and fixtures only; no websocket, REST, real Alpaca, or broker credential a
 micro-live: valid `ExecutionIntent`, broker reconciliation, idempotent `client_order_id`,
 protective-stop verification, partial-fill handling, duplicate-order prevention, alerts, and
 manual-control evidence. Current implementation has paper-only broker boundaries, but no end-to-end
-paper orchestration, paper evidence, or live trading approval.
+paper operations, frozen paper evidence, or live trading approval. The fake/local dry-run path is
+local validation evidence only.

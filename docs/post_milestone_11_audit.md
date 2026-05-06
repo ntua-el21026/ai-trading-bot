@@ -510,5 +510,26 @@ Milestones 12-15 have now advanced the scaffold beyond the original post-Milesto
 The repository is still not ready for real paper trading or Level 4 micro-live. Remaining blockers
 include managed Postgres/Supabase runtime integration, real Temporal test-server/replay evidence,
 real Alpaca paper smoke tests, real AI/news provider integrations, real alert delivery, deployed
-dashboard evidence, end-to-end paper dry-run orchestration, actual paper trading operations, frozen
-paper evidence, and go/no-go approval. Live trading remains disabled.
+dashboard evidence, actual paper trading operations, frozen paper evidence, and go/no-go approval.
+Live trading remains disabled.
+
+## Post-Milestone 16 Status Update
+
+Milestone 16 adds a fake/local end-to-end paper dry-run path:
+
+- `packages/paper/` defines dry-run scenario models, deterministic fixtures, and an orchestrator.
+- `scripts/run_paper_dry_run.py` runs the happy-path fake/local dry run and prints the explicit
+  warning that no broker orders are submitted.
+- The dry run persists fixture raw payloads, candidates, AI outputs, decisions, risk checks,
+  execution intents, fake broker orders/fills/positions, reconciliation results, system
+  events/incidents, and reports through the local ledger repository.
+- The dry run uses `FakeAlpacaClient`, neutral/fake AI output, `FakeAlertAdapter`, daily report
+  generation, and ledger-backed dashboard read models.
+- Tests cover happy path, risk rejection, duplicate active intent, broker ambiguity, missing
+  protective stop, reconciliation mismatch, partial fill stop quantity, invalid-AI neutral
+  fallback, no-credential behavior, and CLI fake-mode refusal.
+
+This is still not actual paper trading. Remaining blockers include managed Postgres/Supabase
+runtime integration, real Temporal test-server/replay evidence, real Alpaca paper smoke tests, real
+AI/news provider integrations, real alert delivery, deployed dashboard evidence, actual paper
+trading operations, frozen paper evidence, and go/no-go approval. Live trading remains disabled.

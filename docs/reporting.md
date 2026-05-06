@@ -7,6 +7,10 @@ ledger/read-model snapshots, rendered deterministically, and persisted through t
 Report generation does not call broker APIs, AI/news providers, market-data providers, alert
 services, or managed databases by default.
 
+Milestone 16 uses the daily report generator inside the fake/local paper dry-run path. Those reports
+are generated from local ledger records created during the dry run and are not production paper
+trading evidence.
+
 ## Implemented
 
 - `packages/reporting/models.py` defines daily/weekly report, section, metric, issue, snapshot, and
@@ -18,6 +22,8 @@ services, or managed databases by default.
   report records.
 - `apps/workers/app/activities/reporting.py` exposes Temporal activity boundaries for daily/weekly
   report generation and dashboard snapshot reads.
+- `packages/paper/dry_run.py` generates and persists a daily report as part of the fake/local
+  end-to-end dry run.
 
 Daily reports include workflow summary, candidates/signals, AI stats, decisions/rejections,
 execution intents, orders/fills/positions, protective stops, reconciliation status, incidents,
@@ -42,6 +48,12 @@ Current reporting tests:
 
 ```bash
 uv run --group dev pytest tests/unit/test_reporting.py tests/unit/test_reporting_activities.py
+```
+
+Dry-run report coverage is included in:
+
+```bash
+uv run --group dev pytest tests/unit/test_paper_dry_run_orchestration.py
 ```
 
 These tests are fixture/local tests only. They are not paper trading evidence.

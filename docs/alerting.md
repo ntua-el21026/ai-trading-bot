@@ -5,6 +5,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 Milestone 15 adds alerting contracts and fake/fail-closed adapters. Default tests and default
 activity wiring do not send Telegram, email, broker, AI/news, or other network messages.
 
+Milestone 16 uses `FakeAlertAdapter` inside the fake/local paper dry-run path to capture order,
+fill, incident, and report-generated alerts. No real alert delivery is enabled.
+
 ## Implemented
 
 - `packages/alerting/models.py` defines alert severity, channels, categories, messages, dispatch
@@ -16,6 +19,8 @@ activity wiring do not send Telegram, email, broker, AI/news, or other network m
   Telegram/email adapter skeletons.
 - `apps/workers/app/activities/reporting.py` exposes alert dispatch, incident-alert, and
   report-alert Temporal activity boundaries.
+- `packages/paper/dry_run.py` captures fake dry-run alerts through `AlertRouter` and
+  `FakeAlertAdapter`.
 
 ## Adapter Policy
 
@@ -38,6 +43,7 @@ Alerting does not:
 - call AI/news providers;
 - expose frontend secrets;
 - start paper trading operations.
+- call external alert services during dry-run orchestration.
 
 ## Tests
 

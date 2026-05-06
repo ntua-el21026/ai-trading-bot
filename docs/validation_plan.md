@@ -2,12 +2,13 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 15 adds
-report generation, alerting contracts, fake alert adapters, and ledger-backed dashboard read models
-using fixture/local data by default. It does not validate real Alpaca paper credentials, real
-AI/news provider credentials, managed Postgres/Supabase runtime connectivity, real alert delivery,
-production dashboard deployment, live Temporal replay behavior, paper trading operations, live
-trading, or profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 16 adds
+fake/local end-to-end paper dry-run orchestration using fixture data, local ledger repositories,
+fake broker behavior, neutral/fake AI output, fake alerts, report generation, and dashboard read
+models. It does not validate real Alpaca paper credentials, real AI/news provider credentials,
+managed Postgres/Supabase runtime connectivity, real alert delivery, production dashboard
+deployment, live Temporal replay behavior, actual paper trading operations, live trading, or
+profitability.
 
 ## Foundation Checks
 
@@ -39,6 +40,9 @@ trading, or profitability.
 - Daily/weekly report generation, stable Markdown rendering, report persistence, alert routing,
   fake alert capture, fail-closed Telegram/email skeletons, dashboard read models, and reporting
   activities are fixture-tested without external alert delivery or managed database credentials.
+- Fake/local end-to-end paper dry-run orchestration is tested for happy path, risk rejection,
+  duplicate active intent, broker ambiguity, missing protective stops, reconciliation mismatches,
+  partial fills, invalid-AI neutral fallback, report/dashboard output, and CLI safety behavior.
 - REST fallback snapshot construction is fixture-tested with the 30-second spec interval.
 - Reconciliation comparison is fixture-tested for clean state, missing/extra positions, missing protective stops, duplicate open entry orders, unexpected short positions, unsupported broker asset classes, unknown open broker orders, missing fills, quantity mismatch, average-price mismatch, account-equity mismatch, stale snapshots, and Temporal workflow inconsistency.
 - Incident severity, pause-new-risk recommendations, and flatten-if-safe recommendations are fixture-tested.
@@ -93,6 +97,7 @@ trading, or profitability.
 | Reconciliation | `tests/unit/test_reconciliation.py`, `tests/unit/test_failure_simulations.py` |
 | AI schema, fallback, scoring, persistence | `tests/unit/test_ai_news.py`, `tests/unit/test_ai_parser.py`, `tests/unit/test_ai_scoring.py`, `tests/unit/test_ai_persistence.py`, `tests/unit/test_failure_simulations.py` |
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py` |
+| Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
 | Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py` |
 | Validation harness assumptions | `tests/unit/test_validation_harness.py` |
@@ -145,6 +150,11 @@ submissions, absence of external calls, and safe live/autonomous runtime flags.
 Paper dry-run checks are operational contract validation, not proof of profitability or live
 readiness.
 
+`packages/paper/` now provides an executable fake/local dry-run service that persists ledger
+evidence, uses `FakeAlpacaClient`, captures fake alerts, generates a daily report, and builds a
+dashboard snapshot. `scripts/run_paper_dry_run.py` runs this path in fake/local mode only and does
+not submit broker orders or call external services.
+
 ## Paper Operations Evidence
 
 `docs/paper_trading_runbook.md` defines the target paper operating procedure, monitoring checklist,
@@ -152,10 +162,11 @@ incident response flow, report expectations, frozen paper acceptance criteria, a
 handoff gates.
 
 Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
-but still needs explicit real Alpaca paper smoke tests, managed database runtime connectivity, real
-Temporal query/signal backend integration, real Temporal test-server/replay evidence, real AI/news
-provider integration, real dashboard deployment, real alert delivery, and controlled paper runs
-before these gates can be satisfied.
+fake/local paper dry-run orchestration, and local ledger evidence, but still needs explicit real
+Alpaca paper smoke tests, managed database runtime connectivity, real Temporal query/signal backend
+integration, real Temporal test-server/replay evidence, real AI/news provider integration, real
+dashboard deployment, real alert delivery, and controlled paper runs before these gates can be
+satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 

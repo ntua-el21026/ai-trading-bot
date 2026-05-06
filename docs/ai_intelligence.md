@@ -33,6 +33,8 @@ AI cannot:
   local/fake Temporal activity boundary without calling AI/news providers.
 - Milestone 14 broker activity boundaries do not grant AI broker access. AI still has no order
   submission, order modification, stop modification, or broker credential path.
+- Milestone 16 paper dry-run orchestration uses neutral/fake AI fallback output only and persists it
+  through the local ledger. It does not call AI or news providers.
 
 ## Fallback Policy
 
@@ -48,9 +50,9 @@ global kill switch by itself.
 ## Deferred Work
 
 Real news provider clients, real AI provider clients, managed database runtime integration,
-production dashboard deployment, and paper/live validation remain deferred. Tests use fixtures only
-and require no API keys or network calls. Milestone 08 dashboard contracts can display AI output read
-models but do not call AI providers from frontend code.
+production dashboard deployment, and paper/live validation remain deferred. Tests and the Milestone
+16 dry run use fixtures only and require no API keys or network calls. Dashboard contracts can
+display AI output read models but do not call AI providers from frontend code.
 
 ## Level 4 Readiness Evidence
 

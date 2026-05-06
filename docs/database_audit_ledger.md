@@ -12,6 +12,11 @@ future ledger persistence. Managed Postgres/Supabase runtime wiring is still def
 Milestone 15 adds report generation/persistence helpers and ledger-backed dashboard read-model
 queries. It does not add managed Postgres/Supabase runtime wiring or external alert delivery.
 
+Milestone 16 uses the local ledger repository for fake/local paper dry-run evidence persistence.
+It persists fixture raw payloads, candidates, AI outputs, decisions, risk checks, execution
+intents, fake broker orders/fills/positions, reconciliation results, system events/incidents, and
+daily reports without requiring `DATABASE_URL`.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -36,6 +41,8 @@ Implemented:
 - Unit tests for report persistence and dashboard read models:
   - `tests/unit/test_reporting.py`
   - `tests/unit/test_dashboard_read_models.py`
+- Unit tests for fake/local dry-run ledger evidence:
+  - `tests/unit/test_paper_dry_run_orchestration.py`
 - Safe Temporal ledger activity contracts and tests:
   - `apps/workers/app/activities/models.py`
   - `apps/workers/app/activities/ledger.py`
@@ -117,6 +124,8 @@ Activity implementations call only these repository boundaries and local/fake SQ
 Reporting helpers persist generated daily/weekly report payloads through the same repository
 boundary. Dashboard read models use repository reads only and do not call broker, AI/news, alert, or
 Temporal clients.
+Paper dry-run orchestration uses the same local repository boundary for end-to-end fake evidence
+and still avoids managed Postgres/Supabase runtime access by default.
 
 ## Local Test Strategy
 
@@ -146,8 +155,8 @@ Milestones 12-14 do not:
 - connect Temporal activities to real managed Postgres/Supabase runtime writes;
 - deploy a dashboard;
 - implement real alert delivery;
-- start paper trading operations.
+- start actual paper trading operations.
 
 Paper trading still requires real managed database integration, explicit Alpaca paper smoke-test
 evidence, provider integration, real alert delivery, deployed dashboard evidence, Temporal
-test-server/replay evidence, and operational dry-run evidence.
+test-server/replay evidence, and controlled paper-operation evidence.

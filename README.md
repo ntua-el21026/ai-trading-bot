@@ -10,8 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 15 reporting, alerting, and dashboard backend/read-model
-foundation with fake/local defaults.
+This repository is at Milestone 16 fake/local end-to-end paper dry-run orchestration with
+fake/local defaults.
 
 Implemented pieces:
 
@@ -50,6 +50,12 @@ Implemented pieces:
   adapter skeletons under `packages/alerting/`
 - reporting/alerting/dashboard Temporal activity contracts that use local ledger repositories and
   fake alert adapters by default
+- fake/local paper dry-run orchestration under `packages/paper/` that exercises fixture data,
+  candidate persistence, neutral/fake AI output, deterministic risk checks, execution-intent
+  creation, fake broker submit/fill/protective-stop verification, reconciliation, fake alerts,
+  daily report generation, and dashboard/read-model snapshots
+- safe CLI entry point `scripts/run_paper_dry_run.py` that defaults to fake/local mode and submits
+  no broker orders
 - REST fallback snapshot contracts using the spec's 30-second fallback interval
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations
@@ -97,7 +103,7 @@ Implemented pieces:
 
 Not implemented yet:
 
-- end-to-end paper trading orchestration
+- actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
 - real Alpaca paper smoke-test evidence
 - real news provider integration
@@ -163,6 +169,18 @@ Run Milestone 15 reporting, alerting, and dashboard read-model tests:
 uv run --group dev pytest tests/unit/test_reporting*.py tests/unit/test_alerting*.py tests/unit/test_dashboard*.py tests/unit/test_control_plane*.py tests/temporal/test_workflow_contracts.py
 ```
 
+Run Milestone 16 fake/local paper dry-run orchestration tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_paper_dry_run*.py tests/unit/test_dry_run*.py
+```
+
+Run the safe fake/local dry-run script:
+
+```bash
+uv run python scripts/run_paper_dry_run.py
+```
+
 Optional local checks once dependencies are installed:
 
 ```bash
@@ -211,6 +229,14 @@ snapshots, rendered deterministically, and persisted through the ledger reposito
 uses fake adapters by default; Telegram/email skeletons fail closed and do not send network
 messages in this milestone. Dashboard read models can be built from ledger repositories, but a real
 dashboard deployment and real Temporal query/signal backend are still deferred.
+
+## Paper Dry-Run Orchestration
+
+Milestone 16 adds `packages/paper/` and `scripts/run_paper_dry_run.py`. The path is fake/local
+only: in-memory SQLite, fixture data, neutral/fake AI output, `FakeAlpacaClient`, fake alerts,
+report generation, and ledger-backed dashboard read models. It does not call Alpaca, AI/news,
+market-data, Telegram/email, managed Postgres/Supabase, or Temporal services, and it submits no
+real paper or live broker orders.
 
 ## Level 4 Micro-Live Readiness
 

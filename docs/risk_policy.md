@@ -9,7 +9,9 @@ codes and incident recommendations. It does not submit orders, call a broker, wr
 managed database runtime, or enable live trading. Milestone 13 adds local/fake Temporal ledger
 activities for risk-check and incident persistence. Milestone 14 adds fake-tested paper broker
 boundaries for snapshots, idempotency lookup, protective-stop submit/verify, and ambiguity handling
-without starting paper operations.
+without starting paper operations. Milestone 16 exercises deterministic risk checks in fake/local
+dry-run scenarios, including risk rejection, duplicate active intent, stale data, and
+kill-switch/pause-new-risk inputs, without enabling autonomous execution in config.
 
 ## Foundation Defaults
 
@@ -64,6 +66,8 @@ or mutate kill-switch state directly.
 
 Milestone 14 fake broker snapshots can feed the reconciliation comparison service. These tests are
 contract validation only; they are not broker paper evidence and do not prove live readiness.
+Milestone 16 fake/local dry-run scenarios persist reconciliation mismatches and missing-stop
+incidents through the local ledger, still without real broker calls.
 
 ## AI Risk Intelligence Input
 
@@ -114,9 +118,9 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 
 Later milestones must connect these contracts to end-to-end Temporal execution workflows, explicit
 Alpaca paper smoke tests, and managed database audit persistence. The ledger foundation now provides
-schema, local repository support, and local/fake Temporal activity boundaries for future risk-check
-and incident persistence. Any change to risk limits or risk semantics requires explicit approval and
-a corresponding spec update.
+schema, local repository support, local/fake Temporal activity boundaries, and fake/local dry-run
+evidence for risk-check and incident persistence. Any change to risk limits or risk semantics
+requires explicit approval and a corresponding spec update.
 
 ## Level 4 Readiness Status
 

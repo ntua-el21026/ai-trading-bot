@@ -6,7 +6,7 @@ intelligence, reporting/alerting, dashboard/control-plane, validation/testing, p
 and Level 4 readiness documentation boundary architecture.
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current
-repository implementation is limited to Milestones 00-15 scaffolding and local/fake integration
+repository implementation is limited to Milestones 00-16 scaffolding and local/fake integration
 foundation: project metadata, safe configuration defaults, typed config loading, structured logging
 helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal
 backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests,
@@ -15,8 +15,8 @@ repositories, paper-only Alpaca broker boundaries using fake clients by default,
 strategy/regime/signal helpers, passive risk/execution-core contracts, normalized broker models,
 pure reconciliation comparison, bounded AI/news intelligence contracts, pure report generation,
 fake-safe alert contracts, ledger-backed dashboard read models, dashboard/control-plane read/action
-contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live
-readiness documentation.
+contracts, validation/testing contracts, fake/local paper dry-run orchestration, paper trading
+runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -84,7 +84,14 @@ readiness documentation.
 - `apps/api/app/control_plane.py` maps safe backend control requests to existing Temporal signal
   names and exposes a helper for ledger-backed dashboard snapshots. It does not call broker
   adapters, AI/news providers, alert services, or browser-side Temporal paths.
-- `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No frontend framework or deployment files are added.
+- `packages/paper/` coordinates a fake/local end-to-end paper dry run with fixture data, neutral or
+  fake AI output, deterministic risk checks, ledger persistence, `FakeAlpacaClient` entry/fill/stop
+  behavior, reconciliation, fake alerts, daily report generation, and dashboard/read-model
+  snapshots.
+- `scripts/run_paper_dry_run.py` runs the fake/local dry run and prints the explicit warning that
+  no broker orders are submitted.
+- `apps/dashboard/` is a minimal dashboard scaffold with safe public environment selection only. No
+  frontend framework or deployment files are added.
 - Validation contracts under `packages/validation/` define the spec-required backtest split, benchmark,
   fee/slippage, ablation, Monte Carlo placeholder, failure-simulation, and paper dry-run check
   assumptions. They are deterministic contracts only and do not run live or paper broker orders.
@@ -98,7 +105,7 @@ readiness documentation.
 - No production worker deployment is implemented.
 - No production dashboard UI is implemented.
 - No real alert delivery is implemented.
-- No end-to-end paper trading orchestration is implemented.
+- No actual paper trading operations with real broker/provider side effects are implemented.
 - No Alpaca SDK-backed runtime wiring or real paper smoke-test evidence is implemented.
 - No managed Postgres/Supabase runtime connection or migration execution is implemented.
 - No real managed Postgres/Supabase activity wiring is implemented.
