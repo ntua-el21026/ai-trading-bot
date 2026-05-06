@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the current foundation, data/backtest, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
+This document describes the current foundation, data/backtest, database/audit-ledger, Temporal skeleton, deterministic strategy, risk/execution-core, broker-reconciliation, AI/news intelligence, dashboard/control-plane, validation/testing, paper-operations, and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 11 scaffolding: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current repository implementation is limited to Milestone 12 scaffolding and local persistence foundation: project metadata, safe configuration defaults, typed config loading, structured logging helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests, Temporal workflow/worker skeletons, deterministic strategy/regime/signal helpers, passive risk/execution-core contracts, broker adapter contracts, normalized broker models, pure reconciliation comparison, bounded AI/news intelligence contracts, dashboard/control-plane read/action contracts, validation/testing contracts, paper trading runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -20,6 +20,10 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - Feature utilities calculate daily returns, SMA, EMA, ATR14, ATR percent, volume averages, volume ratios, highs, dollar volume, and RS63 inputs.
 - Universe filters support live and research universe scaffolding with point-in-time optimism warnings.
 - Backtesting utilities support explicit fixture signals, basic mark-to-market equity, and validation metrics.
+- `db/migrations/0001_initial_audit_ledger.sql` defines the initial Postgres/Supabase audit-ledger
+  schema for all core spec section 19 tables.
+- `packages/ledger/` defines local schema helpers, typed ledger records, repository protocols, and a
+  SQLite repository implementation for deterministic tests without managed database credentials.
 - Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, placeholder activity contracts, signal names, query names, and retry-policy contracts exist.
 - Regime classification implements deterministic `RISK_ON`, `CAUTION`, and `RISK_OFF` states from SPY SMA/realized-volatility rules.
 - Strategy candidate evaluation implements long-only trend, breakout, volume, RS63, ATR percent, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates.
@@ -51,7 +55,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 - No production dashboard UI is implemented.
 - No broker-executable order submission is implemented.
 - No real Alpaca SDK/client integration is implemented.
-- No database schema or migration is implemented.
+- No managed Postgres/Supabase runtime connection or migration execution is implemented.
+- No Temporal activity writes to the database ledger yet.
 - No real AI/news provider integration is implemented.
 - No real Temporal query/signal backend integration is implemented.
 - Temporal schedules are not activated.

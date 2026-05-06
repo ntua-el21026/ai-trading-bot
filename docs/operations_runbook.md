@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 11 does not implement production services, active schedules, real broker clients, real AI/news provider clients, real Temporal query/signal backend integration, alerts, reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, and Level 4 readiness documentation with incident/fallback recommendations.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 12 does not implement production services, active schedules, real broker clients, real AI/news provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend integration, alerts, reports, paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive broker/reconciliation, AI/news, dashboard/control-plane, validation/testing contracts, paper trading operations documentation, Level 4 readiness documentation with incident/fallback recommendations, and a local database/audit-ledger foundation.
 
 ## Current Foundation Operations
 
@@ -34,10 +34,25 @@ AI/news intelligence is currently a fixture-safe contract:
 3. Build a versioned prompt and validate strict AI JSON output.
 4. Fall back to neutral behavior for no news, invalid JSON, schema violations, provider outages, or
    insufficient data.
-5. Persist only payload contracts for future database integration.
+5. Persist only payload contracts for future managed database integration.
 
-No current operation calls AI providers, news providers, broker APIs, or databases. AI has no broker
-credentials and cannot create or modify orders, stops, strategy rules, risk limits, or kill switches.
+No current operation calls AI providers, news providers, broker APIs, or managed databases. AI has no
+broker credentials and cannot create or modify orders, stops, strategy rules, risk limits, or kill
+switches.
+
+## Current Ledger Operations
+
+Database/audit-ledger behavior is currently a local persistence foundation:
+
+1. Review Postgres-target DDL in `db/migrations/0001_initial_audit_ledger.sql`.
+2. Use `packages.ledger.connect_in_memory_sqlite()` only for local deterministic tests.
+3. Use `SQLiteLedgerRepository` against an explicit SQLite connection; it does not read
+   `DATABASE_URL`.
+4. Preserve raw provider payloads, raw AI prompt/output hashes, execution intent IDs, client order
+   IDs, broker snapshots, system events, and report payloads when exercising repository tests.
+
+No current operation opens a managed Postgres/Supabase connection, runs production migrations, writes
+from Temporal activities to the ledger, or requires real database credentials.
 
 ## Current Dashboard Operations
 
@@ -105,6 +120,7 @@ records. They do not enable live trading or autonomous live execution.
 ## Future Operations Scope
 
 Later milestones must implement real worker startup, Temporal schedules, paper trading procedures,
-real broker credential setup, real AI/news provider setup, database-backed reconciliation and AI
-research persistence, real Temporal query/signal backend integration, dashboard deployment,
-alerting, evidence collection, and Level 4 micro-live readiness gates.
+real broker credential setup, real AI/news provider setup, managed database-backed reconciliation and
+AI research persistence, Temporal activities connected to ledger repositories, real Temporal
+query/signal backend integration, dashboard deployment, alerting, evidence collection, and Level 4
+micro-live readiness gates.

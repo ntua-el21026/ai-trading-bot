@@ -27,6 +27,8 @@ AI cannot:
 - `packages/ai/fallback.py` defines neutral no-news, provider-outage, and conflicting-source fallback contracts.
 - `packages/ai/scoring.py` implements deterministic recency/source/event scoring, hard-block classification, and non-increasing size multipliers.
 - `packages/ai/persistence.py` defines raw prompt/output persistence payload contracts with audit hashes.
+- `packages/ledger/repositories.py` can persist AI research output payloads locally in repository
+  tests without calling AI/news providers or managed databases.
 
 ## Fallback Policy
 
@@ -41,10 +43,10 @@ global kill switch by itself.
 
 ## Deferred Work
 
-Real news provider clients, real AI provider clients, database persistence/migrations, production
-dashboard deployment, and paper/live validation remain deferred. Tests use fixtures only and require
-no API keys or network calls. Milestone 08 dashboard contracts can display AI output read models but
-do not call AI providers from frontend code.
+Real news provider clients, real AI provider clients, managed database runtime integration,
+production dashboard deployment, and paper/live validation remain deferred. Tests use fixtures only
+and require no API keys or network calls. Milestone 08 dashboard contracts can display AI output read
+models but do not call AI providers from frontend code.
 
 ## Level 4 Readiness Evidence
 

@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 11 Level 4 micro-live readiness documentation.
+This repository is at Milestone 12 database/audit-ledger foundation.
 
 Implemented pieces:
 
@@ -48,6 +48,12 @@ Implemented pieces:
 - deterministic AI event scoring, hard-block classification, and non-increasing size-multiplier
   helpers
 - raw prompt/output persistence payload contracts with audit hashes
+- Postgres-oriented audit-ledger migration under `db/migrations/`
+- local `packages/ledger/` schema, typed records, and SQLite repository implementation for
+  deterministic tests without managed database credentials
+- ledger tables for symbols, raw payloads, OHLCV, features, regimes, candidates, AI outputs,
+  decisions, risk checks, execution intents, orders, fills, positions, reconciliations, system
+  events, and reports
 - Temporal AI/news activity boundaries that perform no external calls
 - dashboard/control-plane read models for system state, workflows, intents, orders, positions,
   incidents, reconciliation, kill switch, candidates/signals, AI outputs, reports, and risk status
@@ -76,7 +82,8 @@ Not implemented yet:
 - real Alpaca SDK/client integration
 - real news provider integration
 - real AI provider integration
-- database migrations or durable ledger persistence
+- managed Postgres/Supabase runtime connection or migration execution
+- Temporal activities that write to the database ledger
 - production dashboard UI/deployment
 - real Temporal query/signal backend integration
 - actual paper trading operations
@@ -111,6 +118,12 @@ Run the Milestone 09 validation-focused tests:
 uv run --group dev pytest tests/unit/test_validation_harness.py tests/unit/test_failure_simulations.py tests/unit/test_paper_dry_run.py tests/temporal/test_workflow_contracts.py
 ```
 
+Run Milestone 12 ledger tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_ledger*.py
+```
+
 Optional local checks once dependencies are installed:
 
 ```bash
@@ -140,8 +153,8 @@ Milestone 10 adds paper trading operating documentation only:
 - `docs/templates/paper_incident_report_template.md`
 
 The runbook is target-state operational readiness documentation. It does not mean real provider
-integrations, database persistence, paper broker execution, alerting, dashboard deployment, or live
-trading are complete.
+integrations, managed database runtime integration, paper broker execution, alerting, dashboard
+deployment, or live trading are complete.
 
 ## Level 4 Micro-Live Readiness
 
@@ -154,11 +167,11 @@ Milestone 11 adds readiness documentation only:
 - `docs/templates/level4_micro_live_go_no_go_template.md`
 
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
-real provider integrations, database/audit persistence, real Temporal query/signal backend
+real provider integrations, managed database runtime integration, real Temporal query/signal backend
 integration, real dashboard deployment, alerting, and live go/no-go approval.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Broker, AI, and control-plane methods are protocol/skeleton boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute broker or AI/news provider calls. Ledger tests use local in-memory SQLite and do not require `DATABASE_URL` or managed Postgres/Supabase credentials. Broker, AI, ledger, and control-plane methods remain protocol or repository boundaries until later milestones wire explicitly configured providers through server-side Temporal activities or API services.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

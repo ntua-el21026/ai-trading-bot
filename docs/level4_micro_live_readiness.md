@@ -2,9 +2,9 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 11 prepares readiness documentation and evidence gates only. It does not enable live
-trading, autonomous live execution, live credentials, broker API calls, paper or live orders,
-production schedules, expanded Level 4, or Level 5.
+Milestone 12 adds a local database/audit-ledger foundation while preserving the readiness boundary.
+It does not enable live trading, autonomous live execution, live credentials, broker API calls, paper
+or live orders, production schedules, expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -21,7 +21,7 @@ authorization.
 - Do not enable live trading.
 - Do not enable autonomous live execution.
 - Do not add paper or live credentials.
-- Do not call Alpaca, AI/news providers, databases, or production services.
+- Do not call Alpaca, AI/news providers, managed databases, or production services.
 - Do not submit broker orders.
 - Do not change risk limits, autonomy level, execution policy, stop policy, kill-switch behavior,
   allowed assets, strategy defaults, or AI authority boundaries.
@@ -34,10 +34,11 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-10 are complete.
+- Milestones 00-12 are complete.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
-- Database persistence/migrations are absent.
+- Database/audit-ledger foundation exists locally; managed Postgres/Supabase runtime integration is
+  absent.
 - Real Temporal query/signal backend integration is deferred.
 - Real broker/AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
@@ -47,7 +48,8 @@ Known status:
 
 Hard blockers:
 
-- No real database/audit ledger implementation.
+- No managed database runtime, migration execution evidence, or Temporal database-writing activity
+  evidence.
 - No real Alpaca paper client integration or paper execution evidence.
 - No real AI/news provider integration evidence.
 - No real Temporal query/signal backend evidence.
@@ -199,8 +201,9 @@ Required evidence:
 - Order fill not recorded internally detection.
 - Temporal workflow state inconsistent with DB/order state detection.
 
-Current status: deterministic reconciliation contracts and fixture tests exist. Real broker stream,
-REST fallback, database ledger, and Temporal/DB consistency evidence are pending.
+Current status: deterministic reconciliation contracts and fixture tests exist, and local ledger
+schema/repository foundations exist. Real broker stream, REST fallback, managed database runtime, and
+Temporal/DB consistency evidence are pending.
 
 ## Protective Stop Evidence
 
@@ -229,8 +232,9 @@ Required evidence:
 - Duplicate active intent is rejected.
 - Zero duplicate-order incidents during frozen paper.
 
-Current status: passive idempotency helpers, duplicate-intent checks, and lifecycle contracts exist.
-Real broker/database idempotency evidence is pending.
+Current status: passive idempotency helpers, duplicate-intent checks, lifecycle contracts, and local
+ledger uniqueness constraints exist. Real broker and managed database idempotency evidence is
+pending.
 
 ## AI Schema Evidence
 

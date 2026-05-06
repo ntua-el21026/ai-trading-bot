@@ -6,7 +6,9 @@ Milestone 06 implements passive execution-core and broker-reconciliation contrac
 `ExecutionIntent`, client-order idempotency helpers, order lifecycle transition validation,
 structured rejection models, broker adapter protocols, normalized broker state models, Alpaca
 `trade_updates` mapping, and pure reconciliation comparison. It does not implement executable broker
-order submission, database persistence, live trading, or real Temporal order execution behavior.
+order submission, Temporal database-writing activities, live trading, or real Temporal order
+execution behavior. Milestone 12 adds database/audit-ledger schema and local repository foundations
+for later execution persistence.
 
 ## Foundation Defaults
 
@@ -50,8 +52,10 @@ order submission, database persistence, live trading, or real Temporal order exe
 {strategy}-{symbol}-{side}-{trade_date}-{intent_seq}-{short_hash}
 ```
 
-The helper also provides duplicate active-intent detection. Broker and database lookup before retry
-remain deferred to broker reconciliation and execution milestones.
+The helper also provides duplicate active-intent detection. The ledger foundation enforces
+`execution_intents.client_order_id_root` uniqueness locally and in the Postgres-target schema.
+Broker lookup before retry and managed database runtime evidence remain deferred to broker
+reconciliation and execution milestones.
 
 ## Order Lifecycle Abstractions
 

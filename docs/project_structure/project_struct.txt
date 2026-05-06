@@ -45,6 +45,9 @@ AI_Trading_Bot/
 │   ├── system.yaml
 │   ├── temporal.yaml
 │   └── universe.yaml
+├── db/
+│   └── migrations/
+│       └── 0001_initial_audit_ledger.sql
 ├── docs/
 │   ├── ai_deep_research/
 │   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 1).md
@@ -93,10 +96,12 @@ AI_Trading_Bot/
 │   ├── ai_intelligence.md
 │   ├── architecture.md
 │   ├── dashboard_control_plane.md
+│   ├── database_audit_ledger.md
 │   ├── execution_policy.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
 │   ├── paper_trading_runbook.md
+│   ├── post_milestone_11_audit.md
 │   ├── risk_policy.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
@@ -139,6 +144,12 @@ AI_Trading_Bot/
 │   │   ├── models.py
 │   │   ├── order_lifecycle.py
 │   │   └── rejections.py
+│   ├── ledger/
+│   │   ├── __init__.py
+│   │   ├── connection.py
+│   │   ├── models.py
+│   │   ├── repositories.py
+│   │   └── schema.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -186,6 +197,8 @@ AI_Trading_Bot/
 │       ├── test_features.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
+│       ├── test_ledger_repositories.py
+│       ├── test_ledger_schema.py
 │       ├── test_paper_dry_run.py
 │       ├── test_position_sizing.py
 │       ├── test_reconciliation.py
@@ -205,4 +218,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 35, Total files: 171
+Total directories: 38, Total files: 181

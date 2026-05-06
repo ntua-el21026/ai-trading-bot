@@ -5,8 +5,8 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 Milestone 06 implements deterministic risk-check contracts, position sizing, kill-switch state
 models, and passive broker reconciliation inputs. The implementation is passive: it approves or
 rejects proposed new-risk entries, compares broker/internal snapshots, and returns structured reason
-codes and incident recommendations. It does not submit orders, call a broker, write a database, or
-enable live trading.
+codes and incident recommendations. It does not submit orders, call a broker, write from Temporal to
+the database, or enable live trading.
 
 ## Foundation Defaults
 
@@ -107,12 +107,14 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 ## Future Work
 
 Later milestones must connect these contracts to Temporal execution workflows, real Alpaca paper
-adapters, and database audit persistence. Any change to risk limits or risk semantics requires
-explicit approval and a corresponding spec update.
+adapters, and managed database audit persistence. The ledger foundation now provides schema and
+local repository support for future risk-check and incident persistence. Any change to risk limits
+or risk semantics requires explicit approval and a corresponding spec update.
 
 ## Level 4 Readiness Status
 
 `docs/level4_micro_live_readiness.md` documents the current Level 4 micro-live risk config review.
 The current `risk_level_4_micro_live` values match the latest spec, while live trading and
 autonomous live execution remain disabled. Level 4 readiness is not satisfied because frozen paper,
-real broker/provider, database, dashboard, alerting, and go/no-go evidence are still absent.
+real broker/provider, managed database runtime, dashboard, alerting, and go/no-go evidence are still
+absent.

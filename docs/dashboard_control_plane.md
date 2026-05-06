@@ -59,7 +59,7 @@ Dashboard/frontend code may only expose explicitly safe public values. It must n
 credentials, AI/news provider keys, privileged database URLs, or Temporal API keys.
 
 Current implementation does not add Vercel deployment files, frontend dependencies, real Temporal
-clients, database persistence, or production dashboard deployment.
+clients, database-backed read-model providers, or production dashboard deployment.
 
 ## Level 4 Readiness Evidence
 

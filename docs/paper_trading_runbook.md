@@ -2,9 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 10 defines paper trading operating procedures and acceptance gates only. The repository
-still does not implement actual paper trading operations, real Alpaca paper client integration,
-database persistence, real AI/news provider calls, production dashboard deployment, or live trading.
+Milestone 12 adds a local database/audit-ledger foundation, while paper trading remains disabled.
+The repository still does not implement actual paper trading operations, real Alpaca paper client
+integration, managed database runtime integration, real AI/news provider calls, production dashboard
+deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -28,9 +29,10 @@ frozen, versioned, reproducible, and operationally clean.
 ## Current Implementation Status
 
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
-for broker reconciliation, AI/news validation, control-plane actions, failure simulation, and paper
-dry-run checks. It does not connect those contracts to real provider clients or durable database
-persistence yet.
+for broker reconciliation, AI/news validation, control-plane actions, failure simulation, paper
+dry-run checks, and local ledger repository tests. It does not connect those contracts to real
+provider clients, managed Postgres/Supabase runtime persistence, or Temporal database-writing
+activities yet.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -42,7 +44,7 @@ Required services by name:
 - Temporal service or Temporal Cloud namespace.
 - Worker process for each required task queue.
 - Alpaca paper account.
-- Database/audit ledger when implemented.
+- Database/audit-ledger foundation and later managed runtime integration.
 - Dashboard/control plane when deployed.
 - Alert channels when implemented.
 - AI/news provider configuration when implemented.
@@ -128,7 +130,7 @@ This procedure is target-state documentation until real services are wired.
 4. Confirm worker registration and task queue polling.
 5. Confirm dashboard/control-plane read models load from safe backend contracts.
 6. Confirm broker paper account mode through server-side broker activity once implemented.
-7. Confirm database/audit ledger connectivity once implemented.
+7. Confirm managed database/audit-ledger connectivity once implemented.
 8. Confirm alert channel delivery once implemented.
 9. Run forced reconciliation before allowing new paper risk once real broker state is connected.
 10. Record config version, code commit, spec version, and operator.
@@ -199,7 +201,7 @@ readiness and expected future operations, not active trading capability.
 
 - Finalize EOD bars.
 - Compute features, regime, deterministic candidates, and rejection reasons.
-- Persist signal/candidate artifacts once database persistence exists.
+- Persist signal/candidate artifacts once managed database runtime integration exists.
 - Record optimism warnings if point-in-time universe membership is unavailable.
 
 ### 16:30-17:00 - AIShortlistResearchWorkflow
@@ -364,7 +366,7 @@ future approved validation policy says otherwise.
 
 Before micro-live readiness review, collect and approve:
 
-- real database/audit persistence implementation and migration evidence;
+- managed database/audit persistence implementation and migration execution evidence;
 - real Temporal query/signal backend integration;
 - real Alpaca paper client integration and broker paper evidence;
 - real AI/news provider integration and schema-validity evidence;
