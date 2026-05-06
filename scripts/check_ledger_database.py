@@ -10,6 +10,7 @@ from packages.ledger.runtime import (
     LedgerRuntimeError,
     check_postgres_ledger_schema,
     connect_runtime_postgres,
+    require_managed_db_tests_enabled,
 )
 
 
@@ -26,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         config = LedgerDatabaseConfig.from_env()
+        require_managed_db_tests_enabled()
     except LedgerRuntimeError as exc:
         print(f"Refusing database check: {exc}", file=sys.stderr)
         return 2
@@ -45,7 +47,16 @@ def main(argv: list[str] | None = None) -> int:
             print(f"table={table_name}")
 
     if not result.ok:
-        print(f"Missing expected tables: {', '.join(result.missing_tables)}", file=sys.stderr)
+        if result.missing_tables:
+            print(f"Missing expected tables: {', '.join(result.missing_tables)}", file=sys.stderr)
+        if result.missing_unique_constraints:
+            print(
+                "Missing expected unique constraints: "
+                f"{', '.join(result.missing_unique_constraints)}",
+                file=sys.stderr,
+            )
+        if result.missing_indexes:
+            print(f"Missing expected indexes: {', '.join(result.missing_indexes)}", file=sys.stderr)
         return 1
 
     print("Ledger schema check passed.")

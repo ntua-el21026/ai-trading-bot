@@ -553,3 +553,29 @@ managed Postgres with fixture records, real Temporal test-server/replay evidence
 smoke tests, real AI/news provider integrations, real alert delivery, deployed dashboard evidence,
 actual paper trading operations, frozen paper evidence, and go/no-go approval. Live trading remains
 disabled.
+
+## Post-Milestone 18 Status Update
+
+Milestone 18 adds managed Postgres/Supabase migration and repository CRUD validation scaffolding
+without running managed database operations in this environment:
+
+- `packages/ledger/runtime.py` now defines explicit managed DB operation gates:
+  `RUN_MANAGED_DB_TESTS=1` and `LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE` for migration
+  application.
+- `scripts/apply_ledger_migrations.py --apply` refuses to run unless the managed DB test gate and
+  migration confirmation gate are both present.
+- `scripts/check_ledger_database.py` refuses to connect unless `RUN_MANAGED_DB_TESTS=1` is present.
+- Schema checks validate expected tables, key uniqueness constraints, and the open-position partial
+  index.
+- `packages/ledger/postgres_repository.py` adds a transaction-scoped Postgres repository for
+  explicit managed runtime CRUD validation.
+- `tests/integration/test_managed_ledger_crud.py` is skipped by default and validates managed CRUD
+  with isolated fixture records inside rollback transactions when explicitly enabled.
+
+This run did not apply migrations, run schema checks against a managed target, or run managed CRUD
+validation because `DATABASE_URL`, `RUN_MANAGED_DB_TESTS=1`, and
+`LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE` were not present. Remaining blockers include actual
+managed Postgres/Supabase migration/schema/CRUD evidence, real Temporal test-server/replay evidence,
+real Alpaca paper smoke tests, real AI/news provider integrations, real alert delivery, deployed
+dashboard evidence, actual paper trading operations, frozen paper evidence, and go/no-go approval.
+Live trading remains disabled.

@@ -32,6 +32,8 @@ def test_apply_migration_script_dry_run_requires_url_but_does_not_connect() -> N
 
     assert completed.returncode == 0
     assert "Mode: dry-run" in completed.stdout
+    assert "RUN_MANAGED_DB_TESTS=1" in completed.stdout
+    assert "LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE" in completed.stdout
     assert "db.supabase.co" in completed.stdout
     assert "s3cr3t" not in completed.stdout
     assert "trader" not in completed.stdout
@@ -54,18 +56,53 @@ def test_check_database_script_rejects_placeholder_database_url_without_leaking_
     assert PLACEHOLDER_RUNTIME_URL not in completed.stderr
 
 
+def test_apply_migration_script_apply_requires_managed_db_and_confirmation_gates() -> None:
+    completed = _run_script(APPLY_SCRIPT, {"DATABASE_URL": VALID_RUNTIME_URL}, "--apply")
+
+    assert completed.returncode == 2
+    assert "RUN_MANAGED_DB_TESTS=1 is required" in completed.stderr
+    assert "s3cr3t" not in completed.stdout
+    assert "s3cr3t" not in completed.stderr
+
+    completed = _run_script(
+        APPLY_SCRIPT,
+        {
+            "DATABASE_URL": VALID_RUNTIME_URL,
+            "RUN_MANAGED_DB_TESTS": "1",
+        },
+        "--apply",
+    )
+
+    assert completed.returncode == 2
+    assert "LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE is required" in completed.stderr
+    assert "s3cr3t" not in completed.stdout
+    assert "s3cr3t" not in completed.stderr
+
+
+def test_check_database_script_requires_managed_db_gate_without_leaking_url() -> None:
+    completed = _run_script(CHECK_SCRIPT, {"DATABASE_URL": VALID_RUNTIME_URL})
+
+    assert completed.returncode == 2
+    assert "RUN_MANAGED_DB_TESTS=1 is required" in completed.stderr
+    assert "s3cr3t" not in completed.stdout
+    assert "s3cr3t" not in completed.stderr
+    assert "trader" not in completed.stdout
+    assert "trader" not in completed.stderr
+
+
 def _run_script(
     script: Path,
     env_overrides: dict[str, str],
+    *args: str,
 ) -> subprocess.CompletedProcess[str]:
     env = {
         key: value
         for key, value in os.environ.items()
-        if key not in {"DATABASE_URL", "RUN_MANAGED_DB_TESTS"}
+        if key not in {"DATABASE_URL", "RUN_MANAGED_DB_TESTS", "LEDGER_MIGRATION_CONFIRM"}
     }
     env.update(env_overrides)
     return subprocess.run(
-        [sys.executable, str(script)],
+        [sys.executable, str(script), *args],
         cwd=ROOT,
         env=env,
         capture_output=True,

@@ -3,10 +3,14 @@ from __future__ import annotations
 import pytest
 
 from packages.ledger.runtime import (
+    LEDGER_MIGRATION_CONFIRM_VALUE,
     LedgerDatabaseConfig,
     LedgerRuntimeError,
     database_target,
+    managed_db_tests_enabled,
     redact_database_url,
+    require_managed_db_tests_enabled,
+    require_migration_apply_confirmation,
     validate_postgres_database_url,
 )
 
@@ -60,3 +64,27 @@ def test_runtime_database_target_is_safe_to_print() -> None:
     assert target.display == "postgresql://db.supabase.co:5432/postgres sslmode=require"
     assert "trader" not in target.display
     assert "s3cr3t" not in target.display
+
+
+def test_managed_database_operations_require_second_opt_in_gate() -> None:
+    assert managed_db_tests_enabled({}) is False
+    assert managed_db_tests_enabled({"RUN_MANAGED_DB_TESTS": "0"}) is False
+    assert managed_db_tests_enabled({"RUN_MANAGED_DB_TESTS": "1"}) is True
+
+    with pytest.raises(LedgerRuntimeError, match="RUN_MANAGED_DB_TESTS=1 is required"):
+        require_managed_db_tests_enabled({})
+
+
+def test_migration_apply_requires_confirmation_gate() -> None:
+    with pytest.raises(LedgerRuntimeError, match="RUN_MANAGED_DB_TESTS=1 is required"):
+        require_migration_apply_confirmation({})
+
+    with pytest.raises(LedgerRuntimeError, match="LEDGER_MIGRATION_CONFIRM"):
+        require_migration_apply_confirmation({"RUN_MANAGED_DB_TESTS": "1"})
+
+    require_migration_apply_confirmation(
+        {
+            "RUN_MANAGED_DB_TESTS": "1",
+            "LEDGER_MIGRATION_CONFIRM": LEDGER_MIGRATION_CONFIRM_VALUE,
+        }
+    )

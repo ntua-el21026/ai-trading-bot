@@ -6,10 +6,15 @@ import argparse
 import sys
 
 from packages.ledger.runtime import (
+    LEDGER_MIGRATION_CONFIRM_ENV_VAR,
+    LEDGER_MIGRATION_CONFIRM_VALUE,
+    RUN_MANAGED_DB_TESTS_ENV_VAR,
+    RUN_MANAGED_DB_TESTS_VALUE,
     LedgerDatabaseConfig,
     LedgerRuntimeError,
     apply_postgres_migration_sql,
     connect_runtime_postgres,
+    require_migration_apply_confirmation,
 )
 from packages.ledger.schema import POSTGRES_MIGRATION_PATH, read_postgres_migration
 
@@ -38,8 +43,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.apply:
         print("Mode: dry-run. Migration SQL was loaded but not executed.")
-        print("Re-run with --apply to execute against the target database.")
+        print(
+            "Re-run with --apply only after setting "
+            f"{RUN_MANAGED_DB_TESTS_ENV_VAR}={RUN_MANAGED_DB_TESTS_VALUE} and "
+            f"{LEDGER_MIGRATION_CONFIRM_ENV_VAR}={LEDGER_MIGRATION_CONFIRM_VALUE}."
+        )
         return 0
+
+    try:
+        require_migration_apply_confirmation()
+    except LedgerRuntimeError as exc:
+        print(f"Refusing migration apply: {exc}", file=sys.stderr)
+        return 2
 
     try:
         with connect_runtime_postgres(config) as connection:

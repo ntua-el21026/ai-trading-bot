@@ -21,6 +21,11 @@ Milestone 17 adds an explicit managed Postgres/Supabase runtime path for migrati
 schema validation. Default tests still use SQLite/fakes and do not require managed database
 credentials.
 
+Milestone 18 adds a Postgres-backed repository for explicit managed CRUD validation, strengthens
+managed database operation gates, and extends schema checks to include key uniqueness/index
+expectations. In this run the managed database gates were absent, so no migration was applied and
+managed CRUD validation was skipped.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -37,6 +42,8 @@ Implemented:
   - `packages/ledger/connection.py`
 - Explicit Postgres/Supabase runtime helpers:
   - `packages/ledger/runtime.py`
+- Explicit Postgres/Supabase repository implementation for opt-in validation:
+  - `packages/ledger/postgres_repository.py`
 - Typed ledger record models:
   - `packages/ledger/models.py`
 - Repository protocols and a local SQLite repository implementation:
@@ -53,6 +60,8 @@ Implemented:
   - `tests/unit/test_database_runtime.py`
   - `tests/unit/test_ledger_connection_runtime.py`
   - `tests/unit/test_migration_runtime.py`
+- Opt-in managed Postgres repository CRUD validation:
+  - `tests/integration/test_managed_ledger_crud.py`
 - Operator-invoked database scripts:
   - `scripts/apply_ledger_migrations.py`
   - `scripts/check_ledger_database.py`
@@ -117,6 +126,10 @@ Runtime database access is explicit and opt-in:
 - `apply_postgres_migration_sql()` executes the checked-in migration against an explicit
   connection.
 - `check_postgres_ledger_schema()` verifies that all expected ledger tables exist.
+- `check_postgres_ledger_schema()` also verifies expected uniqueness constraints and the
+  `positions_one_open_per_symbol` partial index.
+- `PostgresLedgerRepository` uses a caller-supplied psycopg connection for managed runtime CRUD
+  validation and does not auto-commit, allowing rollback-based validation.
 
 Dry-run migration command:
 
@@ -127,21 +140,36 @@ DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py
 Apply command:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py --apply
+RUN_MANAGED_DB_TESTS=1 \
+LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE \
+DATABASE_URL="postgresql://..." \
+  uv run python scripts/apply_ledger_migrations.py --apply
 ```
 
 Schema check command:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/check_ledger_database.py --list-tables
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run python scripts/check_ledger_database.py --list-tables
 ```
 
 Managed DB tests are skipped by default and require both `RUN_MANAGED_DB_TESTS=1` and
 `DATABASE_URL`.
 
+Managed CRUD validation command:
+
+```bash
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run --group dev pytest tests/integration/test_managed_ledger_crud.py
+```
+
+Milestone 18 did not apply migrations or run managed CRUD validation because `DATABASE_URL`,
+`RUN_MANAGED_DB_TESTS=1`, and `LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE` were not present in
+the environment.
+
 ## Repository Boundaries
 
-The local repository supports:
+The local SQLite repository supports:
 
 - raw provider payload insert/get by provider, endpoint, and payload hash;
 - AI research output insert/get with raw prompt/output hashes and parsed payload;
@@ -155,6 +183,10 @@ The local repository supports:
 - active execution intent, open position, recent incident, and latest reconciliation read helpers.
 - report, AI output, candidate, decision, risk-check, order, fill, and reconciliation list helpers
   used by reporting and dashboard read-model services.
+
+The opt-in Postgres repository supports the same core managed CRUD validation path for raw payloads,
+AI outputs, candidates, decisions, risk checks, execution intents, orders, fills, open positions,
+broker reconciliations, system events/incidents, and reports.
 
 Temporal ledger activities support:
 
@@ -184,9 +216,10 @@ SQLite compatibility differences:
 - JSON/JSONB payloads are stored as canonical JSON text in local tests.
 - The checked-in migration remains Postgres-oriented and uses `JSONB`, `TIMESTAMPTZ`, and
   `gen_random_uuid()`.
-- Actual managed Postgres/Supabase migration execution remains operator opt-in and was not run by
-  default tests.
-- Repository CRUD validation against managed Postgres with fixture data remains deferred.
+- Actual managed Postgres/Supabase migration execution remains operator opt-in and was not run in
+  this environment.
+- Repository CRUD validation against managed Postgres with fixture data exists as an opt-in
+  integration test and was skipped in this environment because managed DB gates were absent.
 - Temporal real test-server/replay coverage remains deferred.
 
 ## Safety Boundary

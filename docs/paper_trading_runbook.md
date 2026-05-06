@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 17 adds explicit managed Postgres/Supabase migration and schema-check helpers while paper
-trading remains disabled. The repository still does not implement actual paper trading operations,
-real Alpaca paper smoke-test evidence, actual managed database migration evidence, real AI/news
-provider calls, real alert delivery, production dashboard deployment, or live trading.
+Milestone 18 adds explicit managed Postgres/Supabase migration, schema-check, and repository CRUD
+validation gates while paper trading remains disabled. The repository still does not implement
+actual paper trading operations, real Alpaca paper smoke-test evidence, actual managed database
+migration/schema/CRUD evidence from this environment, real AI/news provider calls, real alert
+delivery, production dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -31,10 +32,11 @@ frozen, versioned, reproducible, and operationally clean.
 This runbook is target/runbook readiness documentation. Current code provides contracts and fixtures
 for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validation, control-plane
 actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
-dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, safe
-local/fake Temporal activity tests, and fake broker activity tests. It does not connect those
-contracts to real provider clients, real alert delivery, managed Postgres/Supabase runtime
-persistence, or actual paper execution orchestration yet.
+dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, opt-in
+managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
+activity tests. It does not connect those contracts to real provider clients, real alert delivery,
+managed Postgres/Supabase runtime persistence in this environment, or actual paper execution
+orchestration yet.
 
 The safe local dry-run command is:
 
@@ -55,7 +57,7 @@ Required services by name:
 - Temporal service or Temporal Cloud namespace.
 - Worker process for each required task queue.
 - Alpaca paper account.
-- Database/audit-ledger foundation and later managed runtime integration.
+- Database/audit-ledger foundation and gated managed runtime validation.
 - Dashboard/control plane when deployed.
 - Alert channels when implemented.
 - AI/news provider configuration when implemented.
@@ -63,6 +65,8 @@ Required services by name:
 Required environment variable names only:
 
 - `DATABASE_URL`
+- `RUN_MANAGED_DB_TESTS`
+- `LEDGER_MIGRATION_CONFIRM`
 - `TEMPORAL_ADDRESS`
 - `TEMPORAL_NAMESPACE`
 - `TEMPORAL_API_KEY`

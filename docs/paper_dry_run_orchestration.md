@@ -110,6 +110,7 @@ The following are still deferred:
 
 - actual Alpaca paper smoke tests;
 - actual managed Postgres/Supabase migration/schema evidence;
+- managed Postgres/Supabase repository CRUD evidence from a target environment;
 - real Temporal test-server/replay integration;
 - real AI/news provider integration;
 - real alert delivery;
@@ -118,5 +119,6 @@ The following are still deferred:
 - frozen paper evidence;
 - Level 4 micro-live readiness.
 
-Milestone 17 adds opt-in Postgres/Supabase migration and schema-check helpers, but the dry-run path
-continues to default to in-memory SQLite and does not require or call managed Postgres/Supabase.
+Milestones 17-18 add opt-in Postgres/Supabase migration, schema-check, and repository CRUD
+validation helpers, but the dry-run path continues to default to in-memory SQLite and does not
+require or call managed Postgres/Supabase.

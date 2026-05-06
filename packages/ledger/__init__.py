@@ -5,6 +5,7 @@ AI/news providers, Temporal, alert services, or managed database APIs.
 """
 
 from packages.ledger.connection import connect_in_memory_sqlite
+from packages.ledger.postgres_repository import PostgresLedgerRepository
 from packages.ledger.repositories import SQLiteLedgerRepository
 from packages.ledger.runtime import (
     LedgerDatabaseConfig,
@@ -17,6 +18,7 @@ __all__ = [
     "EXPECTED_LEDGER_TABLES",
     "LedgerDatabaseConfig",
     "LedgerRuntimeError",
+    "PostgresLedgerRepository",
     "SQLiteLedgerRepository",
     "connect_in_memory_sqlite",
     "connect_runtime_postgres",

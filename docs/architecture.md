@@ -6,7 +6,7 @@ intelligence, reporting/alerting, dashboard/control-plane, validation/testing, p
 and Level 4 readiness documentation boundary architecture.
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current
-repository implementation is limited to Milestones 00-17 scaffolding and local/fake integration
+repository implementation is limited to Milestones 00-18 scaffolding and local/fake integration
 foundation: project metadata, safe configuration defaults, typed config loading, structured logging
 helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal
 backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests,
@@ -16,8 +16,8 @@ strategy/regime/signal helpers, passive risk/execution-core contracts, normalize
 pure reconciliation comparison, bounded AI/news intelligence contracts, pure report generation,
 fake-safe alert contracts, ledger-backed dashboard read models, dashboard/control-plane read/action
 contracts, validation/testing contracts, fake/local paper dry-run orchestration, explicit
-Postgres/Supabase runtime migration/check helpers, paper trading runbook documentation, and Level 4
-micro-live readiness documentation.
+Postgres/Supabase runtime migration/check helpers, opt-in managed repository CRUD validation, paper
+trading runbook documentation, and Level 4 micro-live readiness documentation.
 
 ## Target Shape
 
@@ -40,8 +40,12 @@ micro-live readiness documentation.
 - `packages/ledger/` defines local schema helpers, typed ledger records, repository protocols, and a
   SQLite repository implementation for deterministic tests without managed database credentials.
 - `packages/ledger/runtime.py` defines explicit Postgres/Supabase `DATABASE_URL` validation,
-  redacted target metadata, psycopg connection helpers, migration execution helpers, and expected
-  table schema checks for operator-invoked runtime use.
+  redacted target metadata, managed operation gates, psycopg connection helpers, migration
+  execution helpers, and expected table/uniqueness/index schema checks for operator-invoked runtime
+  use.
+- `packages/ledger/postgres_repository.py` defines a transaction-scoped Postgres repository for
+  opt-in managed CRUD validation and future server-side runtime wiring. It does not auto-commit and
+  does not open connections itself.
 - Temporal SDK dependency, typed client bootstrap, task queue mapping, workflow skeletons, safe
   ledger activity contracts, provider placeholders, signal names, query names, and retry-policy
   contracts exist.
@@ -111,8 +115,9 @@ micro-live readiness documentation.
 - No real alert delivery is implemented.
 - No actual paper trading operations with real broker/provider side effects are implemented.
 - No Alpaca SDK-backed runtime wiring or real paper smoke-test evidence is implemented.
-- No managed Postgres/Supabase migration has been applied by default tests.
-- No managed Postgres/Supabase repository CRUD validation with fixture records is implemented.
+- No managed Postgres/Supabase migration has been applied by default tests or in this environment.
+- Managed Postgres/Supabase repository CRUD validation with fixture records is implemented as an
+  opt-in integration test, but was not run against a managed target in this environment.
 - No real managed Postgres/Supabase activity wiring is implemented.
 - No real AI/news provider integration is implemented.
 - No real Temporal test-server/replay evidence is implemented.

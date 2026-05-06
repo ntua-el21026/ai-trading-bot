@@ -2,9 +2,9 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 17 prepares a managed Postgres/Supabase-compatible runtime path for the audit ledger. It
-does not start actual paper trading, submit broker orders, call external providers, or require real
-credentials in default tests.
+Milestones 17-18 prepare a managed Postgres/Supabase-compatible runtime path for the audit ledger
+and add explicit managed repository CRUD validation. They do not start actual paper trading, submit
+broker orders, call external providers, or require real credentials in default tests.
 
 ## Runtime Target
 
@@ -49,11 +49,17 @@ The runtime helpers reject missing, non-Postgres, and obvious placeholder URLs b
 - `LedgerDatabaseConfig.from_env()` for explicit `DATABASE_URL` loading.
 - `validate_postgres_database_url()` for fail-closed URL validation.
 - `redact_database_url()` and `database_target()` for safe target output.
+- `require_managed_db_tests_enabled()` for the second opt-in managed DB gate.
+- `require_migration_apply_confirmation()` for the migration apply confirmation gate.
 - `connect_runtime_postgres()` for explicit psycopg runtime connections.
 - `apply_postgres_migration_sql()` for migration execution.
-- `check_postgres_ledger_schema()` for expected table validation.
+- `check_postgres_ledger_schema()` for expected table, uniqueness, and index validation.
 
 These helpers do not fall back to SQLite. If `DATABASE_URL` is absent, they fail closed.
+
+`packages/ledger/postgres_repository.py` provides `PostgresLedgerRepository` for explicit runtime
+validation and future server-side wiring. The repository uses a caller-supplied psycopg connection
+and does not commit automatically; operator validation can run inside rollback transactions.
 
 ## Applying Migrations
 
@@ -69,22 +75,30 @@ not connect.
 Apply the migration only after confirming the target:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py --apply
+RUN_MANAGED_DB_TESTS=1 \
+LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE \
+DATABASE_URL="postgresql://..." \
+  uv run python scripts/apply_ledger_migrations.py --apply
 ```
 
 The script does not print credentials. It does not call brokers, AI/news providers, alert services,
 Temporal schedules, or dashboard deployment commands.
+
+Milestone 18 was run without `DATABASE_URL`, `RUN_MANAGED_DB_TESTS=1`, or
+`LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE` in the environment, so no managed database
+migration was applied in this run.
 
 ## Checking Schema
 
 After applying migrations, validate expected tables:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/check_ledger_database.py --list-tables
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run python scripts/check_ledger_database.py --list-tables
 ```
 
-The check connects to the supplied Postgres target, verifies the spec-required ledger tables, and
-prints no secrets.
+The check connects to the supplied Postgres target, verifies the spec-required ledger tables and key
+uniqueness/index constraints, and prints no secrets.
 
 ## Opt-In Tests
 
@@ -94,6 +108,18 @@ Default tests skip managed DB checks. To run the managed DB schema check explici
 RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
   uv run --group dev pytest tests/unit/test_ledger_connection_runtime.py -m integration
 ```
+
+To run managed repository CRUD validation after migration application:
+
+```bash
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run --group dev pytest tests/integration/test_managed_ledger_crud.py
+```
+
+The CRUD test inserts isolated fixture records for raw provider payloads, AI outputs, execution
+intents, orders, fills, positions, broker reconciliations, system events/incidents, and reports
+inside a rollback transaction. It verifies uniqueness constraints using savepoints and never
+truncates tables or deletes arbitrary managed DB rows.
 
 Do not run this command with live trading credentials in the environment. The test is read-only
 schema validation, but runtime secrets must still be handled through local env files or a secret
@@ -119,8 +145,8 @@ Milestone 17 does not:
 
 Still deferred:
 
-- actually applying migrations to a managed Supabase/Postgres instance;
-- repository CRUD validation against a managed Postgres runtime with fixture data;
+- applying migrations to a managed Supabase/Postgres instance in this environment;
+- running repository CRUD validation against a managed Postgres runtime in this environment;
 - real Temporal test-server/replay integration;
 - real Alpaca paper smoke tests;
 - real AI/news provider integration;

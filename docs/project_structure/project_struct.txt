@@ -166,6 +166,7 @@ AI_Trading_Bot/
 │   │   ├── __init__.py
 │   │   ├── connection.py
 │   │   ├── models.py
+│   │   ├── postgres_repository.py
 │   │   ├── repositories.py
 │   │   ├── runtime.py
 │   │   └── schema.py
@@ -210,6 +211,8 @@ AI_Trading_Bot/
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
 ├── tests/
+│   ├── integration/
+│   │   └── test_managed_ledger_crud.py
 │   ├── temporal/
 │   │   └── test_workflow_contracts.py
 │   └── unit/
@@ -263,4 +266,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 43, Total files: 221
+Total directories: 44, Total files: 223

@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 17 adds managed Postgres/Supabase runtime preparation while preserving the readiness
-boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
-calls in default tests, real alert delivery, paper or live orders, production schedules, expanded
-Level 4, or Level 5.
+Milestone 18 adds managed Postgres/Supabase migration and repository CRUD validation gates while
+preserving the readiness boundary. It does not enable live trading, autonomous live execution, live
+credentials, real Alpaca calls in default tests, real alert delivery, paper or live orders,
+production schedules, expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -35,12 +35,13 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-17 are complete.
+- Milestones 00-18 are complete as local/offline code and opt-in validation scaffolding.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
-  Postgres/Supabase migration/check helpers exist, but actual managed runtime evidence is absent
-  unless an operator runs the opt-in scripts against a target database.
+  Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist, but actual
+  managed runtime evidence is absent unless an operator runs the gated commands against a target
+  database.
 - Paper-only Alpaca adapter and fake broker activity boundaries exist; real paper smoke-test
   evidence is absent.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
@@ -54,7 +55,7 @@ Known status:
 
 Hard blockers:
 
-- No managed database runtime or migration execution evidence from an actual target database.
+- No managed database runtime migration/schema/CRUD evidence from an actual target database.
 - No real Temporal test-server/replay evidence.
 - No real Alpaca paper smoke-test evidence or paper execution evidence.
 - No controlled real paper operations evidence.
@@ -154,6 +155,8 @@ Variable names only:
 - `ALPACA_SECRET_KEY`
 - `ALPACA_BASE_URL`
 - `DATABASE_URL`
+- `RUN_MANAGED_DB_TESTS`
+- `LEDGER_MIGRATION_CONFIRM`
 - `TEMPORAL_ADDRESS`
 - `TEMPORAL_NAMESPACE`
 - `TEMPORAL_API_KEY`
@@ -209,9 +212,10 @@ Required evidence:
 - Order fill not recorded internally detection.
 - Temporal workflow state inconsistent with DB/order state detection.
 
-Current status: deterministic reconciliation contracts and fixture tests exist, and local ledger
-schema/repository/activity foundations exist. Real broker stream, REST fallback, managed database
-runtime, and Temporal/DB consistency evidence are pending.
+Current status: deterministic reconciliation contracts and fixture tests exist, local ledger
+schema/repository/activity foundations exist, and opt-in managed DB CRUD validation is available.
+Real broker stream, REST fallback, actual managed database runtime evidence, and Temporal/DB
+consistency evidence are pending.
 
 ## Protective Stop Evidence
 

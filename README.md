@@ -10,8 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 17 managed Postgres/Supabase runtime preparation with offline
-default tests and fake/local trading defaults.
+This repository is at Milestone 18 managed Postgres/Supabase migration and repository CRUD
+validation preparation with offline default tests and fake/local trading defaults.
 
 Implemented pieces:
 
@@ -71,9 +71,12 @@ Implemented pieces:
   deterministic tests without managed database credentials
 - explicit Postgres/Supabase runtime helpers in `packages/ledger/runtime.py` for validated
   `DATABASE_URL` loading, redacted target output, psycopg runtime connections, migration execution,
-  and expected-table schema checks
+  expected-table schema checks, and expected uniqueness/index checks
+- transaction-scoped Postgres ledger repository support for explicit managed database CRUD
+  validation without owning commits
 - opt-in database scripts `scripts/apply_ledger_migrations.py` and
-  `scripts/check_ledger_database.py` that require explicit `DATABASE_URL` and never print secrets
+  `scripts/check_ledger_database.py` that require explicit `DATABASE_URL`, second opt-in gates, and
+  never print secrets
 - ledger tables for symbols, raw payloads, OHLCV, features, regimes, candidates, AI outputs,
   decisions, risk checks, execution intents, orders, fills, positions, reconciliations, system
   events, and reports
@@ -115,8 +118,8 @@ Not implemented yet:
 - real Alpaca paper smoke-test evidence
 - real news provider integration
 - real AI provider integration
-- actually applying migrations to a managed Postgres/Supabase instance
-- repository CRUD validation against managed Postgres with fixture data
+- actually applying migrations to a managed Postgres/Supabase instance in this environment
+- running managed Postgres repository CRUD validation with fixture data in this environment
 - real Temporal test-server/replay execution
 - production dashboard UI/deployment
 - real Telegram/email alert delivery
@@ -189,6 +192,21 @@ Run Milestone 17 database runtime tests:
 uv run --group dev pytest tests/unit/test_database_runtime*.py tests/unit/test_ledger_connection*.py tests/unit/test_migration*.py
 ```
 
+Run Milestone 18 managed database validation tests locally/offline plus the default-skipped
+integration test:
+
+```bash
+uv run --group dev pytest tests/unit/test_database_runtime.py tests/unit/test_migration_runtime.py tests/integration/test_managed_ledger_crud.py
+```
+
+Run the managed CRUD validation only after applying the migration to an explicit development
+Postgres/Supabase target:
+
+```bash
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run --group dev pytest tests/integration/test_managed_ledger_crud.py
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -246,11 +264,12 @@ dashboard deployment and real Temporal query/signal backend are still deferred.
 
 ## Database Runtime
 
-Milestone 17 adds `packages/ledger/runtime.py`, `scripts/apply_ledger_migrations.py`, and
-`scripts/check_ledger_database.py`. These are explicit Postgres/Supabase runtime helpers. Default
-tests still use SQLite/fakes and do not require `DATABASE_URL`. Migration application and schema
-validation against a managed database are opt-in, server-side only, and must use secrets from local
-environment files or a secret manager. See `docs/database_runtime.md`.
+Milestones 17-18 add `packages/ledger/runtime.py`, `packages/ledger/postgres_repository.py`,
+`scripts/apply_ledger_migrations.py`, and `scripts/check_ledger_database.py`. These are explicit
+Postgres/Supabase runtime helpers. Default tests still use SQLite/fakes and do not require
+`DATABASE_URL`. Migration application, schema validation, and managed repository CRUD validation are
+opt-in, server-side only, and must use secrets from local environment files or a secret manager. See
+`docs/database_runtime.md`.
 
 ## Paper Dry-Run Orchestration
 

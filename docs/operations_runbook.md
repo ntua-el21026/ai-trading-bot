@@ -2,16 +2,17 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 17 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 18 does
 not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news
-provider clients, actual managed Postgres/Supabase migration evidence, real Temporal query/signal
-backend integration, real alert delivery, paper trading runs, Level 4 live readiness evidence, or
-live trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news,
-reporting, alerting, dashboard/control-plane, validation/testing contracts, fake/local paper
-dry-run orchestration, explicit Postgres/Supabase runtime migration/check helpers, paper trading
-operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a
-local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
-repositories.
+provider clients, actual managed Postgres/Supabase migration evidence in this environment, real
+Temporal query/signal backend integration, real alert delivery, paper trading runs, Level 4 live
+readiness evidence, or live trading. It does define passive broker/reconciliation, fake-tested paper
+Alpaca boundaries, AI/news, reporting, alerting, dashboard/control-plane, validation/testing
+contracts, fake/local paper dry-run orchestration, explicit Postgres/Supabase runtime
+migration/check helpers with second opt-in gates, opt-in managed repository CRUD validation, paper
+trading operations documentation, Level 4 readiness documentation with incident/fallback
+recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries
+backed by local/fake repositories.
 
 ## Current Foundation Operations
 
@@ -74,7 +75,7 @@ Database/audit-ledger behavior is currently a local persistence foundation:
 4. Preserve raw provider payloads, raw AI prompt/output hashes, execution intent IDs, client order
    IDs, broker snapshots, system events, and report payloads when exercising repository tests.
 
-No current operation opens a managed Postgres/Supabase connection, runs production migrations, or
+No default operation opens a managed Postgres/Supabase connection, runs production migrations, or
 requires real database credentials.
 
 ## Current Managed Database Runtime Operations
@@ -91,18 +92,33 @@ DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py
 3. Apply the migration only after confirming the redacted target:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py --apply
+RUN_MANAGED_DB_TESTS=1 \
+LEDGER_MIGRATION_CONFIRM=APPLY_TO_DEV_DATABASE \
+DATABASE_URL="postgresql://..." \
+  uv run python scripts/apply_ledger_migrations.py --apply
 ```
 
 4. Validate expected tables:
 
 ```bash
-DATABASE_URL="postgresql://..." uv run python scripts/check_ledger_database.py --list-tables
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run python scripts/check_ledger_database.py --list-tables
 ```
 
-The scripts require explicit `DATABASE_URL`, reject obvious placeholders, and never print
-credentials. They do not call brokers, AI/news providers, alert services, Temporal schedules,
-dashboard deployment, or trading code.
+5. Run managed repository CRUD validation only against a development target after migration:
+
+```bash
+RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
+  uv run --group dev pytest tests/integration/test_managed_ledger_crud.py
+```
+
+The scripts require explicit `DATABASE_URL`, reject obvious placeholders, enforce the opt-in gates,
+and never print credentials. The CRUD test writes isolated fixture records inside rollback
+transactions and never truncates or deletes arbitrary rows. These commands do not call brokers,
+AI/news providers, alert services, Temporal schedules, dashboard deployment, or trading code.
+
+Milestone 18 was executed without the managed DB gates, so migration apply, schema check against a
+managed target, and managed CRUD validation were skipped in this environment.
 
 ## Current Temporal Ledger Activity Operations
 
@@ -228,7 +244,7 @@ records. They do not enable live trading or autonomous live execution.
 ## Future Operations Scope
 
 Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
-tests, actual paper trading orchestration, real AI/news provider setup, managed database-backed
-repository CRUD validation with fixture records, real Temporal test-server/replay coverage, real
-Temporal query/signal backend integration, dashboard deployment, real alert delivery, evidence
-collection, and Level 4 micro-live readiness gates.
+tests, actual paper trading orchestration, real AI/news provider setup, actual managed database
+migration/schema/CRUD evidence from a target environment, real Temporal test-server/replay
+coverage, real Temporal query/signal backend integration, dashboard deployment, real alert
+delivery, evidence collection, and Level 4 micro-live readiness gates.
