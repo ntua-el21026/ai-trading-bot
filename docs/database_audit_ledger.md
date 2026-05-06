@@ -17,6 +17,10 @@ It persists fixture raw payloads, candidates, AI outputs, decisions, risk checks
 intents, fake broker orders/fills/positions, reconciliation results, system events/incidents, and
 daily reports without requiring `DATABASE_URL`.
 
+Milestone 17 adds an explicit managed Postgres/Supabase runtime path for migration application and
+schema validation. Default tests still use SQLite/fakes and do not require managed database
+credentials.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -31,6 +35,8 @@ Implemented:
   - `packages/ledger/schema.py`
 - Local in-memory SQLite connection helper:
   - `packages/ledger/connection.py`
+- Explicit Postgres/Supabase runtime helpers:
+  - `packages/ledger/runtime.py`
 - Typed ledger record models:
   - `packages/ledger/models.py`
 - Repository protocols and a local SQLite repository implementation:
@@ -43,6 +49,13 @@ Implemented:
   - `tests/unit/test_dashboard_read_models.py`
 - Unit tests for fake/local dry-run ledger evidence:
   - `tests/unit/test_paper_dry_run_orchestration.py`
+- Unit tests for runtime URL validation, migration dry run, and default-skipped managed DB checks:
+  - `tests/unit/test_database_runtime.py`
+  - `tests/unit/test_ledger_connection_runtime.py`
+  - `tests/unit/test_migration_runtime.py`
+- Operator-invoked database scripts:
+  - `scripts/apply_ledger_migrations.py`
+  - `scripts/check_ledger_database.py`
 - Safe Temporal ledger activity contracts and tests:
   - `apps/workers/app/activities/models.py`
   - `apps/workers/app/activities/ledger.py`
@@ -93,6 +106,39 @@ The migration and local schema include constraints for:
 
 These constraints support later duplicate-intent prevention and idempotent broker order handling.
 
+## Runtime Postgres/Supabase Path
+
+Runtime database access is explicit and opt-in:
+
+- `LedgerDatabaseConfig.from_env()` reads `DATABASE_URL` only when called.
+- Missing, non-Postgres, and obvious placeholder URLs fail closed.
+- Script output uses redacted target metadata and never prints credentials.
+- `connect_runtime_postgres()` does not fall back to SQLite.
+- `apply_postgres_migration_sql()` executes the checked-in migration against an explicit
+  connection.
+- `check_postgres_ledger_schema()` verifies that all expected ledger tables exist.
+
+Dry-run migration command:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py
+```
+
+Apply command:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py --apply
+```
+
+Schema check command:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/check_ledger_database.py --list-tables
+```
+
+Managed DB tests are skipped by default and require both `RUN_MANAGED_DB_TESTS=1` and
+`DATABASE_URL`.
+
 ## Repository Boundaries
 
 The local repository supports:
@@ -138,25 +184,28 @@ SQLite compatibility differences:
 - JSON/JSONB payloads are stored as canonical JSON text in local tests.
 - The checked-in migration remains Postgres-oriented and uses `JSONB`, `TIMESTAMPTZ`, and
   `gen_random_uuid()`.
-- Real managed Postgres/Supabase migration execution is deferred to a later integration milestone.
+- Actual managed Postgres/Supabase migration execution remains operator opt-in and was not run by
+  default tests.
+- Repository CRUD validation against managed Postgres with fixture data remains deferred.
 - Temporal real test-server/replay coverage remains deferred.
 
 ## Safety Boundary
 
-Milestones 12-14 do not:
+Milestones 12-17 do not:
 
 - enable live trading;
 - enable autonomous execution;
 - add secrets or real database credentials;
-- call managed Postgres/Supabase services;
+- call managed Postgres/Supabase services in default tests;
 - call real broker APIs in default tests;
 - call AI/news provider APIs;
 - submit real paper or live broker orders;
-- connect Temporal activities to real managed Postgres/Supabase runtime writes;
+- connect Temporal activities to real managed Postgres/Supabase runtime writes by default;
 - deploy a dashboard;
 - implement real alert delivery;
 - start actual paper trading operations.
 
-Paper trading still requires real managed database integration, explicit Alpaca paper smoke-test
-evidence, provider integration, real alert delivery, deployed dashboard evidence, Temporal
-test-server/replay evidence, and controlled paper-operation evidence.
+Paper trading still requires actually applying and validating migrations in the target managed
+database, explicit Alpaca paper smoke-test evidence, provider integration, real alert delivery,
+deployed dashboard evidence, Temporal test-server/replay evidence, and controlled paper-operation
+evidence.

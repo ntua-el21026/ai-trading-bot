@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 16 adds fake/local end-to-end paper dry-run orchestration while paper trading remains
-disabled. The repository still does not implement actual paper trading operations, real Alpaca
-paper smoke-test evidence, managed database runtime integration, real AI/news provider calls, real
-alert delivery, production dashboard deployment, or live trading.
+Milestone 17 adds explicit managed Postgres/Supabase migration and schema-check helpers while paper
+trading remains disabled. The repository still does not implement actual paper trading operations,
+real Alpaca paper smoke-test evidence, actual managed database migration evidence, real AI/news
+provider calls, real alert delivery, production dashboard deployment, or live trading.
 
 ## Purpose And Constraints
 

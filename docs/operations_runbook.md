@@ -2,15 +2,16 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 16 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 17 does
 not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news
-provider clients, managed Postgres/Supabase runtime integration, real Temporal query/signal backend
-integration, real alert delivery, paper trading runs, Level 4 live readiness evidence, or live
-trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news,
+provider clients, actual managed Postgres/Supabase migration evidence, real Temporal query/signal
+backend integration, real alert delivery, paper trading runs, Level 4 live readiness evidence, or
+live trading. It does define passive broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news,
 reporting, alerting, dashboard/control-plane, validation/testing contracts, fake/local paper
-dry-run orchestration, paper trading operations documentation, Level 4 readiness documentation with
-incident/fallback recommendations, a local database/audit-ledger foundation, and safe Temporal
-activity boundaries backed by local/fake repositories.
+dry-run orchestration, explicit Postgres/Supabase runtime migration/check helpers, paper trading
+operations documentation, Level 4 readiness documentation with incident/fallback recommendations, a
+local database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
+repositories.
 
 ## Current Foundation Operations
 
@@ -75,6 +76,33 @@ Database/audit-ledger behavior is currently a local persistence foundation:
 
 No current operation opens a managed Postgres/Supabase connection, runs production migrations, or
 requires real database credentials.
+
+## Current Managed Database Runtime Operations
+
+Managed Postgres/Supabase support is prepared but opt-in:
+
+1. Store `DATABASE_URL` outside the repository.
+2. Dry-run migration target validation:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py
+```
+
+3. Apply the migration only after confirming the redacted target:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/apply_ledger_migrations.py --apply
+```
+
+4. Validate expected tables:
+
+```bash
+DATABASE_URL="postgresql://..." uv run python scripts/check_ledger_database.py --list-tables
+```
+
+The scripts require explicit `DATABASE_URL`, reject obvious placeholders, and never print
+credentials. They do not call brokers, AI/news providers, alert services, Temporal schedules,
+dashboard deployment, or trading code.
 
 ## Current Temporal Ledger Activity Operations
 
@@ -201,6 +229,6 @@ records. They do not enable live trading or autonomous live execution.
 
 Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
 tests, actual paper trading orchestration, real AI/news provider setup, managed database-backed
-reconciliation and AI research persistence, real Temporal test-server/replay coverage, real Temporal
-query/signal backend integration, dashboard deployment, real alert delivery, evidence collection,
-and Level 4 micro-live readiness gates.
+repository CRUD validation with fixture records, real Temporal test-server/replay coverage, real
+Temporal query/signal backend integration, dashboard deployment, real alert delivery, evidence
+collection, and Level 4 micro-live readiness gates.

@@ -10,8 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 16 fake/local end-to-end paper dry-run orchestration with
-fake/local defaults.
+This repository is at Milestone 17 managed Postgres/Supabase runtime preparation with offline
+default tests and fake/local trading defaults.
 
 Implemented pieces:
 
@@ -69,6 +69,11 @@ Implemented pieces:
 - Postgres-oriented audit-ledger migration under `db/migrations/`
 - local `packages/ledger/` schema, typed records, and SQLite repository implementation for
   deterministic tests without managed database credentials
+- explicit Postgres/Supabase runtime helpers in `packages/ledger/runtime.py` for validated
+  `DATABASE_URL` loading, redacted target output, psycopg runtime connections, migration execution,
+  and expected-table schema checks
+- opt-in database scripts `scripts/apply_ledger_migrations.py` and
+  `scripts/check_ledger_database.py` that require explicit `DATABASE_URL` and never print secrets
 - ledger tables for symbols, raw payloads, OHLCV, features, regimes, candidates, AI outputs,
   decisions, risk checks, execution intents, orders, fills, positions, reconciliations, system
   events, and reports
@@ -100,6 +105,8 @@ Implemented pieces:
 - unit tests for validation harness assumptions, failure-simulation contracts, paper dry-run safety,
   and workflow side-effect boundary checks
 - unit tests for ledger activity persistence and read helpers
+- unit tests for runtime database URL validation, migration dry-run behavior, schema checks, and
+  default-skipped managed DB integration tests
 
 Not implemented yet:
 
@@ -108,7 +115,8 @@ Not implemented yet:
 - real Alpaca paper smoke-test evidence
 - real news provider integration
 - real AI provider integration
-- managed Postgres/Supabase runtime connection or migration execution
+- actually applying migrations to a managed Postgres/Supabase instance
+- repository CRUD validation against managed Postgres with fixture data
 - real Temporal test-server/replay execution
 - production dashboard UI/deployment
 - real Telegram/email alert delivery
@@ -175,6 +183,12 @@ Run Milestone 16 fake/local paper dry-run orchestration tests:
 uv run --group dev pytest tests/unit/test_paper_dry_run*.py tests/unit/test_dry_run*.py
 ```
 
+Run Milestone 17 database runtime tests:
+
+```bash
+uv run --group dev pytest tests/unit/test_database_runtime*.py tests/unit/test_ledger_connection*.py tests/unit/test_migration*.py
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -229,6 +243,14 @@ snapshots, rendered deterministically, and persisted through the ledger reposito
 uses fake adapters by default; Telegram/email skeletons fail closed and do not send network
 messages in this milestone. Dashboard read models can be built from ledger repositories, but a real
 dashboard deployment and real Temporal query/signal backend are still deferred.
+
+## Database Runtime
+
+Milestone 17 adds `packages/ledger/runtime.py`, `scripts/apply_ledger_migrations.py`, and
+`scripts/check_ledger_database.py`. These are explicit Postgres/Supabase runtime helpers. Default
+tests still use SQLite/fakes and do not require `DATABASE_URL`. Migration application and schema
+validation against a managed database are opt-in, server-side only, and must use secrets from local
+environment files or a secret manager. See `docs/database_runtime.md`.
 
 ## Paper Dry-Run Orchestration
 

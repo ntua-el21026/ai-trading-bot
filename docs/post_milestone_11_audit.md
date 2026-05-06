@@ -533,3 +533,23 @@ This is still not actual paper trading. Remaining blockers include managed Postg
 runtime integration, real Temporal test-server/replay evidence, real Alpaca paper smoke tests, real
 AI/news provider integrations, real alert delivery, deployed dashboard evidence, actual paper
 trading operations, frozen paper evidence, and go/no-go approval. Live trading remains disabled.
+
+## Post-Milestone 17 Status Update
+
+Milestone 17 adds a managed Postgres/Supabase-compatible runtime preparation path:
+
+- `packages/ledger/runtime.py` defines explicit `DATABASE_URL` validation, redaction, target
+  summaries, psycopg runtime connections, migration execution helpers, and expected-table schema
+  checks.
+- `scripts/apply_ledger_migrations.py` dry-runs by default and applies the checked-in migration
+  only with `--apply`.
+- `scripts/check_ledger_database.py` validates expected ledger tables against an explicit target.
+- Managed DB tests are skipped by default and require `RUN_MANAGED_DB_TESTS=1` plus `DATABASE_URL`.
+- Default tests remain local/offline and do not require managed database credentials.
+
+This does not mean migrations were applied to a real managed database. Remaining blockers include
+actual managed Postgres/Supabase migration/schema evidence, repository CRUD validation against
+managed Postgres with fixture records, real Temporal test-server/replay evidence, real Alpaca paper
+smoke tests, real AI/news provider integrations, real alert delivery, deployed dashboard evidence,
+actual paper trading operations, frozen paper evidence, and go/no-go approval. Live trading remains
+disabled.

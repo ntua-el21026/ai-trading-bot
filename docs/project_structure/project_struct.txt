@@ -106,6 +106,7 @@ AI_Trading_Bot/
 │   ├── broker_integration.md
 │   ├── dashboard_control_plane.md
 │   ├── database_audit_ledger.md
+│   ├── database_runtime.md
 │   ├── execution_policy.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
@@ -166,6 +167,7 @@ AI_Trading_Bot/
 │   │   ├── connection.py
 │   │   ├── models.py
 │   │   ├── repositories.py
+│   │   ├── runtime.py
 │   │   └── schema.py
 │   ├── paper/
 │   │   ├── __init__.py
@@ -202,6 +204,8 @@ AI_Trading_Bot/
 │   │   └── paper.py
 │   └── __init__.py
 ├── scripts/
+│   ├── apply_ledger_migrations.py
+│   ├── check_ledger_database.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
@@ -225,6 +229,7 @@ AI_Trading_Bot/
 │       ├── test_dashboard_env_security.py
 │       ├── test_dashboard_read_models.py
 │       ├── test_data_models.py
+│       ├── test_database_runtime.py
 │       ├── test_dry_run_cli.py
 │       ├── test_execution_intent.py
 │       ├── test_failure_simulations.py
@@ -232,8 +237,10 @@ AI_Trading_Bot/
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
 │       ├── test_ledger_activities.py
+│       ├── test_ledger_connection_runtime.py
 │       ├── test_ledger_repositories.py
 │       ├── test_ledger_schema.py
+│       ├── test_migration_runtime.py
 │       ├── test_paper_dry_run.py
 │       ├── test_paper_dry_run_orchestration.py
 │       ├── test_position_sizing.py
@@ -256,4 +263,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 43, Total files: 214
+Total directories: 43, Total files: 221

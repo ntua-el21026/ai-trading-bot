@@ -35,7 +35,7 @@ EXPECTED_LEDGER_TABLES: tuple[str, ...] = (
 SQLITE_COMPATIBILITY_NOTES = (
     "Postgres is the target database. Local tests use SQLite with JSON stored as canonical text, "
     "TEXT UUIDs, and partial unique indexes where SQLite supports them. Managed Postgres/Supabase "
-    "integration remains deferred."
+    "runtime migration and schema checks are opt-in through explicit DATABASE_URL helpers."
 )
 
 

@@ -109,7 +109,7 @@ uv run --group dev python -m compileall -q packages apps tests
 The following are still deferred:
 
 - actual Alpaca paper smoke tests;
-- managed Postgres/Supabase runtime integration;
+- actual managed Postgres/Supabase migration/schema evidence;
 - real Temporal test-server/replay integration;
 - real AI/news provider integration;
 - real alert delivery;
@@ -117,3 +117,6 @@ The following are still deferred:
 - actual paper trading operations;
 - frozen paper evidence;
 - Level 4 micro-live readiness.
+
+Milestone 17 adds opt-in Postgres/Supabase migration and schema-check helpers, but the dry-run path
+continues to default to in-memory SQLite and does not require or call managed Postgres/Supabase.

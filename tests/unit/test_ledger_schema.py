@@ -41,4 +41,4 @@ def test_postgres_migration_is_audit_ledger_oriented_and_contains_no_secrets() -
 def test_sqlite_compatibility_notes_document_postgres_target() -> None:
     assert "Postgres is the target database" in SQLITE_COMPATIBILITY_NOTES
     assert "SQLite" in SQLITE_COMPATIBILITY_NOTES
-    assert "Managed Postgres/Supabase integration remains deferred" in SQLITE_COMPATIBILITY_NOTES
+    assert "runtime migration and schema checks are opt-in" in SQLITE_COMPATIBILITY_NOTES

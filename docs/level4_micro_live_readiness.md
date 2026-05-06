@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 16 adds fake/local end-to-end paper dry-run orchestration while preserving the readiness
+Milestone 17 adds managed Postgres/Supabase runtime preparation while preserving the readiness
 boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
 calls in default tests, real alert delivery, paper or live orders, production schedules, expanded
 Level 4, or Level 5.
@@ -35,11 +35,12 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-16 are complete.
+- Milestones 00-17 are complete.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
-  Postgres/Supabase runtime integration is absent.
+  Postgres/Supabase migration/check helpers exist, but actual managed runtime evidence is absent
+  unless an operator runs the opt-in scripts against a target database.
 - Paper-only Alpaca adapter and fake broker activity boundaries exist; real paper smoke-test
   evidence is absent.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
@@ -53,7 +54,7 @@ Known status:
 
 Hard blockers:
 
-- No managed database runtime or migration execution evidence.
+- No managed database runtime or migration execution evidence from an actual target database.
 - No real Temporal test-server/replay evidence.
 - No real Alpaca paper smoke-test evidence or paper execution evidence.
 - No controlled real paper operations evidence.

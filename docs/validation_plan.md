@@ -2,13 +2,12 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 16 adds
-fake/local end-to-end paper dry-run orchestration using fixture data, local ledger repositories,
-fake broker behavior, neutral/fake AI output, fake alerts, report generation, and dashboard read
-models. It does not validate real Alpaca paper credentials, real AI/news provider credentials,
-managed Postgres/Supabase runtime connectivity, real alert delivery, production dashboard
-deployment, live Temporal replay behavior, actual paper trading operations, live trading, or
-profitability.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 17 adds
+managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation, migration
+dry-run/apply scripts, schema-check helpers, and opt-in managed DB tests skipped by default. It does
+not validate real Alpaca paper credentials, real AI/news provider credentials, real alert delivery,
+production dashboard deployment, live Temporal replay behavior, actual paper trading operations,
+live trading, or profitability.
 
 ## Foundation Checks
 
@@ -24,6 +23,8 @@ profitability.
 - Backtest metrics and explicit-signal engine behavior are fixture-tested without broker calls.
 - Audit-ledger schema and repository round trips are fixture-tested with in-memory SQLite and no
   managed database credentials.
+- Runtime database URL validation, redaction, migration dry-run scripts, and default-skipped
+  managed DB schema checks are fixture-tested without connecting to managed Postgres/Supabase.
 - Ledger-backed activity persistence and read helpers are fixture-tested with in-memory SQLite and
   no managed database credentials.
 - Regime classification is fixture-tested for `RISK_ON`, `CAUTION`, and `RISK_OFF`.
@@ -82,6 +83,7 @@ profitability.
 | Universe filtering | `tests/unit/test_universe.py` |
 | Backtesting metrics and explicit-signal engine | `tests/unit/test_backtesting_metrics.py` |
 | Database/audit-ledger foundation | `tests/unit/test_ledger_schema.py`, `tests/unit/test_ledger_repositories.py` |
+| Database runtime preparation | `tests/unit/test_database_runtime.py`, `tests/unit/test_ledger_connection_runtime.py`, `tests/unit/test_migration_runtime.py` |
 | Temporal ledger activities | `tests/unit/test_ledger_activities.py`, `tests/temporal/test_workflow_contracts.py` |
 | Regime logic | `tests/unit/test_regime.py` |
 | Strategy signals and candidates | `tests/unit/test_strategy_signals.py` |
@@ -163,10 +165,10 @@ handoff gates.
 
 Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
 fake/local paper dry-run orchestration, and local ledger evidence, but still needs explicit real
-Alpaca paper smoke tests, managed database runtime connectivity, real Temporal query/signal backend
-integration, real Temporal test-server/replay evidence, real AI/news provider integration, real
-dashboard deployment, real alert delivery, and controlled paper runs before these gates can be
-satisfied.
+Alpaca paper smoke tests, actual managed database migration/schema validation against the target
+runtime, real Temporal query/signal backend integration, real Temporal test-server/replay evidence,
+real AI/news provider integration, real dashboard deployment, real alert delivery, and controlled
+paper runs before these gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -200,8 +202,9 @@ Current blockers:
 
 - Frozen paper evidence is unavailable.
 - Actual paper trading operations have not started.
-- Database/audit-ledger foundation and local/fake Temporal activity persistence exist; managed
-  runtime connectivity is absent.
+- Database/audit-ledger foundation, local/fake Temporal activity persistence, and explicit
+  Postgres/Supabase runtime helpers exist; actual managed runtime migration/schema evidence is
+  absent unless an operator runs the opt-in scripts.
 - Real Temporal query/signal backend integration is deferred.
 - Real Alpaca paper smoke-test evidence and real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
