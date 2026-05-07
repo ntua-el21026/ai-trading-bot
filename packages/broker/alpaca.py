@@ -7,6 +7,10 @@ wrapper behind explicit paper-mode gates.
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any, Literal, Protocol, Self, cast, get_args
@@ -17,6 +21,7 @@ from packages.broker.adapters import BrokerAdapterNotConfigured
 from packages.broker.models import (
     REST_FALLBACK_INTERVAL_SECONDS,
     BrokerAccountSnapshot,
+    BrokerClockSnapshot,
     BrokerErrorCode,
     BrokerFill,
     BrokerOperationError,
@@ -211,6 +216,140 @@ class AlpacaPaperClient:
             return self._call(names, *tuple(arg for arg in args if arg is not None))
         except KeyError:
             return None
+
+
+class AlpacaPaperReadOnlyHttpClient:
+    """Minimal read-only Alpaca paper REST client for opt-in smoke validation."""
+
+    def __init__(
+        self,
+        *,
+        credentials: AlpacaPaperCredentials,
+        timeout_seconds: float = 10.0,
+        opener: Any | None = None,
+    ) -> None:
+        if credentials.base_url != ALPACA_PAPER_BASE_URL:
+            raise AlpacaClientError(
+                "attempted_live_mode",
+                "read-only smoke client requires the exact Alpaca paper endpoint",
+                pause_new_risk=True,
+            )
+        self._credentials = credentials
+        self._timeout_seconds = timeout_seconds
+        self._opener = opener or urllib.request.urlopen
+
+    def get_account(self) -> Mapping[str, Any]:
+        return _json_mapping(self._get_json("/v2/account"))
+
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        value = self._get_json(
+            "/v2/orders",
+            params={"status": "open", "limit": "500", "direction": "desc"},
+        )
+        return _json_mapping_sequence(value)
+
+    def get_order_by_id(self, broker_order_id: str) -> Mapping[str, Any] | None:
+        value = self._get_optional_json(f"/v2/orders/{urllib.parse.quote(broker_order_id)}")
+        return None if value is None else _json_mapping(value)
+
+    def get_order_by_client_order_id(self, client_order_id: str) -> Mapping[str, Any] | None:
+        value = self._get_optional_json(
+            "/v2/orders:by_client_order_id",
+            params={"client_order_id": client_order_id},
+        )
+        return None if value is None else _json_mapping(value)
+
+    def submit_order(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        raise _read_only_write_error("submit_order")
+
+    def cancel_order(self, broker_order_id: str) -> Mapping[str, Any]:
+        raise _read_only_write_error("cancel_order")
+
+    def list_fills(self) -> Sequence[Mapping[str, Any]]:
+        value = self._get_json(
+            "/v2/account/activities/FILL",
+            params={"direction": "desc", "page_size": "100"},
+        )
+        return _json_mapping_sequence(value)
+
+    def list_positions(self) -> Sequence[Mapping[str, Any]]:
+        value = self._get_json("/v2/positions")
+        return _json_mapping_sequence(value)
+
+    def get_position(self, symbol: str) -> Mapping[str, Any] | None:
+        value = self._get_optional_json(f"/v2/positions/{urllib.parse.quote(symbol.upper())}")
+        return None if value is None else _json_mapping(value)
+
+    def get_clock(self) -> Mapping[str, Any]:
+        return _json_mapping(self._get_json("/v2/clock"))
+
+    def consume_trade_updates(self) -> Iterable[Mapping[str, Any]]:
+        return ()
+
+    def _get_optional_json(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str] | None = None,
+    ) -> object | None:
+        try:
+            return self._get_json(path, params=params)
+        except AlpacaClientError as exc:
+            if exc.code == "order_not_found":
+                return None
+            raise
+
+    def _get_json(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str] | None = None,
+    ) -> object:
+        request = urllib.request.Request(
+            _build_read_only_url(self._credentials.base_url, path, params=params),
+            headers={
+                "APCA-API-KEY-ID": self._credentials.api_key,
+                "APCA-API-SECRET-KEY": self._credentials.secret_key,
+                "Accept": "application/json",
+            },
+            method="GET",
+        )
+        try:
+            with self._opener(request, timeout=self._timeout_seconds) as response:
+                body = response.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise AlpacaClientError(
+                    "order_not_found",
+                    "Alpaca paper resource was not found",
+                ) from exc
+            if exc.code in {401, 403}:
+                raise AlpacaClientError(
+                    "credential_rejected",
+                    f"Alpaca paper read-only request was rejected with HTTP {exc.code}",
+                    pause_new_risk=True,
+                ) from exc
+            raise AlpacaClientError(
+                "rest_fallback_unavailable",
+                f"Alpaca paper read-only request failed with HTTP {exc.code}",
+                retryable=500 <= exc.code < 600,
+            ) from exc
+        except (urllib.error.URLError, OSError) as exc:
+            raise AlpacaClientError(
+                "rest_fallback_unavailable",
+                "Alpaca paper read-only request failed before a response was received",
+                retryable=True,
+                details={"error_type": type(exc).__name__},
+            ) from exc
+        if not body:
+            return {}
+        try:
+            return json.loads(body.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise AlpacaClientError(
+                "rest_fallback_unavailable",
+                "Alpaca paper read-only response was not valid JSON",
+            ) from exc
 
 
 class AlpacaPaperAdapter:
@@ -568,6 +707,16 @@ def map_alpaca_position(payload: Mapping[str, Any]) -> BrokerPosition:
     )
 
 
+def map_alpaca_clock(payload: Mapping[str, Any]) -> BrokerClockSnapshot:
+    return BrokerClockSnapshot(
+        is_open=bool(payload["is_open"]),
+        timestamp=_datetime(payload["timestamp"]),
+        next_open=_datetime(payload["next_open"]),
+        next_close=_datetime(payload["next_close"]),
+        raw_payload_hash=hash_payload(payload),
+    )
+
+
 def map_alpaca_protective_stop(payload: Mapping[str, Any]) -> BrokerProtectiveStop:
     order = map_alpaca_order(payload)
     if order.stop_price is None:
@@ -785,6 +934,44 @@ def _as_mapping_sequence(value: object) -> tuple[Mapping[str, Any], ...]:
     return tuple(_as_mapping(item) for item in value)
 
 
+def _json_mapping(value: object) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise AlpacaClientError(
+            "rest_fallback_unavailable",
+            f"expected JSON object from Alpaca, got {type(value).__name__}",
+        )
+    return cast(Mapping[str, Any], value)
+
+
+def _json_mapping_sequence(value: object) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(value, list):
+        raise AlpacaClientError(
+            "rest_fallback_unavailable",
+            f"expected JSON list from Alpaca, got {type(value).__name__}",
+        )
+    return tuple(_json_mapping(item) for item in value)
+
+
+def _build_read_only_url(
+    base_url: str,
+    path: str,
+    *,
+    params: Mapping[str, str] | None = None,
+) -> str:
+    normalized_base = base_url.rstrip("/")
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    query = "" if not params else f"?{urllib.parse.urlencode(params)}"
+    return f"{normalized_base}{normalized_path}{query}"
+
+
+def _read_only_write_error(operation: str) -> AlpacaClientError:
+    return AlpacaClientError(
+        "client_not_configured",
+        f"read-only Alpaca paper smoke client refuses write operation: {operation}",
+        pause_new_risk=True,
+    )
+
+
 def _datetime(value: object) -> datetime:
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -846,7 +1033,11 @@ def _order_status(value: object) -> BrokerOrderStatus:
 
 
 def _asset_class(value: object) -> AssetClass:
-    normalized = "etf" if value == "us_equity_etf" else str(value or "equity")
+    normalized = str(value or "equity")
+    if normalized in {"us_equity", "us_equity_common"}:
+        normalized = "equity"
+    elif normalized == "us_equity_etf":
+        normalized = "etf"
     if normalized not in get_args(AssetClass):
         return "other"
     return cast(AssetClass, normalized)

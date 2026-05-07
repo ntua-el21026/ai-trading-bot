@@ -3,16 +3,20 @@
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
 Milestone 14 adds paper-only Alpaca broker boundaries. Milestone 16 uses those boundaries through
-`FakeAlpacaClient` in a fake/local dry-run path. The repository does not start paper trading
-operations, does not activate Temporal schedules, does not add real credentials, and does not
-enable live trading.
+`FakeAlpacaClient` in a fake/local dry-run path. Milestone 20 adds an opt-in read-only Alpaca paper
+smoke path. The repository does not start paper trading operations, does not activate Temporal
+schedules, does not add real credentials, and does not enable live trading.
 
 ## Current Implementation
 
 - `packages/broker/alpaca.py` defines `AlpacaClientProtocol`, `AlpacaPaperClient`,
-  `AlpacaPaperCredentials`, `AlpacaPaperAdapter`, Alpaca-like payload mappers, paper entry-order
-  request builders, protective-stop request builders, structured broker results, and stream/REST
-  status helpers.
+  `AlpacaPaperReadOnlyHttpClient`, `AlpacaPaperCredentials`, `AlpacaPaperAdapter`, Alpaca-like
+  payload mappers, paper entry-order request builders, protective-stop request builders,
+  structured broker results, and stream/REST status helpers.
+- `packages/broker/smoke.py` defines the explicit-gate read-only paper smoke runner and sanitized
+  summary model.
+- `scripts/check_alpaca_paper_readonly.py` runs the opt-in read-only smoke check with sanitized
+  output only.
 - `packages/broker/fakes.py` defines `FakeAlpacaClient` and fake adapter builders for local tests.
 - `apps/workers/app/activities/broker.py` defines broker activity request/response contracts and
   activity functions for paper account/order/fill/position snapshots, idempotency lookups, paper
@@ -35,6 +39,17 @@ this milestone, and default tests never instantiate an SDK-backed client.
 Default tests use `run_mode="test"` with `FakeAlpacaClient`, so no credentials or external network
 calls are required.
 
+The read-only smoke path additionally requires:
+
+- `ALPACA_API_KEY` present;
+- `ALPACA_SECRET_KEY` present;
+- `ALPACA_BASE_URL=https://paper-api.alpaca.markets`;
+- `RUN_ALPACA_PAPER_SMOKE=1`;
+- `ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT`;
+- `config/system.yaml` live/autonomous flags disabled;
+- `config/execution.yaml` live/autonomous order flags disabled;
+- `AlpacaPaperAdapter` live-mode refusal check passing.
+
 ## Supported Boundaries
 
 Implemented fake-tested boundaries:
@@ -48,6 +63,7 @@ Implemented fake-tested boundaries:
 - paper protective-stop submission for filled quantity;
 - protective-stop verification against open fake broker orders;
 - Alpaca `trade_updates` mapping;
+- read-only account, open-order, position, and clock/status smoke mapping;
 - REST fallback snapshot/status with the spec's 30-second active-window interval;
 - structured ambiguity and safety errors for duplicate client IDs, timeouts, rejected orders,
   missing stops, stream disconnects, and REST fallback unavailability.
@@ -72,16 +88,29 @@ acknowledgement, fill persistence, partial-fill stop quantity, protective-stop v
 ambiguity, missing-stop incidents, and reconciliation mismatches. This is not a real Alpaca paper
 smoke test and it does not submit broker orders.
 
-## Optional Paper Smoke Tests
+## Optional Read-Only Paper Smoke
 
-Real Alpaca paper smoke tests are deferred. When added, they must:
+The read-only paper smoke command is opt-in and server-side only:
 
-- require explicit paper credentials from environment or secret manager;
-- use a marker such as `--run-alpaca-paper`;
-- be excluded from the default test suite;
-- submit only explicitly approved paper orders;
-- verify idempotency lookup, cancel behavior, protective stop placement, and reconciliation evidence;
-- never accept live endpoints or live credentials.
+```bash
+RUN_ALPACA_PAPER_SMOKE=1 \
+ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT \
+ALPACA_BASE_URL=https://paper-api.alpaca.markets \
+  uv run python scripts/check_alpaca_paper_readonly.py
+```
+
+Allowed real calls are GET/read-only account, orders, positions, and clock/status calls. The smoke
+path prints no secrets and does not print raw broker payloads. It does not submit, cancel, replace,
+close, liquidate, or place protective-stop orders. The matching integration test is skipped by
+default unless the same explicit gates are present.
+
+Milestone 20 read-only smoke status: passed after corrected local paper credentials were loaded.
+The sanitized result confirmed account, open-order, position, and clock/status reads mapped
+successfully against `https://paper-api.alpaca.markets`, with zero submitted, cancelled, replaced,
+or stop orders and no live endpoint use.
+
+Paper order lifecycle smoke tests remain deferred. A future milestone must separately gate and
+approve any paper submit/cancel/protective-stop test before it can run.
 
 ## Current Non-Claims
 
@@ -90,6 +119,8 @@ Real Alpaca paper smoke tests are deferred. When added, they must:
 - No autonomous execution is enabled.
 - No real Alpaca calls occur in default tests.
 - No broker orders are submitted in default tests.
+- The successful read-only paper smoke is connectivity evidence only; it is not actual paper
+  trading.
 - Protective-stop and reconciliation behavior are fake-client contract tests, not production paper
   evidence.
 - Level 4 micro-live readiness remains unsatisfied.

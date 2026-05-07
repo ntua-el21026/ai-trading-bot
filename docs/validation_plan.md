@@ -5,10 +5,11 @@ This document describes the current validation scaffold.
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-19
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
-repository CRUD tests skipped by default, and local Temporal SDK test-environment/replay coverage.
-This does not validate real Alpaca paper credentials, real AI/news provider credentials, real alert
-delivery, production dashboard deployment, production Temporal backend behavior, actual paper
-trading operations, live trading, or profitability.
+repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage, and
+opt-in Alpaca paper read-only smoke tooling. This does not validate Alpaca paper order lifecycle
+behavior, real AI/news provider credentials, real alert delivery, production dashboard deployment,
+production Temporal backend behavior, actual paper trading operations, live trading, or
+profitability.
 
 ## Foundation Checks
 
@@ -40,6 +41,9 @@ trading operations, live trading, or profitability.
 - Paper-only Alpaca adapter gates, fake-client mapping, idempotency lookup, paper entry/cancel,
   protective-stop submit/verify, partial-fill stop-quantity handling, ambiguity handling, and
   broker activity contracts are fixture-tested without real Alpaca calls.
+- Alpaca paper read-only smoke gates, sanitized summary output, GET-only HTTP client behavior,
+  live-endpoint refusal, account/open-order/position/clock mapping, and write-operation refusal are
+  fixture-tested without real Alpaca calls.
 - Daily/weekly report generation, stable Markdown rendering, report persistence, alert routing,
   fake alert capture, fail-closed Telegram/email skeletons, dashboard read models, and reporting
   activities are fixture-tested without external alert delivery or managed database credentials.
@@ -103,6 +107,7 @@ trading operations, live trading, or profitability.
 | Order lifecycle contracts | `tests/unit/test_execution_intent.py`, `tests/unit/test_failure_simulations.py` |
 | Broker models and stream mapping | `tests/unit/test_broker_models.py`, `tests/unit/test_alpaca_mapping.py` |
 | Paper broker adapter and activities | `tests/unit/test_alpaca_paper_adapter.py`, `tests/unit/test_broker_activities.py` |
+| Alpaca paper read-only smoke | `tests/unit/test_alpaca_paper_readonly.py`, `tests/integration/test_alpaca_paper_readonly_smoke.py` |
 | Reconciliation | `tests/unit/test_reconciliation.py`, `tests/unit/test_failure_simulations.py` |
 | AI schema, fallback, scoring, persistence | `tests/unit/test_ai_news.py`, `tests/unit/test_ai_parser.py`, `tests/unit/test_ai_scoring.py`, `tests/unit/test_ai_persistence.py`, `tests/unit/test_failure_simulations.py` |
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py` |
@@ -113,10 +118,11 @@ trading operations, live trading, or profitability.
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: real Alpaca paper smoke tests, production managed Postgres/Supabase
-activity wiring, real provider integrations, real alert delivery, production Temporal backend
-integration, production dashboard deployment, paper trading operations, and Level 4 micro-live
-readiness evidence are not implemented.
+Remaining gaps are explicit: Alpaca paper order lifecycle smoke tests, production managed
+Postgres/Supabase activity wiring, real provider integrations, real alert delivery, production
+Temporal backend integration, production dashboard deployment, paper trading operations, and Level 4
+micro-live readiness evidence are not implemented. Milestone 20 read-only Alpaca paper smoke
+evidence has passed for account, open-order, position, and clock/status reads only.
 
 ## Validation Harness Contracts
 
@@ -172,9 +178,9 @@ handoff gates.
 
 Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
 fake/local paper dry-run orchestration, and local ledger evidence, but still needs explicit real
-Alpaca paper smoke tests, production managed database activity wiring, production Temporal
-query/signal backend integration, real AI/news provider integration, real dashboard deployment, real
-alert delivery, and controlled paper runs before these gates can be satisfied.
+Alpaca paper order lifecycle smoke tests, production managed database activity wiring, production
+Temporal query/signal backend integration, real AI/news provider integration, real dashboard
+deployment, real alert delivery, and controlled paper runs before these gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -212,7 +218,8 @@ Current blockers:
   Postgres/Supabase runtime helpers, and opt-in managed CRUD validation exist.
 - Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
   integration is deferred.
-- Real Alpaca paper smoke-test evidence and real AI/news provider integrations are deferred.
+- Alpaca paper read-only smoke evidence exists for account/open-order/position/clock reads; paper
+  order lifecycle smoke evidence and real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
 - Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
 - Live trading remains disabled.

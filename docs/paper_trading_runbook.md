@@ -2,11 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 18 adds explicit managed Postgres/Supabase migration, schema-check, and repository CRUD
-validation gates while paper trading remains disabled. The repository still does not implement
-actual paper trading operations, real Alpaca paper smoke-test evidence, actual managed database
-migration/schema/CRUD evidence from this environment, real AI/news provider calls, real alert
-delivery, production dashboard deployment, or live trading.
+Milestone 20 adds explicit Alpaca paper read-only smoke tooling while paper trading remains
+disabled. The repository still does not implement actual paper trading operations, Alpaca paper
+order lifecycle smoke tests, real AI/news provider calls, real alert delivery, production dashboard
+deployment, or live trading.
 
 ## Purpose And Constraints
 
@@ -34,9 +33,9 @@ for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validat
 actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
 dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, opt-in
 managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
-activity tests. It does not connect those contracts to real provider clients, real alert delivery,
-managed Postgres/Supabase runtime persistence in this environment, or actual paper execution
-orchestration yet.
+activity tests. It also provides an opt-in read-only Alpaca paper smoke command. It does not connect
+those contracts to order-writing paper execution, real AI/news provider clients, real alert
+delivery, production managed database activity wiring, or actual paper execution orchestration yet.
 
 The safe local dry-run command is:
 
@@ -46,6 +45,22 @@ uv run python scripts/run_paper_dry_run.py
 
 It prints `This is a fake/local dry run. No broker orders are submitted.`, uses in-memory SQLite
 and fake adapters, and does not call external services.
+
+The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
+
+```bash
+RUN_ALPACA_PAPER_SMOKE=1 \
+ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT \
+ALPACA_BASE_URL=https://paper-api.alpaca.markets \
+  uv run python scripts/check_alpaca_paper_readonly.py
+```
+
+It validates account, open-order, position, and clock/status reads only. It must not submit,
+cancel, replace, close, liquidate, or place protective-stop orders.
+
+Milestone 20 read-only smoke status: passed after corrected local paper credentials were loaded.
+This proves paper account connectivity and normalized read-only mapping only. It is not actual paper
+trading and it does not validate the paper order lifecycle.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -75,6 +90,8 @@ Required environment variable names only:
 - `ALPACA_API_KEY`
 - `ALPACA_SECRET_KEY`
 - `ALPACA_BASE_URL`
+- `RUN_ALPACA_PAPER_SMOKE`
+- `ALPACA_PAPER_SMOKE_CONFIRM`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
@@ -118,8 +135,8 @@ Complete this checklist before every paper session:
   explicitly changes it.
 - Confirm `live_trading_enabled: false`.
 - Confirm autonomous live execution is disabled.
-- Confirm broker account mode is paper through an explicitly gated server-side broker activity once
-  real paper smoke tests are approved.
+- Confirm broker account mode is paper through the explicitly gated read-only smoke command before
+  any future paper order lifecycle smoke test is approved.
 - Confirm kill switch is enabled.
 - Confirm broker reconciliation is required before new-risk orders.
 - Confirm protective stops are required.
@@ -389,7 +406,7 @@ Before micro-live readiness review, collect and approve:
 - managed database/audit persistence implementation and migration execution evidence;
 - real Temporal test-server/replay evidence;
 - real Temporal query/signal backend integration;
-- real Alpaca paper smoke-test evidence and broker paper evidence;
+- retained Alpaca read-only smoke evidence and future paper order lifecycle broker evidence;
 - real AI/news provider integration and schema-validity evidence;
 - real dashboard deployment evidence;
 - real alert delivery evidence;

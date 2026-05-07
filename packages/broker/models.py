@@ -45,6 +45,7 @@ BrokerStreamEventType = Literal[
 ]
 BrokerErrorCode = Literal[
     "missing_credentials",
+    "credential_rejected",
     "non_paper_environment",
     "attempted_live_mode",
     "order_not_found",
@@ -93,6 +94,22 @@ class BrokerAccountSnapshot(BrokerModel):
     def validate_timestamp(self) -> Self:
         if self.as_of.tzinfo is None:
             raise ValueError("as_of must be timezone-aware")
+        return self
+
+
+class BrokerClockSnapshot(BrokerModel):
+    is_open: bool
+    timestamp: datetime
+    next_open: datetime
+    next_close: datetime
+    raw_payload_hash: str | None = None
+
+    @model_validator(mode="after")
+    def validate_timestamps(self) -> Self:
+        for field_name in ("timestamp", "next_open", "next_close"):
+            timestamp = getattr(self, field_name)
+            if timestamp.tzinfo is None:
+                raise ValueError(f"{field_name} must be timezone-aware")
         return self
 
 

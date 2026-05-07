@@ -145,7 +145,8 @@ AI_Trading_Bot/
 │   │   ├── adapters.py
 │   │   ├── alpaca.py
 │   │   ├── fakes.py
-│   │   └── models.py
+│   │   ├── models.py
+│   │   └── smoke.py
 │   ├── control_plane/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -206,12 +207,14 @@ AI_Trading_Bot/
 │   └── __init__.py
 ├── scripts/
 │   ├── apply_ledger_migrations.py
+│   ├── check_alpaca_paper_readonly.py
 │   ├── check_ledger_database.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
 ├── tests/
 │   ├── integration/
+│   │   ├── test_alpaca_paper_readonly_smoke.py
 │   │   └── test_managed_ledger_crud.py
 │   ├── temporal/
 │   │   ├── test_temporal_sdk_environment.py
@@ -224,6 +227,7 @@ AI_Trading_Bot/
 │       ├── test_alerting.py
 │       ├── test_alpaca_mapping.py
 │       ├── test_alpaca_paper_adapter.py
+│       ├── test_alpaca_paper_readonly.py
 │       ├── test_backtesting_metrics.py
 │       ├── test_broker_activities.py
 │       ├── test_broker_models.py
@@ -267,4 +271,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 44, Total files: 224
+Total directories: 44, Total files: 228

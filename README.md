@@ -10,8 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 19 real Temporal SDK test-server / replay coverage with offline
-default tests and fake/local trading defaults.
+This repository is at Milestone 20 Alpaca paper read-only smoke tooling with offline default tests
+and fake/local trading defaults.
 
 Implemented pieces:
 
@@ -41,6 +41,11 @@ Implemented pieces:
 - fixture-only Alpaca `trade_updates` mapping to internal broker lifecycle events
 - fake Alpaca client support for account/order/fill/position snapshots, order lookup, paper entry
   submit, cancel, protective-stop submit/verify, stream-event mapping, and REST fallback contracts
+- opt-in read-only Alpaca paper HTTP smoke client and smoke runner for account, open orders,
+  positions, and clock/status snapshots
+- successful opt-in Alpaca paper read-only smoke evidence for account, open-orders, positions, and
+  clock/status reads against the paper endpoint, with no write operations attempted
+- normalized broker clock snapshot mapping for read-only Alpaca paper smoke validation
 - broker Temporal activity contracts that default to fake Alpaca paper adapters and perform no real
   Alpaca calls in default tests
 - pure daily and weekly report generation from supplied ledger/read-model snapshots under
@@ -121,7 +126,7 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- real Alpaca paper smoke-test evidence
+- Alpaca paper order lifecycle smoke-test evidence
 - real news provider integration
 - real AI provider integration
 - production dashboard UI/deployment
@@ -217,6 +222,21 @@ Run Milestone 19 Temporal SDK test-environment and replay tests:
 uv run --group dev pytest tests/temporal -vv
 ```
 
+Run Milestone 20 Alpaca paper read-only smoke tooling tests offline:
+
+```bash
+uv run --group dev pytest tests/unit/test_alpaca_paper_readonly.py
+```
+
+Run the real read-only paper smoke only after loading local secrets and explicit gates:
+
+```bash
+RUN_ALPACA_PAPER_SMOKE=1 \
+ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT \
+ALPACA_BASE_URL=https://paper-api.alpaca.markets \
+  uv run python scripts/check_alpaca_paper_readonly.py
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -264,8 +284,12 @@ deployment, or live trading are complete.
 Milestone 14 adds `packages/broker/alpaca.py`, `packages/broker/fakes.py`, and
 `apps/workers/app/activities/broker.py`. The adapter is paper-only, refuses live-mode or live-order
 flags, and requires explicit paper credentials in runtime mode. Default tests and default activity
-wiring use fakes and do not call Alpaca or submit real paper orders. Optional real Alpaca paper smoke
-tests remain deferred and must require explicit credentials and an explicit opt-in marker.
+wiring use fakes and do not call Alpaca or submit real paper orders. Milestone 20 adds an opt-in
+read-only paper smoke path for account, open orders, positions, and clock/status snapshots. It
+requires explicit environment gates, refuses live endpoints, prints sanitized summaries only, and
+does not submit, cancel, replace, or modify orders. The Milestone 20 read-only smoke was rerun
+successfully against the Alpaca paper endpoint; this is connectivity and mapping evidence only, not
+paper order lifecycle evidence or actual paper trading.
 
 ## Reporting And Alerting
 

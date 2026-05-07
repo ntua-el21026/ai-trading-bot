@@ -7,12 +7,15 @@ from packages.broker.alpaca import (
     AlpacaPaperAdapter,
     AlpacaPaperClient,
     AlpacaPaperCredentials,
+    AlpacaPaperReadOnlyHttpClient,
+    map_alpaca_clock,
     map_alpaca_trade_update,
 )
 from packages.broker.fakes import FakeAlpacaClient, build_fake_alpaca_paper_adapter
 from packages.broker.models import (
     REST_FALLBACK_INTERVAL_SECONDS,
     BrokerAccountSnapshot,
+    BrokerClockSnapshot,
     BrokerEnvironment,
     BrokerErrorCode,
     BrokerFill,
@@ -36,9 +39,11 @@ __all__ = [
     "AlpacaPaperAdapter",
     "AlpacaPaperClient",
     "AlpacaPaperCredentials",
+    "AlpacaPaperReadOnlyHttpClient",
     "BrokerAccountSnapshot",
     "BrokerAdapter",
     "BrokerAdapterNotConfigured",
+    "BrokerClockSnapshot",
     "BrokerEnvironment",
     "BrokerErrorCode",
     "BrokerFill",
@@ -57,5 +62,6 @@ __all__ = [
     "FakeAlpacaClient",
     "REST_FALLBACK_INTERVAL_SECONDS",
     "build_fake_alpaca_paper_adapter",
+    "map_alpaca_clock",
     "map_alpaca_trade_update",
 ]
