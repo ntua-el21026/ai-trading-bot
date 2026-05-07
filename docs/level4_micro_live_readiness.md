@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 18 adds managed Postgres/Supabase migration and repository CRUD validation gates while
-preserving the readiness boundary. It does not enable live trading, autonomous live execution, live
-credentials, real Alpaca calls in default tests, real alert delivery, paper or live orders,
-production schedules, expanded Level 4, or Level 5.
+Milestone 19 adds local Temporal SDK test-server/replay validation while preserving the readiness
+boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
+calls in default tests, real alert delivery, paper or live orders, production schedules, expanded
+Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -35,18 +35,18 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-18 are complete as local/offline code and opt-in validation scaffolding.
+- Milestones 00-19 are complete as local/offline code, opt-in validation scaffolding, and local
+  Temporal SDK test-server/replay coverage.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
-  Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist, but actual
-  managed runtime evidence is absent unless an operator runs the gated commands against a target
-  database.
+  Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist.
 - Paper-only Alpaca adapter and fake broker activity boundaries exist; real paper smoke-test
   evidence is absent.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
   but it is not actual paper trading evidence.
-- Real Temporal query/signal backend integration is deferred.
+- Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
+  integration is deferred.
 - Real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
 - Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
@@ -55,12 +55,12 @@ Known status:
 
 Hard blockers:
 
-- No managed database runtime migration/schema/CRUD evidence from an actual target database.
-- No real Temporal test-server/replay evidence.
+- No production managed database activity wiring evidence.
+- No production Temporal backend/live worker evidence.
 - No real Alpaca paper smoke-test evidence or paper execution evidence.
 - No controlled real paper operations evidence.
 - No real AI/news provider integration evidence.
-- No real Temporal query/signal backend evidence.
+- No production Temporal query/signal backend evidence.
 - No real alert delivery evidence.
 - No frozen paper run evidence.
 - No Level 4 go/no-go report.
@@ -190,9 +190,9 @@ Before Level 4 micro-live, dry-run or controlled-paper evidence must demonstrate
 - Alert delivery works for orders, fills, exits, kill switch, reconciliation mismatches, missing
   stops, worker failure, and provider outage.
 
-Current status: contract tests exist for signal names and safe control models, and fake alert
-routing is fixture-tested. Real Temporal signal/query backend integration and real alert delivery
-evidence are pending.
+Current status: contract tests exist for signal names and safe control models, local Temporal SDK
+signal/query tests cover selected workflows, and fake alert routing is fixture-tested. Production
+Temporal signal/query backend integration and real alert delivery evidence are pending.
 
 ## Broker And Reconciliation Evidence
 
@@ -213,9 +213,10 @@ Required evidence:
 - Temporal workflow state inconsistent with DB/order state detection.
 
 Current status: deterministic reconciliation contracts and fixture tests exist, local ledger
-schema/repository/activity foundations exist, and opt-in managed DB CRUD validation is available.
-Real broker stream, REST fallback, actual managed database runtime evidence, and Temporal/DB
-consistency evidence are pending.
+schema/repository/activity foundations exist, opt-in managed DB CRUD validation is available, and
+local Temporal SDK signal/query tests cover the reconciliation workflow. Real broker stream, REST
+fallback, production managed database activity wiring, and Temporal/DB consistency evidence are
+pending.
 
 ## Protective Stop Evidence
 
@@ -278,8 +279,8 @@ Required evidence:
   incidents, and resume after review through approved server-side paths.
 
 Current status: read models, ledger-backed dashboard snapshots, safe control contracts, fixture
-dispatch, and frontend env guardrails exist. Real dashboard deployment and real Temporal backend
-evidence are pending.
+dispatch, frontend env guardrails, and local Temporal SDK signal/query tests exist. Real dashboard
+deployment and production Temporal backend evidence are pending.
 
 ## Slippage And Fill-Quality Evidence
 

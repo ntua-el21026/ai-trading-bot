@@ -2,14 +2,13 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-18
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-19
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
-migration dry-run/apply scripts, schema-check helpers, second opt-in gates, and opt-in managed DB
-repository CRUD tests skipped by default. This run did not apply migrations or run managed CRUD
-validation because the managed DB gates were absent. It does not validate real Alpaca paper
-credentials, real AI/news provider credentials, real alert delivery, production dashboard
-deployment, live Temporal replay behavior, actual paper trading operations, live trading, or
-profitability.
+migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
+repository CRUD tests skipped by default, and local Temporal SDK test-environment/replay coverage.
+This does not validate real Alpaca paper credentials, real AI/news provider credentials, real alert
+delivery, production dashboard deployment, production Temporal backend behavior, actual paper
+trading operations, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -70,6 +69,11 @@ profitability.
   trading flags, and autonomous execution flags.
 - Workflow modules are statically checked for direct broker, AI/news, provider SDK, network, random,
   environment, and wall-clock side-effect imports.
+- Temporal SDK test-environment tests execute every registered workflow skeleton with fake/local
+  activities, validate selected signal/query contracts, verify configured worker task-queue
+  registration, and replay a generated kill-switch workflow history without Temporal Cloud,
+  production schedules, managed database credentials, broker APIs, AI/news providers, alert
+  delivery, or broker orders.
 - Paper trading runbook documentation cross-links the frozen paper acceptance gates and operating
   evidence requirements without claiming paper operations have started.
 - Level 4 readiness documentation cross-links acceptance gates, current blockers, config review,
@@ -104,14 +108,14 @@ profitability.
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py` |
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
-| Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py` |
+| Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py`, `tests/temporal/test_temporal_sdk_environment.py` |
 | Validation harness assumptions | `tests/unit/test_validation_harness.py` |
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: real Alpaca paper smoke tests, managed Postgres/Supabase runtime
-integration, real provider integrations, real alert delivery, real Temporal test-server/replay
-coverage, production dashboard deployment, paper trading operations, and Level 4 micro-live
+Remaining gaps are explicit: real Alpaca paper smoke tests, production managed Postgres/Supabase
+activity wiring, real provider integrations, real alert delivery, production Temporal backend
+integration, production dashboard deployment, paper trading operations, and Level 4 micro-live
 readiness evidence are not implemented.
 
 ## Validation Harness Contracts
@@ -168,10 +172,9 @@ handoff gates.
 
 Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
 fake/local paper dry-run orchestration, and local ledger evidence, but still needs explicit real
-Alpaca paper smoke tests, actual managed database migration/schema validation against the target
-runtime, real Temporal query/signal backend integration, real Temporal test-server/replay evidence,
-real AI/news provider integration, real dashboard deployment, real alert delivery, and controlled
-paper runs before these gates can be satisfied.
+Alpaca paper smoke tests, production managed database activity wiring, production Temporal
+query/signal backend integration, real AI/news provider integration, real dashboard deployment, real
+alert delivery, and controlled paper runs before these gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -206,9 +209,9 @@ Current blockers:
 - Frozen paper evidence is unavailable.
 - Actual paper trading operations have not started.
 - Database/audit-ledger foundation, local/fake Temporal activity persistence, explicit
-  Postgres/Supabase runtime helpers, and opt-in managed CRUD validation exist; actual managed
-  runtime migration/schema/CRUD evidence is absent unless an operator runs the gated commands.
-- Real Temporal query/signal backend integration is deferred.
+  Postgres/Supabase runtime helpers, and opt-in managed CRUD validation exist.
+- Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
+  integration is deferred.
 - Real Alpaca paper smoke-test evidence and real AI/news provider integrations are deferred.
 - Real dashboard deployment is deferred.
 - Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
@@ -224,10 +227,10 @@ If point-in-time universe membership is unavailable, stock-universe backtests mu
 
 ## Future Validation Scope
 
-Later milestones must add managed database-backed integration tests, real provider mock/replay
-integration, Temporal test-server/replay coverage, controlled paper trading execution, paper trading
-evidence, and Level 4 readiness review required by the latest spec. Backtests and paper trading must
-not be represented as proof of live profitability.
+Later milestones must add production managed database activity wiring, real provider mock/replay
+integration, controlled paper trading execution, paper trading evidence, and Level 4 readiness
+review required by the latest spec. Backtests and paper trading must not be represented as proof of
+live profitability.
 
 ## Current Assumptions
 

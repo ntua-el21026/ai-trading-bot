@@ -2,15 +2,16 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 16 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Milestone 19 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
-dry-run orchestration, provider placeholder activity boundaries, signal names, query names,
-dashboard/control-plane signal mapping contracts, validation-oriented workflow boundary tests, and
-contract tests. It does not implement actual paper trading orchestration, managed
-Postgres/Supabase runtime wiring, AI calls, market/news provider calls, real alert delivery,
-production schedule activation, browser-side Temporal calls, real paper orders, or live trading.
+dry-run orchestration, managed Postgres/Supabase runtime helpers, provider placeholder activity
+boundaries, signal names, query names, dashboard/control-plane signal mapping contracts, local
+Temporal SDK test-environment coverage, and replay coverage for a generated workflow history. It
+does not implement actual paper trading orchestration, AI calls, market/news provider calls, real
+alert delivery, production schedule activation, browser-side Temporal calls, real paper orders, or
+live trading.
 
 ## Configuration
 
@@ -110,6 +111,14 @@ a live Temporal server and does not activate schedules. Workflow code remains de
 continues to avoid direct database, broker, AI/news, provider, network, clock, or random side
 effects.
 
+Milestone 19 adds local Temporal SDK test-environment coverage under `tests/temporal/`. The tests
+start the SDK test server, register workers on configured task queues, execute every registered
+workflow skeleton with fake/local activities, exercise signal/query contracts for kill switch,
+reconciliation, and reporting workflows, and replay a generated `KillSwitchWorkflow` history with
+Temporal's replayer. These tests do not connect to Temporal Cloud, do not activate production
+schedules, do not require managed database credentials, and do not call broker, AI/news, market-data,
+alert, or dashboard services.
+
 Milestone 06 adds placeholder boundaries for:
 
 - broker reconciliation snapshot retrieval;
@@ -199,32 +208,31 @@ uv run python scripts/seed_temporal_schedules.py
 
 ## Testing
 
-Current tests are import and contract tests:
+Current tests include import/static contracts, local Temporal SDK test-environment execution, and
+workflow replay coverage:
 
 ```bash
 uv run --group dev pytest tests/unit tests/temporal
 ```
 
-Milestone 14 also statically checks that workflow modules do not directly import broker clients,
+Milestone 14 statically checks that workflow modules do not directly import broker clients,
 broker SDKs, AI/news, ledger/database, network-provider, wall-clock, or random side-effect code.
 Side effects remain activity responsibilities.
 
 Milestone 15 adds fixture tests for report activities, alert dispatch activities, dashboard snapshot
-activity output, and workflow activity-name alignment. Real Temporal test-server/replay execution is
-still deferred.
+activity output, and workflow activity-name alignment.
 
-Milestone 16 adds fake/local dry-run orchestration tests and CLI safety tests. These do not provide
-real Temporal test-server or replay evidence.
+Milestone 16 adds fake/local dry-run orchestration tests and CLI safety tests.
 
-Full Temporal replay or local test-server execution is deferred. A future command should use
-Temporal's testing environment, for example:
+Milestone 19 adds the real SDK test-server and replay tests:
 
 ```bash
-uv run --group dev pytest tests/temporal --run-temporal-server
+uv run --group dev pytest tests/temporal -vv
 ```
 
 ## Level 4 Readiness Evidence
 
 `docs/level4_micro_live_readiness.md` requires real Temporal query/signal backend evidence before
-Level 4 micro-live. Current workflow tests are import/static contract tests only; real test-server
-or replay evidence, live worker evidence, and production schedule activation remain deferred.
+Level 4 micro-live. Current workflow tests now include local SDK test-server signal/query coverage
+and replay evidence, but production Temporal backend integration, live worker evidence, and
+production schedule activation remain deferred.

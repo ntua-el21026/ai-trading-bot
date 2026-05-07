@@ -214,6 +214,7 @@ AI_Trading_Bot/
 │   ├── integration/
 │   │   └── test_managed_ledger_crud.py
 │   ├── temporal/
+│   │   ├── test_temporal_sdk_environment.py
 │   │   └── test_workflow_contracts.py
 │   └── unit/
 │       ├── test_ai_news.py
@@ -266,4 +267,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 44, Total files: 223
+Total directories: 44, Total files: 224

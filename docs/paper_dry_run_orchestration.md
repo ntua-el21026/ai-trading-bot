@@ -109,9 +109,8 @@ uv run --group dev python -m compileall -q packages apps tests
 The following are still deferred:
 
 - actual Alpaca paper smoke tests;
-- actual managed Postgres/Supabase migration/schema evidence;
-- managed Postgres/Supabase repository CRUD evidence from a target environment;
-- real Temporal test-server/replay integration;
+- production managed Postgres/Supabase activity wiring;
+- production Temporal query/signal backend integration;
 - real AI/news provider integration;
 - real alert delivery;
 - real dashboard deployment;

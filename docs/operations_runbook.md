@@ -2,17 +2,17 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 18 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 19 does
 not implement production services, active schedules, real Alpaca paper smoke tests, real AI/news
-provider clients, actual managed Postgres/Supabase migration evidence in this environment, real
-Temporal query/signal backend integration, real alert delivery, paper trading runs, Level 4 live
-readiness evidence, or live trading. It does define passive broker/reconciliation, fake-tested paper
-Alpaca boundaries, AI/news, reporting, alerting, dashboard/control-plane, validation/testing
-contracts, fake/local paper dry-run orchestration, explicit Postgres/Supabase runtime
-migration/check helpers with second opt-in gates, opt-in managed repository CRUD validation, paper
-trading operations documentation, Level 4 readiness documentation with incident/fallback
-recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries
-backed by local/fake repositories.
+provider clients, production Temporal query/signal backend integration, real alert delivery, paper
+trading runs, Level 4 live readiness evidence, or live trading. It does define passive
+broker/reconciliation, fake-tested paper Alpaca boundaries, AI/news, reporting, alerting,
+dashboard/control-plane, validation/testing contracts, fake/local paper dry-run orchestration,
+explicit Postgres/Supabase runtime migration/check helpers with second opt-in gates, opt-in managed
+repository CRUD validation, local Temporal SDK test-server/replay coverage, paper trading operations
+documentation, Level 4 readiness documentation with incident/fallback recommendations, a local
+database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
+repositories.
 
 ## Current Foundation Operations
 
@@ -117,9 +117,6 @@ and never print credentials. The CRUD test writes isolated fixture records insid
 transactions and never truncates or deletes arbitrary rows. These commands do not call brokers,
 AI/news providers, alert services, Temporal schedules, dashboard deployment, or trading code.
 
-Milestone 18 was executed without the managed DB gates, so migration apply, schema check against a
-managed target, and managed CRUD validation were skipped in this environment.
-
 ## Current Temporal Ledger Activity Operations
 
 Temporal ledger activities are currently local/fake-safe boundaries:
@@ -132,8 +129,21 @@ Temporal ledger activities are currently local/fake-safe boundaries:
 4. Activity results report `external_calls_performed=false`.
 
 These activities persist to local SQLite during tests. They do not call broker APIs, AI/news
-providers, managed databases, alerts, or frontend code. Real Temporal test-server/replay coverage is
-still deferred.
+providers, managed databases, alerts, or frontend code.
+
+## Current Temporal Test Environment Operations
+
+Temporal SDK test-environment coverage is available for local validation:
+
+```bash
+uv run --group dev pytest tests/temporal -vv
+```
+
+The tests start Temporal's local SDK test server, register workers on the configured task queues,
+execute every workflow skeleton with fake/local activities, exercise kill-switch, reconciliation,
+and reporting signal-query contracts, and replay a generated kill-switch workflow history. They do
+not connect to Temporal Cloud, do not activate production schedules, do not require managed database
+credentials, and do not call broker, AI/news, market-data, alert, dashboard, or trading services.
 
 ## Current Temporal Broker Activity Operations
 
@@ -244,7 +254,6 @@ records. They do not enable live trading or autonomous live execution.
 ## Future Operations Scope
 
 Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper smoke
-tests, actual paper trading orchestration, real AI/news provider setup, actual managed database
-migration/schema/CRUD evidence from a target environment, real Temporal test-server/replay
-coverage, real Temporal query/signal backend integration, dashboard deployment, real alert
-delivery, evidence collection, and Level 4 micro-live readiness gates.
+tests, actual paper trading orchestration, real AI/news provider setup, production managed database
+activity wiring, production Temporal query/signal backend integration, dashboard deployment, real
+alert delivery, evidence collection, and Level 4 micro-live readiness gates.

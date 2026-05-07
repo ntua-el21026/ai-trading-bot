@@ -6,7 +6,7 @@ intelligence, reporting/alerting, dashboard/control-plane, validation/testing, p
 and Level 4 readiness documentation boundary architecture.
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Current
-repository implementation is limited to Milestones 00-18 scaffolding and local/fake integration
+repository implementation is limited to Milestones 00-19 scaffolding and local/fake integration
 foundation: project metadata, safe configuration defaults, typed config loading, structured logging
 helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal
 backtest utilities, Postgres-oriented audit-ledger DDL, local SQLite ledger repositories for tests,
@@ -17,7 +17,8 @@ pure reconciliation comparison, bounded AI/news intelligence contracts, pure rep
 fake-safe alert contracts, ledger-backed dashboard read models, dashboard/control-plane read/action
 contracts, validation/testing contracts, fake/local paper dry-run orchestration, explicit
 Postgres/Supabase runtime migration/check helpers, opt-in managed repository CRUD validation, paper
-trading runbook documentation, and Level 4 micro-live readiness documentation.
+trading runbook documentation, local Temporal SDK test-server/replay validation, and Level 4
+micro-live readiness documentation.
 
 ## Target Shape
 
@@ -56,6 +57,10 @@ trading runbook documentation, and Level 4 micro-live readiness documentation.
 - Workflow skeletons call ledger activity boundaries by stable name while workflow code remains
   deterministic and imports no database, broker, AI/news, provider, network, clock, or random
   clients.
+- `tests/temporal/test_temporal_sdk_environment.py` starts Temporal's local SDK test environment,
+  registers workers on the configured task queues, executes every workflow skeleton with fake/local
+  activities, validates selected signal/query contracts, and replays a generated kill-switch
+  workflow history. It does not connect to Temporal Cloud or activate schedules.
 - Regime classification implements deterministic `RISK_ON`, `CAUTION`, and `RISK_OFF` states from SPY SMA/realized-volatility rules.
 - Strategy candidate evaluation implements long-only trend, breakout, volume, RS63, ATR percent, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates.
 - Exit helpers calculate stop levels and exit trigger reason codes only; they do not submit or modify orders.
@@ -115,13 +120,10 @@ trading runbook documentation, and Level 4 micro-live readiness documentation.
 - No real alert delivery is implemented.
 - No actual paper trading operations with real broker/provider side effects are implemented.
 - No Alpaca SDK-backed runtime wiring or real paper smoke-test evidence is implemented.
-- No managed Postgres/Supabase migration has been applied by default tests or in this environment.
-- Managed Postgres/Supabase repository CRUD validation with fixture records is implemented as an
-  opt-in integration test, but was not run against a managed target in this environment.
 - No real managed Postgres/Supabase activity wiring is implemented.
 - No real AI/news provider integration is implemented.
-- No real Temporal test-server/replay evidence is implemented.
-- No real Temporal query/signal backend integration is implemented.
+- No production Temporal query/signal backend integration is implemented.
+- No production Temporal worker deployment evidence is implemented.
 - Temporal schedules are not activated.
 - Level 4 micro-live readiness is not satisfied because required evidence is absent.
 - Earnings blackout evaluation requires caller-supplied earnings dates and trading calendars. Missing earnings data is treated as unknown and blocks entries conservatively.

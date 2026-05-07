@@ -10,8 +10,8 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 18 managed Postgres/Supabase migration and repository CRUD
-validation preparation with offline default tests and fake/local trading defaults.
+This repository is at Milestone 19 real Temporal SDK test-server / replay coverage with offline
+default tests and fake/local trading defaults.
 
 Implemented pieces:
 
@@ -85,6 +85,12 @@ Implemented pieces:
   using local/fake SQLite repositories by default
 - workflow skeletons aligned to ledger persistence activity boundaries without direct database,
   broker, AI/news, provider, network, clock, or random calls in workflow code
+- real Temporal SDK local test-environment coverage for all registered workflow skeletons using
+  fake/local activities only
+- Temporal signal/query tests for kill switch, reconciliation, and reporting workflows under the
+  local SDK test server
+- Temporal replay coverage for a generated kill-switch workflow history
+- worker registration tests for configured task queues and workflow mappings
 - Temporal AI/news activity boundaries that perform no external calls
 - dashboard/control-plane read models for system state, workflows, intents, orders, positions,
   incidents, reconciliation, kill switch, candidates/signals, AI outputs, reports, and risk status
@@ -118,12 +124,10 @@ Not implemented yet:
 - real Alpaca paper smoke-test evidence
 - real news provider integration
 - real AI provider integration
-- actually applying migrations to a managed Postgres/Supabase instance in this environment
-- running managed Postgres repository CRUD validation with fixture data in this environment
-- real Temporal test-server/replay execution
 - production dashboard UI/deployment
 - real Telegram/email alert delivery
-- real Temporal query/signal backend integration
+- production Temporal query/signal backend integration
+- production worker/schedule activation
 - actual paper trading operations
 - Level 4 micro-live readiness evidence
 - live trading
@@ -207,6 +211,12 @@ RUN_MANAGED_DB_TESTS=1 DATABASE_URL="postgresql://..." \
   uv run --group dev pytest tests/integration/test_managed_ledger_crud.py
 ```
 
+Run Milestone 19 Temporal SDK test-environment and replay tests:
+
+```bash
+uv run --group dev pytest tests/temporal -vv
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -230,6 +240,10 @@ uv run python scripts/start_worker.py --task-queue execution-task-queue
 
 `scripts/seed_temporal_schedules.py` is dry-run only in this milestone and does not create or
 activate production schedules.
+
+Milestone 19 adds local Temporal SDK test-environment and replay coverage under `tests/temporal/`.
+These tests start the SDK's local test server, register workers against configured task queues, use
+fake/local activities only, do not connect to Temporal Cloud, and do not activate schedules.
 
 ## Paper Trading Runbook
 
@@ -290,8 +304,8 @@ Milestone 11 adds readiness documentation only:
 - `docs/templates/level4_micro_live_go_no_go_template.md`
 
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
-real provider integrations, managed database runtime integration, real Temporal query/signal backend
-integration, real dashboard deployment, alerting, and live go/no-go approval.
+real provider integrations, production Temporal query/signal backend integration, production
+dashboard deployment, real alert delivery, controlled paper operations, and live go/no-go approval.
 
 ## Safety Defaults
 
