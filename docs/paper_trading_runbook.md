@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 20 adds explicit Alpaca paper read-only smoke tooling while paper trading remains
-disabled. The repository still does not implement actual paper trading operations, Alpaca paper
-order lifecycle smoke tests, real AI/news provider calls, real alert delivery, production dashboard
-deployment, or live trading.
+Milestone 21A adds explicit Alpaca paper read-only smoke tooling plus a default-refusing,
+operator-gated Alpaca paper order-lifecycle smoke harness while paper trading remains disabled. The
+repository still does not implement actual paper trading operations, real AI/news provider calls,
+real alert delivery, production dashboard deployment, frozen paper evidence, Level 4 readiness, or
+live trading.
 
 ## Purpose And Constraints
 
@@ -33,9 +34,10 @@ for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validat
 actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
 dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, opt-in
 managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
-activity tests. It also provides an opt-in read-only Alpaca paper smoke command. It does not connect
-those contracts to order-writing paper execution, real AI/news provider clients, real alert
-delivery, production managed database activity wiring, or actual paper execution orchestration yet.
+activity tests. It also provides an opt-in read-only Alpaca paper smoke command and a separate
+gated order-lifecycle smoke harness that refuses by default. It does not connect those contracts to
+autonomous order-writing paper execution, real AI/news provider clients, real alert delivery,
+production managed database activity wiring, or actual paper execution orchestration yet.
 
 The safe local dry-run command is:
 
@@ -61,6 +63,19 @@ cancel, replace, close, liquidate, or place protective-stop orders.
 Milestone 20 read-only smoke status: passed after corrected local paper credentials were loaded.
 This proves paper account connectivity and normalized read-only mapping only. It is not actual paper
 trading and it does not validate the paper order lifecycle.
+
+The Alpaca paper order-lifecycle smoke harness is also opt-in and must not be treated as paper
+trading:
+
+```bash
+uv run python scripts/check_alpaca_paper_order_lifecycle.py
+```
+
+With no write-smoke gates loaded, the expected result is sanitized refusal before broker write
+calls. A later real paper write smoke requires the explicit gates listed below, uses only one tiny
+paper `DAY` limit entry order, places a protective stop only for filled quantity, cleans up
+smoke-created orders/positions, and prints sanitized evidence only. It is not frozen paper
+evidence, not actual paper trading operations, and not Level 4 readiness.
 
 Do not treat any procedure below as operationally complete until the deferred integrations listed in
 the paper-to-live handoff section are implemented and validated.
@@ -92,6 +107,12 @@ Required environment variable names only:
 - `ALPACA_BASE_URL`
 - `RUN_ALPACA_PAPER_SMOKE`
 - `ALPACA_PAPER_SMOKE_CONFIRM`
+- `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE`
+- `ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM`
+- `ALPACA_PAPER_ORDER_SMOKE_SYMBOL`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_QTY`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD`
+- `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
@@ -137,6 +158,8 @@ Complete this checklist before every paper session:
 - Confirm autonomous live execution is disabled.
 - Confirm broker account mode is paper through the explicitly gated read-only smoke command before
   any future paper order lifecycle smoke test is approved.
+- Confirm the order-lifecycle smoke harness refuses by default unless every explicit write-smoke
+  gate is loaded before the command starts.
 - Confirm kill switch is enabled.
 - Confirm broker reconciliation is required before new-risk orders.
 - Confirm protective stops are required.
@@ -406,7 +429,8 @@ Before micro-live readiness review, collect and approve:
 - managed database/audit persistence implementation and migration execution evidence;
 - real Temporal test-server/replay evidence;
 - real Temporal query/signal backend integration;
-- retained Alpaca read-only smoke evidence and future paper order lifecycle broker evidence;
+- retained Alpaca read-only smoke evidence and separately gated paper order lifecycle broker
+  evidence;
 - real AI/news provider integration and schema-validity evidence;
 - real dashboard deployment evidence;
 - real alert delivery evidence;

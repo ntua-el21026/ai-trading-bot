@@ -4,7 +4,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
 Milestone 16 adds a fake/local end-to-end paper dry-run path. It is operational rehearsal only. It
 does not start actual paper trading, submit broker orders, call external services, or provide Level
-4 readiness evidence.
+4 readiness evidence. Milestone 21A's gated Alpaca paper order-lifecycle smoke harness is separate
+from this fake/local dry-run path and refuses by default unless explicit write-smoke gates are
+loaded.
 
 ## Implemented
 
@@ -108,7 +110,7 @@ uv run --group dev python -m compileall -q packages apps tests
 
 The following are still deferred:
 
-- actual Alpaca paper smoke tests;
+- retained real Alpaca paper order-lifecycle smoke evidence;
 - production managed Postgres/Supabase activity wiring;
 - production Temporal query/signal backend integration;
 - real AI/news provider integration;

@@ -36,13 +36,15 @@ class FakeAlpacaClient:
         rest_error: AlpacaClientError | None = None,
         next_submit_status: str = "accepted",
         next_submit_filled_qty: float = 0.0,
+        submit_outcomes: Sequence[tuple[str, float]] = (),
+        mutate_positions_on_submit: bool = False,
     ) -> None:
         self.account_payload = dict(account or _default_account())
         self.orders_by_id = {str(order["id"]): dict(order) for order in orders}
         self.orders_by_client_order_id = {
             str(order["client_order_id"]): dict(order) for order in orders
         }
-        self.fills = tuple(dict(fill) for fill in fills)
+        self.fills = [dict(fill) for fill in fills]
         self.positions_by_symbol = {
             str(position["symbol"]).upper(): dict(position) for position in positions
         }
@@ -53,6 +55,8 @@ class FakeAlpacaClient:
         self.rest_error = rest_error
         self.next_submit_status = next_submit_status
         self.next_submit_filled_qty = next_submit_filled_qty
+        self.submit_outcomes = list(submit_outcomes)
+        self.mutate_positions_on_submit = mutate_positions_on_submit
         self.submitted_order_requests: list[dict[str, Any]] = []
         self.cancelled_broker_order_ids: list[str] = []
 
@@ -90,6 +94,10 @@ class FakeAlpacaClient:
             )
 
         self.submitted_order_requests.append(dict(request))
+        submit_status = self.next_submit_status
+        submit_filled_qty = self.next_submit_filled_qty
+        if self.submit_outcomes:
+            submit_status, submit_filled_qty = self.submit_outcomes.pop(0)
         broker_order_id = f"paper-order-{len(self.orders_by_id) + 1}"
         submitted_at = DEFAULT_AS_OF.isoformat().replace("+00:00", "Z")
         order = {
@@ -99,10 +107,10 @@ class FakeAlpacaClient:
             "side": request["side"],
             "asset_class": "equity",
             "qty": request["qty"],
-            "filled_qty": str(self.next_submit_filled_qty),
+            "filled_qty": str(submit_filled_qty),
             "type": request["type"],
             "time_in_force": request["time_in_force"],
-            "status": self.next_submit_status,
+            "status": submit_status,
             "limit_price": request.get("limit_price"),
             "stop_price": request.get("stop_price"),
             "submitted_at": submitted_at,
@@ -110,6 +118,8 @@ class FakeAlpacaClient:
         }
         self.orders_by_id[broker_order_id] = dict(order)
         self.orders_by_client_order_id[client_order_id] = dict(order)
+        if self.mutate_positions_on_submit and submit_filled_qty > 0:
+            self._apply_filled_order(order, filled_quantity=submit_filled_qty)
         return dict(order)
 
     def cancel_order(self, broker_order_id: str) -> Mapping[str, Any]:
@@ -148,6 +158,68 @@ class FakeAlpacaClient:
         if self.stream_error is not None:
             raise self.stream_error
         return tuple(dict(event) for event in self.trade_updates)
+
+    def get_clock(self) -> Mapping[str, Any]:
+        return {
+            "is_open": True,
+            "timestamp": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            "next_open": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            "next_close": DEFAULT_AS_OF.replace(hour=21, minute=0).isoformat().replace(
+                "+00:00",
+                "Z",
+            ),
+        }
+
+    def _apply_filled_order(
+        self,
+        order: Mapping[str, Any],
+        *,
+        filled_quantity: float,
+    ) -> None:
+        symbol = str(order["symbol"]).upper()
+        side = str(order["side"])
+        price = float(order.get("limit_price") or order.get("stop_price") or 1.0)
+        fill_id = f"paper-fill-{len(self.fills) + 1}"
+        filled_at = DEFAULT_AS_OF.isoformat().replace("+00:00", "Z")
+        self.fills.append(
+            {
+                "id": fill_id,
+                "order_id": order["id"],
+                "client_order_id": order["client_order_id"],
+                "symbol": symbol,
+                "side": side,
+                "qty": str(filled_quantity),
+                "price": str(price),
+                "transaction_time": filled_at,
+            }
+        )
+        existing = self.positions_by_symbol.get(symbol)
+        if side == "buy":
+            existing_quantity = 0.0 if existing is None else float(existing["qty"])
+            existing_value = (
+                0.0 if existing is None else existing_quantity * float(existing["avg_entry_price"])
+            )
+            new_quantity = existing_quantity + filled_quantity
+            average_entry_price = (existing_value + filled_quantity * price) / new_quantity
+            self.positions_by_symbol[symbol] = {
+                "symbol": symbol,
+                "asset_class": "equity",
+                "qty": str(new_quantity),
+                "avg_entry_price": str(average_entry_price),
+                "market_value": str(new_quantity * price),
+                "opened_at": filled_at,
+            }
+            return
+        if existing is None:
+            return
+        remaining_quantity = float(existing["qty"]) - filled_quantity
+        if remaining_quantity <= 1e-9:
+            self.positions_by_symbol.pop(symbol, None)
+            return
+        self.positions_by_symbol[symbol] = dict(existing) | {
+            "qty": str(remaining_quantity),
+            "market_value": str(remaining_quantity * float(existing["avg_entry_price"])),
+        }
 
 
 def build_fake_alpaca_paper_adapter(

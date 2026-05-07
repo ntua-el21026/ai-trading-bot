@@ -2,17 +2,18 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 20 does
-not implement production services, active schedules, Alpaca paper order lifecycle smoke tests, real
-AI/news provider clients, production Temporal query/signal backend integration, real alert delivery,
-paper trading runs, Level 4 live readiness evidence, or live trading. It does define passive
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 21A does
+not implement production services, active schedules, actual paper trading runs, real AI/news
+provider clients, production Temporal query/signal backend integration, real alert delivery,
+dashboard deployment, Level 4 live readiness evidence, or live trading. It does define passive
 broker/reconciliation, fake-tested paper Alpaca boundaries, opt-in read-only Alpaca paper smoke
-tooling, AI/news, reporting, alerting, dashboard/control-plane, validation/testing contracts,
-fake/local paper dry-run orchestration, explicit Postgres/Supabase runtime migration/check helpers
-with second opt-in gates, opt-in managed repository CRUD validation, local Temporal SDK
-test-server/replay coverage, paper trading operations documentation, Level 4 readiness
-documentation with incident/fallback recommendations, a local database/audit-ledger foundation, and
-safe Temporal activity boundaries backed by local/fake repositories.
+tooling, a default-refusing gated Alpaca paper order-lifecycle smoke harness, AI/news, reporting,
+alerting, dashboard/control-plane, validation/testing contracts, fake/local paper dry-run
+orchestration, explicit Postgres/Supabase runtime migration/check helpers with second opt-in gates,
+opt-in managed repository CRUD validation, local Temporal SDK test-server/replay coverage, paper
+trading operations documentation, Level 4 readiness documentation with incident/fallback
+recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries
+backed by local/fake repositories.
 
 ## Current Foundation Operations
 
@@ -45,7 +46,8 @@ Paper broker behavior is currently fake-client and contract based:
 3. Runtime adapter construction requires explicit paper credentials and an injected client.
 4. Broker activities under `apps/workers/app/activities/broker.py` default to the fake adapter.
 5. Optional read-only Alpaca paper smoke requires explicit gates and calls only read-only endpoints.
-6. Paper order lifecycle smoke tests remain deferred and must be separately approved and gated.
+6. Optional Alpaca paper order-lifecycle smoke harness refuses by default and requires separate
+   explicit write-smoke gates before any paper write-capable call.
 
 Default tests do not call Alpaca, do not require credentials, and do not submit real paper or live
 orders.
@@ -79,6 +81,39 @@ Forbidden operations for this smoke:
 - close or liquidate position;
 - use any live endpoint;
 - call any POST, PATCH, or DELETE broker endpoint.
+
+## Current Alpaca Paper Order-Lifecycle Smoke Operations
+
+Milestone 21A adds a harness for one controlled paper order lifecycle, but it refuses by default:
+
+```bash
+uv run python scripts/check_alpaca_paper_order_lifecycle.py
+```
+
+Expected default result: sanitized refusal, no order submitted, no cancellation, no protective stop,
+no cleanup exit, and no broker write endpoint called.
+
+A future real paper write smoke requires all explicit gates loaded before the command starts:
+
+- `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1`
+- `ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM=SUBMIT_AND_CLEAN_UP_TINY_PAPER_ORDER`
+- `ALPACA_BASE_URL=https://paper-api.alpaca.markets`
+- `ALPACA_API_KEY`
+- `ALPACA_SECRET_KEY`
+- `ALPACA_PAPER_ORDER_SMOKE_SYMBOL`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_QTY`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD`
+- `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS`
+
+The harness also validates paper environment config, live trading disabled, autonomous execution
+disabled, live orders disabled, execution-intent/risk/reconciliation/stop requirements, approved
+live-universe equity/ETF scope, quantity `<= 1`, notional `<= 1000`, timeout `<= 180` seconds, and
+absence of pre-existing target-symbol broker orders or positions.
+
+This harness is not paper trading. It is not frozen paper evidence, does not activate Temporal
+schedules, does not route through autonomous strategy execution, does not call AI/news providers,
+does not send alerts, does not deploy the dashboard, does not use live Alpaca, and does not satisfy
+Level 4 readiness.
 
 ## Current AI Operations
 
@@ -284,7 +319,8 @@ records. They do not enable live trading or autonomous live execution.
 
 ## Future Operations Scope
 
-Later milestones must implement real worker startup, Temporal schedules, opt-in Alpaca paper order
-lifecycle smoke tests, actual paper trading orchestration, real AI/news provider setup, production
+Later milestones must implement real worker startup, Temporal schedules, an explicitly gated real
+Alpaca paper order-lifecycle smoke run if not already captured, actual paper trading orchestration,
+real AI/news provider setup, production
 managed database activity wiring, production Temporal query/signal backend integration, dashboard
 deployment, real alert delivery, evidence collection, and Level 4 micro-live readiness gates.

@@ -13,7 +13,10 @@ and position audit persistence without submitting broker orders. Milestone 14 ad
 Alpaca adapter and broker activity boundaries behind explicit gates, using fake clients in default
 tests and without starting paper trading operations. Milestone 16 adds fake/local dry-run
 orchestration that creates and persists an `ExecutionIntent`, fake order/fill/position records, and
-protective-stop verification evidence without real broker orders.
+protective-stop verification evidence without real broker orders. Milestone 21A adds an
+operator-invoked Alpaca paper order-lifecycle smoke harness that refuses by default unless all
+write-smoke gates are present. It is harness-only preparation unless separately run with those
+gates, and it is not actual paper trading, frozen paper evidence, or Level 4 readiness.
 
 ## Foundation Defaults
 
@@ -113,6 +116,24 @@ Implemented fake-tested paper boundaries:
 - structured ambiguous/failed results for timeouts, duplicate client IDs, rejected orders, missing
   stops, stream disconnects, and REST fallback unavailability.
 
+## Alpaca Paper Order-Lifecycle Smoke Harness
+
+`packages/broker/order_lifecycle_smoke.py` and
+`scripts/check_alpaca_paper_order_lifecycle.py` define a tightly gated paper-only smoke harness for
+one controlled tiny `DAY` limit entry order, acknowledgement/fill observation, filled-quantity stop
+submission, cleanup, and reconciliation evidence.
+
+The default behavior is refusal before broker write-capable calls. A real paper write smoke requires
+all explicit gates documented in `.env.example` and `docs/broker_integration.md`, the exact paper
+base URL, paper/system execution config invariants, approved live-universe equity/ETF scope,
+quantity `<= 1`, max notional `<= 1000`, timeout `<= 180` seconds, no existing target-symbol broker
+order, and no existing target-symbol broker position.
+
+The harness is not connected to autonomous strategy execution, Temporal schedules, dashboard
+controls, AI/news providers, alert delivery, live trading, or live Alpaca. Successful future smoke
+evidence would validate only a controlled paper order lifecycle and cleanup path; it would not start
+actual paper trading operations.
+
 ## Stream And REST Fallback
 
 Alpaca `trade_updates` fixture payloads are mapped to normalized `BrokerStreamEvent`,
@@ -126,5 +147,5 @@ fakes and fixtures only; no websocket, REST, real Alpaca, or broker credential a
 micro-live: valid `ExecutionIntent`, broker reconciliation, idempotent `client_order_id`,
 protective-stop verification, partial-fill handling, duplicate-order prevention, alerts, and
 manual-control evidence. Current implementation has paper-only broker boundaries, but no end-to-end
-paper operations, frozen paper evidence, or live trading approval. The fake/local dry-run path is
-local validation evidence only.
+paper operations, frozen paper evidence, or live trading approval. The fake/local dry-run path and
+the Milestone 21A default-refusing smoke harness are validation tooling only.

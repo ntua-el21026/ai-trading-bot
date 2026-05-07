@@ -4,8 +4,9 @@ The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
 Milestone 14 adds paper-only Alpaca broker boundaries. Milestone 16 uses those boundaries through
 `FakeAlpacaClient` in a fake/local dry-run path. Milestone 20 adds an opt-in read-only Alpaca paper
-smoke path. The repository does not start paper trading operations, does not activate Temporal
-schedules, does not add real credentials, and does not enable live trading.
+smoke path. Milestone 21A adds an explicitly gated Alpaca paper order-lifecycle smoke harness. The
+repository does not start paper trading operations, does not activate Temporal schedules, does not
+add real credentials, and does not enable live trading.
 
 ## Current Implementation
 
@@ -15,8 +16,13 @@ schedules, does not add real credentials, and does not enable live trading.
   structured broker results, and stream/REST status helpers.
 - `packages/broker/smoke.py` defines the explicit-gate read-only paper smoke runner and sanitized
   summary model.
+- `packages/broker/order_lifecycle_smoke.py` defines the explicit-gate paper order-lifecycle smoke
+  runner, future write-capable paper HTTP client, smoke-only intent construction, cleanup logic,
+  and sanitized summary model.
 - `scripts/check_alpaca_paper_readonly.py` runs the opt-in read-only smoke check with sanitized
   output only.
+- `scripts/check_alpaca_paper_order_lifecycle.py` runs the opt-in paper order-lifecycle smoke
+  harness with sanitized output only. It returns a safe refusal summary by default.
 - `packages/broker/fakes.py` defines `FakeAlpacaClient` and fake adapter builders for local tests.
 - `apps/workers/app/activities/broker.py` defines broker activity request/response contracts and
   activity functions for paper account/order/fill/position snapshots, idempotency lookups, paper
@@ -50,6 +56,21 @@ The read-only smoke path additionally requires:
 - `config/execution.yaml` live/autonomous order flags disabled;
 - `AlpacaPaperAdapter` live-mode refusal check passing.
 
+The paper order-lifecycle smoke path separately requires:
+
+- `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1`;
+- `ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM=SUBMIT_AND_CLEAN_UP_TINY_PAPER_ORDER`;
+- `ALPACA_BASE_URL=https://paper-api.alpaca.markets`;
+- `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` present;
+- `ALPACA_PAPER_ORDER_SMOKE_SYMBOL` present and approved in `config/universe.yaml`;
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_QTY` present and `<= 1`;
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD` present and `<= 1000`;
+- `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS` present and `<= 180`;
+- paper/dry-run config with live trading, autonomous execution, and live orders disabled;
+- execution-intent, risk-check, broker-reconciliation, and protective-stop requirements enabled.
+
+If any gate fails, the harness refuses before write-capable broker calls.
+
 ## Supported Boundaries
 
 Implemented fake-tested boundaries:
@@ -64,6 +85,10 @@ Implemented fake-tested boundaries:
 - protective-stop verification against open fake broker orders;
 - Alpaca `trade_updates` mapping;
 - read-only account, open-order, position, and clock/status smoke mapping;
+- explicitly gated smoke-only DAY limit entry submission, acknowledgement/fill observation,
+  partial/unfilled handling, protective-stop submission for filled quantity, smoke-created order
+  cancellation, cleanup exit submission, and sanitized final reconciliation through fake-client
+  tests;
 - REST fallback snapshot/status with the spec's 30-second active-window interval;
 - structured ambiguity and safety errors for duplicate client IDs, timeouts, rejected orders,
   missing stops, stream disconnects, and REST fallback unavailability.
@@ -109,8 +134,26 @@ The sanitized result confirmed account, open-order, position, and clock/status r
 successfully against `https://paper-api.alpaca.markets`, with zero submitted, cancelled, replaced,
 or stop orders and no live endpoint use.
 
-Paper order lifecycle smoke tests remain deferred. A future milestone must separately gate and
-approve any paper submit/cancel/protective-stop test before it can run.
+Real paper order-lifecycle smoke evidence remains deferred until the new write-smoke gates are
+explicitly loaded and an operator chooses to run the harness.
+
+## Optional Paper Order-Lifecycle Smoke Harness
+
+The order-lifecycle smoke command is opt-in and server-side only:
+
+```bash
+uv run python scripts/check_alpaca_paper_order_lifecycle.py
+```
+
+With no write-smoke gates, this command refuses safely, prints a sanitized summary, and performs no
+broker writes. When all write-smoke gates are explicitly loaded, it is designed to submit one tiny
+paper `DAY` limit buy order with a smoke-only `client_order_id`, observe acknowledgement/fill
+status, place a protective stop only for filled quantity, cancel unfilled or smoke-created orders,
+submit a risk-reducing paper cleanup exit if a smoke-created position exists, and reconcile final
+state as far as available.
+
+This is not actual paper trading, not frozen paper evidence, and not Level 4 readiness. It is a
+single operator-invoked broker lifecycle smoke harness.
 
 ## Current Non-Claims
 
@@ -119,8 +162,11 @@ approve any paper submit/cancel/protective-stop test before it can run.
 - No autonomous execution is enabled.
 - No real Alpaca calls occur in default tests.
 - No broker orders are submitted in default tests.
+- The order-lifecycle smoke harness refuses by default.
 - The successful read-only paper smoke is connectivity evidence only; it is not actual paper
   trading.
+- Future successful order-lifecycle smoke output is broker lifecycle evidence only; it is not actual
+  paper trading or frozen paper evidence.
 - Protective-stop and reconciliation behavior are fake-client contract tests, not production paper
   evidence.
 - Level 4 micro-live readiness remains unsatisfied.

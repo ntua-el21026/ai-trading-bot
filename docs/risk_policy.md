@@ -11,7 +11,10 @@ activities for risk-check and incident persistence. Milestone 14 adds fake-teste
 boundaries for snapshots, idempotency lookup, protective-stop submit/verify, and ambiguity handling
 without starting paper operations. Milestone 16 exercises deterministic risk checks in fake/local
 dry-run scenarios, including risk rejection, duplicate active intent, stale data, and
-kill-switch/pause-new-risk inputs, without enabling autonomous execution in config.
+kill-switch/pause-new-risk inputs, without enabling autonomous execution in config. Milestone 21A
+adds a default-refusing Alpaca paper order-lifecycle smoke harness that must pass the same paper,
+live-disabled, autonomy-disabled, reconciliation-required, and protective-stop-required config
+invariants before any broker write-capable path can be reached.
 
 ## Foundation Defaults
 
@@ -117,10 +120,11 @@ unless the state is `PAUSED_ALL_AUTONOMOUS_ACTIONS`.
 ## Future Work
 
 Later milestones must connect these contracts to end-to-end Temporal execution workflows, explicit
-Alpaca paper smoke tests, and managed database audit persistence. The ledger foundation now provides
-schema, local repository support, local/fake Temporal activity boundaries, and fake/local dry-run
-evidence for risk-check and incident persistence. Any change to risk limits or risk semantics
-requires explicit approval and a corresponding spec update.
+Alpaca paper smoke evidence, and managed database audit persistence. The ledger foundation now
+provides schema, local repository support, local/fake Temporal activity boundaries, fake/local
+dry-run evidence for risk-check and incident persistence, and a gated order-lifecycle smoke harness
+that refuses by default. Any change to risk limits or risk semantics requires explicit approval and
+a corresponding spec update.
 
 ## Level 4 Readiness Status
 
@@ -128,4 +132,5 @@ requires explicit approval and a corresponding spec update.
 The current `risk_level_4_micro_live` values match the latest spec, while live trading and
 autonomous live execution remain disabled. Level 4 readiness is not satisfied because frozen paper,
 real broker/provider, managed database runtime, dashboard, alerting, and go/no-go evidence are still
-absent.
+absent. The Milestone 21A harness is not actual paper trading and does not satisfy frozen paper or
+Level 4 evidence gates.

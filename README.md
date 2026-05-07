@@ -10,8 +10,9 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 20 Alpaca paper read-only smoke tooling with offline default tests
-and fake/local trading defaults.
+This repository is at Milestone 21A Alpaca paper order-lifecycle smoke harness preparation with
+offline default tests and fake/local trading defaults. The new order-lifecycle harness refuses by
+default unless explicit write-smoke gates are present.
 
 Implemented pieces:
 
@@ -45,6 +46,9 @@ Implemented pieces:
   positions, and clock/status snapshots
 - successful opt-in Alpaca paper read-only smoke evidence for account, open-orders, positions, and
   clock/status reads against the paper endpoint, with no write operations attempted
+- explicitly gated Alpaca paper order-lifecycle smoke harness for one tiny operator-invoked paper
+  order lifecycle, with default refusal, smoke-only client order IDs, sanitized summaries, fake
+  submit/fill/stop/cancel/cleanup coverage, and no default broker writes
 - normalized broker clock snapshot mapping for read-only Alpaca paper smoke validation
 - broker Temporal activity contracts that default to fake Alpaca paper adapters and perform no real
   Alpaca calls in default tests
@@ -126,7 +130,7 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- Alpaca paper order lifecycle smoke-test evidence
+- real Alpaca paper order lifecycle smoke-test evidence
 - real news provider integration
 - real AI provider integration
 - production dashboard UI/deployment
@@ -237,6 +241,32 @@ ALPACA_BASE_URL=https://paper-api.alpaca.markets \
   uv run python scripts/check_alpaca_paper_readonly.py
 ```
 
+Run Milestone 21A Alpaca paper order-lifecycle smoke harness tests offline:
+
+```bash
+uv run --group dev pytest tests/unit/test_alpaca_paper_order_lifecycle_smoke.py
+```
+
+Run the gated order-lifecycle smoke harness. With no write-smoke gates, refusal is expected and no
+broker write is attempted:
+
+```bash
+uv run python scripts/check_alpaca_paper_order_lifecycle.py
+```
+
+The real paper write smoke must only be run after loading all explicit write-smoke gates:
+
+```bash
+RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1 \
+ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM=SUBMIT_AND_CLEAN_UP_TINY_PAPER_ORDER \
+ALPACA_BASE_URL=https://paper-api.alpaca.markets \
+ALPACA_PAPER_ORDER_SMOKE_SYMBOL=AAPL \
+ALPACA_PAPER_ORDER_SMOKE_MAX_QTY=1 \
+ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD=200 \
+ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS=60 \
+  uv run python scripts/check_alpaca_paper_order_lifecycle.py
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -287,9 +317,10 @@ flags, and requires explicit paper credentials in runtime mode. Default tests an
 wiring use fakes and do not call Alpaca or submit real paper orders. Milestone 20 adds an opt-in
 read-only paper smoke path for account, open orders, positions, and clock/status snapshots. It
 requires explicit environment gates, refuses live endpoints, prints sanitized summaries only, and
-does not submit, cancel, replace, or modify orders. The Milestone 20 read-only smoke was rerun
-successfully against the Alpaca paper endpoint; this is connectivity and mapping evidence only, not
-paper order lifecycle evidence or actual paper trading.
+does not submit, cancel, replace, or modify orders. Milestone 21A adds a separate order-lifecycle
+smoke harness that refuses by default and requires explicit write-smoke gates before any paper
+submit/cancel/stop/cleanup call. This harness is smoke validation only, not actual paper trading or
+frozen paper evidence.
 
 ## Reporting And Alerting
 
@@ -330,6 +361,7 @@ Milestone 11 adds readiness documentation only:
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
 real provider integrations, production Temporal query/signal backend integration, production
 dashboard deployment, real alert delivery, controlled paper operations, and live go/no-go approval.
+The Milestone 21A harness does not change that status.
 
 ## Safety Defaults
 

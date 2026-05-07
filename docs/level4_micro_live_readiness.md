@@ -2,10 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 20 adds opt-in Alpaca paper read-only smoke tooling while preserving the readiness
-boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
-calls in default tests, real alert delivery, paper or live orders, production schedules, expanded
-Level 4, or Level 5.
+Milestone 21A adds opt-in Alpaca paper read-only smoke tooling plus a default-refusing, explicitly
+gated Alpaca paper order-lifecycle smoke harness while preserving the readiness boundary. It does
+not enable live trading, autonomous live execution, live credentials, real Alpaca calls in default
+tests, real alert delivery, actual paper trading operations, live orders, production schedules,
+expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -22,9 +23,10 @@ authorization.
 - Do not enable live trading.
 - Do not enable autonomous live execution.
 - Do not add paper or live credentials.
-- Do not call live Alpaca, Alpaca write endpoints, AI/news providers, unmanaged databases, or
-  production services. Opt-in read-only Alpaca paper smoke checks remain connectivity validation
-  only.
+- Do not call live Alpaca, AI/news providers, unmanaged databases, or production services. Opt-in
+  read-only Alpaca paper smoke checks remain connectivity validation only. The paper
+  order-lifecycle smoke harness may call paper write endpoints only in a separate operator-gated
+  run, and refuses by default.
 - Do not submit broker orders.
 - Do not change risk limits, autonomy level, execution policy, stop policy, kill-switch behavior,
   allowed assets, strategy defaults, or AI authority boundaries.
@@ -37,14 +39,16 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-20 are complete as local/offline code, opt-in validation scaffolding, local Temporal
-  SDK test-server/replay coverage, and opt-in Alpaca paper read-only smoke tooling.
+- Milestones 00-21A are complete as local/offline code, opt-in validation scaffolding, local
+  Temporal SDK test-server/replay coverage, opt-in Alpaca paper read-only smoke tooling, and a
+  default-refusing gated paper order-lifecycle smoke harness.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
   Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist.
-- Paper-only Alpaca adapter, fake broker activity boundaries, and passing opt-in read-only paper
-  smoke evidence exist; paper order lifecycle smoke-test evidence is absent.
+- Paper-only Alpaca adapter, fake broker activity boundaries, passing opt-in read-only paper smoke
+  evidence, and a gated order-lifecycle smoke harness exist; real paper order lifecycle smoke-test
+  evidence is absent unless the write-gated command is separately run and retained.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
   but it is not actual paper trading evidence.
 - Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
@@ -59,7 +63,7 @@ Hard blockers:
 
 - No production managed database activity wiring evidence.
 - No production Temporal backend/live worker evidence.
-- No Alpaca paper order lifecycle smoke-test evidence or paper execution evidence.
+- No retained real Alpaca paper order lifecycle smoke-test evidence or paper execution evidence.
 - No controlled real paper operations evidence.
 - No real AI/news provider integration evidence.
 - No production Temporal query/signal backend evidence.
@@ -158,6 +162,12 @@ Variable names only:
 - `ALPACA_BASE_URL`
 - `RUN_ALPACA_PAPER_SMOKE`
 - `ALPACA_PAPER_SMOKE_CONFIRM`
+- `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE`
+- `ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM`
+- `ALPACA_PAPER_ORDER_SMOKE_SYMBOL`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_QTY`
+- `ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD`
+- `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS`
 - `DATABASE_URL`
 - `RUN_MANAGED_DB_TESTS`
 - `LEDGER_MIGRATION_CONFIRM`
@@ -219,9 +229,11 @@ Required evidence:
 Current status: deterministic reconciliation contracts and fixture tests exist, local ledger
 schema/repository/activity foundations exist, opt-in managed DB CRUD validation is available, and
 local Temporal SDK signal/query tests cover the reconciliation workflow. Read-only paper smoke
-evidence validates account/open-order/position/clock reads through explicit gates. Real broker
-stream, order lifecycle, REST fallback during active orders, production managed database activity
-wiring, and Temporal/DB consistency evidence are pending.
+evidence validates account/open-order/position/clock reads through explicit gates. The Milestone 21A
+order-lifecycle harness can produce sanitized smoke evidence only when separately write-gated; by
+default it refuses before broker write calls. Real broker stream, retained order-lifecycle evidence,
+REST fallback during active orders, production managed database activity wiring, and Temporal/DB
+consistency evidence are pending.
 
 ## Protective Stop Evidence
 
@@ -235,8 +247,9 @@ Required evidence:
 - No naked live positions exist.
 - Unresolved missing-stop cases require manual review.
 
-Current status: missing-stop policy contracts and tests exist. Real stop placement, broker
-verification, and paper evidence are pending.
+Current status: missing-stop policy contracts and tests exist, and the gated smoke harness can
+exercise filled-quantity stop submission with a fake client. Real stop placement, broker
+verification, and paper evidence are pending unless separately write-gated and retained.
 
 ## Duplicate Order And Idempotency Evidence
 
