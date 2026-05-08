@@ -228,6 +228,7 @@ def test_workflow_modules_do_not_directly_import_side_effect_providers() -> None
         "alpaca.trading",
         "packages.ledger",
         "packages.alerting",
+        "telegram",
         "sqlite3",
         "DATABASE_URL",
         "os.environ",

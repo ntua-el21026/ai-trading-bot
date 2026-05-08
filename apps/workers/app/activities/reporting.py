@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from temporalio import activity
@@ -20,6 +20,11 @@ from packages.reporting.generators import generate_weekly_report as build_weekly
 from packages.reporting.ledger import (
     build_report_input_snapshot,
     persist_report_generation_result,
+)
+from packages.reporting.models import DailyReport, WeeklyReport
+from packages.reporting.renderers import (
+    render_daily_report_telegram_summary,
+    render_weekly_report_telegram_summary,
 )
 
 ReportingActivityStatus = Literal["generated", "dispatched", "read"]
@@ -97,6 +102,7 @@ class ReportingActivityService:
         )
         if request.persist:
             result = persist_report_generation_result(self._repository, result)
+        daily_report = cast(DailyReport, result.report)
         return _result(
             "generate_daily_report",
             request.context,
@@ -108,6 +114,7 @@ class ReportingActivityService:
             payload={
                 "report": result.payload,
                 "markdown": result.markdown,
+                "telegram_summary": render_daily_report_telegram_summary(daily_report),
                 "persisted_report_id": result.persisted_report_id,
             },
         )
@@ -126,6 +133,7 @@ class ReportingActivityService:
         result = build_weekly_report(period_start=start, period_end=end, snapshot=snapshot)
         if request.persist:
             result = persist_report_generation_result(self._repository, result)
+        weekly_report = cast(WeeklyReport, result.report)
         return _result(
             "generate_weekly_report",
             request.context,
@@ -137,6 +145,7 @@ class ReportingActivityService:
             payload={
                 "report": result.payload,
                 "markdown": result.markdown,
+                "telegram_summary": render_weekly_report_telegram_summary(weekly_report),
                 "persisted_report_id": result.persisted_report_id,
             },
         )
@@ -147,10 +156,12 @@ class ReportingActivityService:
         request: DispatchAlertRequest,
     ) -> ReportingActivityResult:
         dispatch_results = self._alert_router.dispatch(request.message)
+        external_calls = any(result.external_calls_performed for result in dispatch_results)
         return _result(
             activity_name,
             request.context,
             "dispatched",
+            external_calls_performed=external_calls,
             payload={
                 "dispatch_results": [
                     result.model_dump(mode="json") for result in dispatch_results
@@ -239,11 +250,12 @@ def _result(
     records_written: int = 0,
     record_ids: tuple[str, ...] = (),
     payload: dict[str, Any] | None = None,
+    external_calls_performed: bool = False,
 ) -> ReportingActivityResult:
     return ReportingActivityResult(
         activity_name=activity_name,
         status=status,
-        external_calls_performed=False,
+        external_calls_performed=external_calls_performed,
         records_written=records_written,
         record_ids=record_ids,
         payload=payload or {},

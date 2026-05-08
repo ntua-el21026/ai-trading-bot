@@ -2,10 +2,10 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 22 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 23 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
-provider/API smoke evidence by default, production Temporal query/signal backend integration, real
-alert delivery, dashboard deployment, Level 4 live readiness evidence, or live trading. It does
+provider/API smoke evidence by default, production Temporal query/signal backend integration,
+dashboard deployment, Level 4 live readiness evidence, or live trading. It does
 define passive broker/reconciliation, fake-tested paper Alpaca boundaries, opt-in read-only Alpaca
 paper smoke tooling, a default-refusing gated Alpaca paper order-lifecycle smoke harness, AI/news, reporting,
 alerting, dashboard/control-plane, validation/testing contracts, fake/local paper dry-run
@@ -15,7 +15,8 @@ trading operations documentation, Level 4 readiness documentation with incident/
 recommendations, Marketaux/Alpha Vantage provider-first news boundaries, OpenAI structured-analysis
 and disabled web-fallback boundaries, AI feedback/calibration safety downgrades, a local
 database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
-repositories.
+repositories. It also adds a Telegram-only real alert delivery harness behind explicit gates while
+keeping Email/Resend deferred.
 
 ## Current Foundation Operations
 
@@ -271,19 +272,32 @@ Temporal services, and it does not submit real paper or live broker orders.
 
 ## Current Reporting And Alerting Operations
 
-Reporting and alerting are currently local/fake-safe boundaries:
+Reporting and alerting are local/fake-safe by default, with a gated Telegram real-delivery harness:
 
 1. Generate daily or weekly reports from supplied ledger/read-model snapshots through
    `packages.reporting`.
 2. Render deterministic Markdown and persist report payloads through the ledger repository.
 3. Dispatch alerts through `AlertRouter` with `FakeAlertAdapter` by default.
-4. Treat Telegram/email adapters as fail-closed skeletons until a future approved milestone adds
-   real delivery configuration and tests.
-5. Use `apps/workers/app/activities/reporting.py` for Temporal activity boundaries that report
+4. Use `TelegramAlertAdapter` only server-side and only when the explicit real-delivery gates are
+   loaded.
+5. Treat Email/Resend as deferred optional future secondary delivery.
+6. Use `apps/workers/app/activities/reporting.py` for Temporal activity boundaries that report
    `external_calls_performed=false` in default tests.
 
-No current operation sends Telegram/email messages, calls external alert services, claims production
-reporting evidence, or starts paper trading operations.
+The Telegram smoke command is:
+
+```bash
+uv run python scripts/check_telegram_alert_delivery.py
+```
+
+With no gates loaded, it refuses safely. Real Telegram smoke delivery requires
+`ALERT_PROVIDER_PRIMARY=telegram`, `ALERT_ENABLE_REAL_DELIVERY=true`, Telegram token/chat presence,
+`RUN_TELEGRAM_ALERT_SMOKE=1`,
+`TELEGRAM_ALERT_SMOKE_CONFIRM=SEND_TEST_ALERT_TO_OPERATOR`, and
+`TELEGRAM_ALERT_SMOKE_MAX_MESSAGES<=3`. It prints sanitized summary fields only.
+
+No current alert operation starts paper trading, modifies risk/execution/stops, acts on Telegram
+commands, deploys anything, or satisfies Level 4 readiness.
 
 ## Current Dashboard Operations
 

@@ -2,11 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 22 adds provider-first news retrieval, OpenAI structured-analysis boundaries,
-disabled-by-default OpenAI web fallback, and autonomous AI feedback/calibration safety downgrades
-while preserving the readiness boundary. It does not enable live trading, autonomous live
-execution, live credentials, real Alpaca calls in default tests, real alert delivery, actual paper
-trading operations, live orders, production schedules, expanded Level 4, or Level 5.
+Milestone 23 adds a Telegram-only real alert delivery harness while preserving the readiness
+boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
+calls in default tests, actual paper trading operations, live orders, production schedules, expanded
+Level 4, or Level 5. Email/Resend remains deferred.
 
 ## Purpose And Scope
 
@@ -58,7 +57,9 @@ Known status:
 - Provider-first Marketaux/Alpha Vantage and OpenAI structured-analysis support exists with opt-in
   smoke gates; real provider/OpenAI smoke evidence is required if not separately run and retained.
 - Real dashboard deployment is deferred.
-- Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
+- Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
+  harness exist. Retained real Telegram smoke evidence is required if the explicit gates have not
+  been run.
 - Live trading remains disabled.
 - Autonomous live execution remains disabled.
 
@@ -70,7 +71,8 @@ Hard blockers:
 - No controlled real paper operations evidence.
 - No retained real provider/OpenAI smoke evidence unless separately gated and run.
 - No production Temporal query/signal backend evidence.
-- No real alert delivery evidence.
+- No retained real Telegram alert delivery evidence unless the explicit smoke has been run and
+  recorded.
 - No frozen paper run evidence.
 - No Level 4 go/no-go report.
 
@@ -211,6 +213,19 @@ Variable names only:
 - `AUTONOMOUS_EXECUTION_ENABLED`
 - `AUTONOMY_LEVEL`
 - `KILL_SWITCH_ENABLED`
+- `ALERT_PROVIDER_PRIMARY`
+- `ALERT_PROVIDER_SECONDARY`
+- `ALERT_ENABLE_REAL_DELIVERY`
+- `ALERT_DAILY_MESSAGE_LIMIT`
+- `ALERT_CRITICAL_BYPASS_DAILY_LIMIT`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `RUN_TELEGRAM_ALERT_SMOKE`
+- `TELEGRAM_ALERT_SMOKE_CONFIRM`
+- `TELEGRAM_ALERT_SMOKE_MAX_MESSAGES`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_REPORT_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_TRADE_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_CRITICAL_SAMPLE`
 
 ## Required Control And Re-Arm Evidence
 
@@ -229,8 +244,9 @@ Before Level 4 micro-live, dry-run or controlled-paper evidence must demonstrate
   stops, worker failure, and provider outage.
 
 Current status: contract tests exist for signal names and safe control models, local Temporal SDK
-signal/query tests cover selected workflows, and fake alert routing is fixture-tested. Production
-Temporal signal/query backend integration and real alert delivery evidence are pending.
+signal/query tests cover selected workflows, and fake alert routing plus gated Telegram delivery
+behavior are fixture-tested. Production Temporal signal/query backend integration and retained real
+Telegram delivery evidence are pending unless separately smoke-tested and recorded.
 
 ## Broker And Reconciliation Evidence
 

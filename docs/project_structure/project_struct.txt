@@ -13,6 +13,7 @@ AI_Trading_Bot/
 │   │   ├── app/
 │   │   │   ├── activities/
 │   │   │   │   ├── __init__.py
+│   │   │   │   ├── ai.py
 │   │   │   │   ├── broker.py
 │   │   │   │   ├── contracts.py
 │   │   │   │   ├── fakes.py
@@ -122,19 +123,25 @@ AI_Trading_Bot/
 │   │   ├── prompts/
 │   │   │   └── ai_trade_research_v0_3.md
 │   │   ├── __init__.py
+│   │   ├── budget.py
 │   │   ├── dedupe.py
 │   │   ├── fallback.py
+│   │   ├── feedback.py
 │   │   ├── models.py
 │   │   ├── news.py
+│   │   ├── openai.py
 │   │   ├── parser.py
 │   │   ├── persistence.py
 │   │   ├── prompts.py
+│   │   ├── providers.py
 │   │   └── scoring.py
 │   ├── alerting/
 │   │   ├── __init__.py
 │   │   ├── adapters.py
 │   │   ├── models.py
-│   │   └── routing.py
+│   │   ├── routing.py
+│   │   ├── smoke.py
+│   │   └── templates.py
 │   ├── backtesting/
 │   │   ├── __init__.py
 │   │   ├── engine.py
@@ -211,6 +218,7 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_order_lifecycle.py
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_ledger_database.py
+│   ├── check_telegram_alert_delivery.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
@@ -218,11 +226,15 @@ AI_Trading_Bot/
 │   ├── integration/
 │   │   ├── test_alpaca_paper_order_lifecycle_write_smoke.py
 │   │   ├── test_alpaca_paper_readonly_smoke.py
-│   │   └── test_managed_ledger_crud.py
+│   │   ├── test_managed_ledger_crud.py
+│   │   ├── test_news_provider_external_smoke.py
+│   │   ├── test_openai_external_smoke.py
+│   │   └── test_telegram_alert_delivery_smoke.py
 │   ├── temporal/
 │   │   ├── test_temporal_sdk_environment.py
 │   │   └── test_workflow_contracts.py
 │   └── unit/
+│       ├── test_ai_feedback_calibration.py
 │       ├── test_ai_news.py
 │       ├── test_ai_parser.py
 │       ├── test_ai_persistence.py
@@ -253,6 +265,9 @@ AI_Trading_Bot/
 │       ├── test_ledger_repositories.py
 │       ├── test_ledger_schema.py
 │       ├── test_migration_runtime.py
+│       ├── test_news_provider_integration.py
+│       ├── test_openai_structured_analysis.py
+│       ├── test_openai_web_fallback.py
 │       ├── test_paper_dry_run.py
 │       ├── test_paper_dry_run_orchestration.py
 │       ├── test_position_sizing.py
@@ -263,6 +278,7 @@ AI_Trading_Bot/
 │       ├── test_risk_checks.py
 │       ├── test_strategy_exits.py
 │       ├── test_strategy_signals.py
+│       ├── test_telegram_alerting.py
 │       ├── test_temporal_config.py
 │       ├── test_universe.py
 │       └── test_validation_harness.py
@@ -275,4 +291,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 44, Total files: 232
+Total directories: 44, Total files: 248

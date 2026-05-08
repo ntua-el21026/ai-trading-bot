@@ -95,6 +95,7 @@ def test_generate_daily_report_activity_persists_report(
     assert result.record_ids
     assert repository.get_report(result.record_ids[0]) is not None
     assert result.payload["report"]["report_type"] == "daily"
+    assert "Daily Report - Dry Run" in result.payload["telegram_summary"]
 
 
 def test_generate_daily_report_activity_accepts_placeholder_workflow_input() -> None:

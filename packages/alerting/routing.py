@@ -26,7 +26,22 @@ CRITICAL_CATEGORIES: frozenset[AlertCategory] = frozenset(
         "duplicate_order_or_intent",
         "kill_switch_activation",
         "worker_unavailable",
+        "execution_worker_unavailable",
         "broker_ambiguity",
+        "ai_quality_degraded",
+    }
+)
+
+WARNING_CATEGORIES: frozenset[AlertCategory] = frozenset(
+    {
+        "protective_stop_warning",
+        "noncritical_reconciliation_issue",
+        "stale_data",
+        "provider_budget_exceeded",
+        "ai_news_warning",
+        "invalid_ai_payload",
+        "repeated_invalid_ai_payloads",
+        "trade_closed_loss",
     }
 )
 
@@ -72,4 +87,6 @@ class AlertRouter:
 def _effective_severity(message: AlertMessage) -> AlertSeverity:
     if message.category in CRITICAL_CATEGORIES:
         return "critical"
+    if message.category in WARNING_CATEGORIES and message.severity == "info":
+        return "warning"
     return message.severity

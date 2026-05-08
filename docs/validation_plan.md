@@ -9,9 +9,11 @@ repository CRUD tests skipped by default, local Temporal SDK test-environment/re
 opt-in Alpaca paper read-only smoke tooling, and a default-refusing gated Alpaca paper
 order-lifecycle smoke harness. Milestone 22 adds Marketaux/Alpha Vantage provider-first news
 retrieval, OpenAI structured analysis, disabled-by-default OpenAI web fallback, and autonomous AI
-feedback/calibration using offline default tests. This does not validate actual paper trading
-operations, retained real paper order-lifecycle write evidence, real alert delivery, production
-dashboard deployment, production Temporal backend behavior, live trading, or profitability.
+feedback/calibration using offline default tests. Milestone 23 adds Telegram-only alert delivery
+contracts, templates, routing, report/trade summaries, fake-default behavior, and an explicitly
+gated Telegram smoke harness. This does not validate actual paper trading operations, retained real
+paper order-lifecycle write evidence, production dashboard deployment, production Temporal backend
+behavior, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -51,9 +53,10 @@ dashboard deployment, production Temporal backend behavior, live trading, or pro
   refusal, smoke-only client order IDs, fake-client filled/unfilled/partial/ambiguous lifecycle
   behavior, cleanup, reconciliation summaries, and sanitized output are fixture-tested without real
   Alpaca calls.
-- Daily/weekly report generation, stable Markdown rendering, report persistence, alert routing,
-  fake alert capture, fail-closed Telegram/email skeletons, dashboard read models, and reporting
-  activities are fixture-tested without external alert delivery or managed database credentials.
+- Daily/weekly report generation, stable Markdown rendering, Telegram-safe report summaries,
+  report persistence, alert routing, fake alert capture, gated Telegram adapter behavior,
+  fail-closed deferred email skeletons, dashboard read models, and reporting activities are
+  fixture-tested without external alert delivery or managed database credentials.
 - Fake/local end-to-end paper dry-run orchestration is tested for happy path, risk rejection,
   duplicate active intent, broker ambiguity, missing protective stops, reconciliation mismatches,
   partial fills, invalid-AI neutral fallback, report/dashboard output, and CLI safety behavior.
@@ -135,7 +138,7 @@ dashboard deployment, production Temporal backend behavior, live trading, or pro
 | Provider-first news | `tests/unit/test_news_provider_integration.py`, `tests/integration/test_news_provider_external_smoke.py` |
 | OpenAI structured analysis and web fallback | `tests/unit/test_openai_structured_analysis.py`, `tests/unit/test_openai_web_fallback.py`, `tests/integration/test_openai_external_smoke.py` |
 | AI feedback/calibration | `tests/unit/test_ai_feedback_calibration.py` |
-| Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py` |
+| Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py`, `tests/unit/test_telegram_alerting.py`, `tests/integration/test_telegram_alert_delivery_smoke.py` |
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
 | Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py`, `tests/temporal/test_temporal_sdk_environment.py` |
@@ -145,9 +148,10 @@ dashboard deployment, production Temporal backend behavior, live trading, or pro
 
 Remaining gaps are explicit: real Alpaca paper order-lifecycle write evidence remains pending after
 the latest 21B closed-market preflight refusal, production managed Postgres/Supabase activity
-wiring, real provider/OpenAI smoke evidence if gates are absent or not run, real alert delivery,
-production Temporal backend integration, production dashboard deployment, paper trading operations,
-and Level 4 micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
+wiring, real provider/OpenAI smoke evidence if gates are absent or not run, retained Telegram alert
+delivery evidence if the explicit Telegram smoke gates are absent or not run, production Temporal
+backend integration, production dashboard deployment, paper trading operations, and Level 4
+micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
 smoke evidence has passed for account, open-order, position, and clock/status reads only.
 Milestone 22 provider/OpenAI/calibration support is not actual paper trading evidence.
 
@@ -207,8 +211,9 @@ Current paper operations evidence is absent. The repository has fake-tested pape
 fake/local paper dry-run orchestration, local ledger evidence, and a gated paper order-lifecycle
 smoke harness that refuses by default, but still needs a separately approved/gated real Alpaca paper
 order lifecycle smoke run, production managed database activity wiring, production Temporal
-query/signal backend integration, real AI/news provider integration, real dashboard deployment, real
-alert delivery, and controlled paper runs before these gates can be satisfied.
+  query/signal backend integration, real AI/news provider integration, real dashboard deployment,
+  retained Telegram alert delivery evidence, and controlled paper runs before these gates can be
+  satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -251,7 +256,9 @@ Current blockers:
   order-lifecycle write evidence remains pending after the latest closed-market 21B refusal. Real
   provider/OpenAI smoke evidence is required if the optional gates have not been separately run.
 - Real dashboard deployment is deferred.
-- Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
+- Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram smoke harness
+  exist. Retained real Telegram delivery evidence is required if the smoke has not been separately
+  run.
 - Live trading remains disabled.
 
 These blockers must be resolved before a Level 4 go/no-go report can approve micro-live.

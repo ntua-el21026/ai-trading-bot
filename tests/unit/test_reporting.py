@@ -14,8 +14,12 @@ from packages.reporting.ledger import (
     build_report_input_snapshot,
     persist_report_generation_result,
 )
-from packages.reporting.models import ReportInputSnapshot, WeeklyReport
-from packages.reporting.renderers import render_report_markdown
+from packages.reporting.models import DailyReport, ReportInputSnapshot, WeeklyReport
+from packages.reporting.renderers import (
+    render_daily_report_telegram_summary,
+    render_report_markdown,
+    render_weekly_report_telegram_summary,
+)
 
 GENERATED_AT = datetime(2026, 5, 6, 20, 0, tzinfo=UTC)
 
@@ -55,6 +59,7 @@ def _snapshot() -> ReportInputSnapshot:
 
 def test_daily_report_generation_from_fixture_snapshot_is_deterministic() -> None:
     result = generate_daily_report(report_date=date(2026, 5, 6), snapshot=_snapshot())
+    report = cast(DailyReport, result.report)
 
     assert result.external_calls_performed is False
     assert result.report.status == "dry_run"
@@ -63,6 +68,7 @@ def test_daily_report_generation_from_fixture_snapshot_is_deterministic() -> Non
     assert "- Live Trading: `disabled`" in result.markdown
     assert "This report is operational telemetry only" in result.markdown
     assert "does not claim profitability" in result.markdown
+    assert "Daily Report - Dry Run" in render_daily_report_telegram_summary(report)
 
 
 def test_weekly_report_generation_and_markdown_rendering_are_stable() -> None:
@@ -75,6 +81,7 @@ def test_weekly_report_generation_and_markdown_rendering_are_stable() -> None:
     assert render_report_markdown(result.report) == result.markdown
     assert "# Weekly Trading Report - 2026-05-04 to 2026-05-10" in result.markdown
     assert "Level 4 readiness remains unsatisfied" in result.markdown
+    assert "Weekly Report - Dry Run" in render_weekly_report_telegram_summary(report)
 
 
 def test_report_persistence_through_ledger_repository() -> None:

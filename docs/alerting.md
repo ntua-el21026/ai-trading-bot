@@ -2,11 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 15 adds alerting contracts and fake/fail-closed adapters. Default tests and default
-activity wiring do not send Telegram, email, broker, AI/news, or other network messages.
-
-Milestone 16 uses `FakeAlertAdapter` inside the fake/local paper dry-run path to capture order,
-fill, incident, and report-generated alerts. No real alert delivery is enabled.
+Milestone 23 adds Telegram as the only real alert delivery channel for now. Email/Resend is
+intentionally deferred and is not required for this stage. Default tests and default activity wiring
+still use fake/fail-closed adapters and do not send Telegram, email, broker, AI/news, or other
+network messages.
 
 ## Implemented
 
@@ -14,44 +13,100 @@ fill, incident, and report-generated alerts. No real alert delivery is enabled.
   requests, and dispatch results.
 - `packages/alerting/routing.py` maps severity/category to channels and escalates critical
   categories such as missing protective stops, reconciliation mismatch, duplicate orders/intents,
-  kill-switch activation, worker unavailability, and broker ambiguity.
-- `packages/alerting/adapters.py` defines an adapter protocol, `FakeAlertAdapter`, and fail-closed
-  Telegram/email adapter skeletons.
+  kill-switch activation, worker unavailability, broker ambiguity, and degraded AI quality.
+- `packages/alerting/templates.py` renders deterministic alert messages for test alerts,
+  order/fill/stop events, trade win/loss outcomes, daily/weekly report summaries, AI/news warnings,
+  reconciliation mismatches, kill-switch activation, and generic incidents.
+- `packages/alerting/adapters.py` defines `FakeAlertAdapter`, a gated server-side
+  `TelegramAlertAdapter`, and a fail-closed future email skeleton.
+- `packages/alerting/smoke.py` and `scripts/check_telegram_alert_delivery.py` provide the explicit
+  Telegram delivery smoke harness with sanitized summary output.
 - `apps/workers/app/activities/reporting.py` exposes alert dispatch, incident-alert, and
-  report-alert Temporal activity boundaries.
-- `packages/paper/dry_run.py` captures fake dry-run alerts through `AlertRouter` and
-  `FakeAlertAdapter`.
+  report-alert Temporal activity boundaries. They use fake adapters by default.
+- `packages/paper/dry_run.py` captures fake dry-run alerts for order, fill, protective stop,
+  incident, and report-generated events.
 
-## Adapter Policy
+## Telegram Real Delivery Gates
 
-- `FakeAlertAdapter` captures messages in memory and performs no external calls.
-- Telegram and email skeletons fail closed when secrets/config are absent.
-- Telegram and email skeletons also fail closed when config is supplied because network delivery is
-  intentionally disabled in this milestone.
-- No alert credentials are committed or required by default tests.
-- Real alert delivery must be added in a later milestone with explicit configuration gates,
-  delivery tests, and evidence capture.
+Real Telegram delivery may occur only when all gates are loaded before the process starts:
+
+- `ALERT_PROVIDER_PRIMARY=telegram`
+- `ALERT_ENABLE_REAL_DELIVERY=true`
+- `TELEGRAM_BOT_TOKEN` present
+- `TELEGRAM_CHAT_ID` present
+- `RUN_TELEGRAM_ALERT_SMOKE=1`
+- `TELEGRAM_ALERT_SMOKE_CONFIRM=SEND_TEST_ALERT_TO_OPERATOR`
+- `TELEGRAM_ALERT_SMOKE_MAX_MESSAGES` present and `<= 3`
+
+The smoke command is:
+
+```bash
+uv run python scripts/check_telegram_alert_delivery.py
+```
+
+With no gates loaded, the expected result is a sanitized refusal and no Telegram call. When gates are
+loaded, the smoke sends at most the configured message count. Optional smoke samples are controlled
+by:
+
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_REPORT_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_TRADE_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_CRITICAL_SAMPLE`
+
+The script prints no `.env`, tokens, chat IDs, raw Telegram responses, broker secrets, database URLs,
+Temporal keys, or AI/news provider keys.
+
+## Routing Policy
+
+- INFO: routine status, daily report generated, weekly report generated.
+- WARNING: AI/news fallback, provider budget exceeded, stale data, unconfirmed stop warning,
+  non-critical reconciliation issue, trade loss summary.
+- CRITICAL: missing protective stop, broker/internal mismatch, duplicate order/intent, unexpected
+  broker position, unexpected short position, kill-switch activation, execution worker unavailable,
+  broker ambiguity, database/audit persistence unavailable, and AI quality degraded to
+  `AI_NEUTRAL_ONLY` or `AI_ESCALATION_REQUIRED`.
+- ORDER/FILL/STOP: order submitted, order acknowledged, order filled, partial fill, protective stop
+  submitted, protective stop verified, cleanup completed.
+- REPORT: daily and weekly report summaries.
+- TRADE OUTCOME: trade closed win/loss, R-multiple, percent result, and exit reason.
+
+## Rate And Message Limits
+
+- `ALERT_DAILY_MESSAGE_LIMIT` limits normal real Telegram messages.
+- `ALERT_CRITICAL_BYPASS_DAILY_LIMIT=true` allows critical alerts to bypass the normal daily limit.
+- `TELEGRAM_ALERT_SMOKE_MAX_MESSAGES` limits the gated smoke to at most three messages.
+
+The implementation is in-memory and side-effect-limited. It does not add Redis or new
+infrastructure.
 
 ## Safety Boundary
 
-Alerting does not:
+Alerting is operator-facing only. Telegram does not:
 
 - enable live trading;
 - enable autonomous execution;
-- submit broker orders;
+- submit, cancel, replace, or modify broker orders;
+- place or change stops;
+- mutate strategy, risk, execution, universe, or kill-switch rules;
 - call broker APIs;
 - call AI/news providers;
 - expose frontend secrets;
+- implement Telegram commands or natural-language trading;
 - start paper trading operations.
-- call external alert services during dry-run orchestration.
+
+## Email/Resend Status
+
+Email/Resend is deferred. It remains a possible future secondary channel for daily/weekly reports
+and critical backup alerts only after paper evidence and/or profitability justification. Email
+variables are not required for Milestone 23, and no real email delivery is implemented.
 
 ## Tests
 
 Current alerting tests:
 
 ```bash
-uv run --group dev pytest tests/unit/test_alerting.py tests/unit/test_reporting_activities.py
+uv run --group dev pytest tests/unit/test_alerting.py tests/unit/test_telegram_alerting.py
+uv run --group dev pytest tests/integration/test_telegram_alert_delivery_smoke.py
 ```
 
-These tests validate routing and fake/fail-closed behavior only. They are not real alert-delivery
-evidence.
+The integration smoke is skipped unless explicit real-delivery gates are present. Unit tests use
+fake clients and do not call Telegram.

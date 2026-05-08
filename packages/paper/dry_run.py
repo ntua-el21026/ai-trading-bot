@@ -251,7 +251,7 @@ class PaperDryRunOrchestrator:
             filled_quantity=filled_quantity,
         )
         _persist_reconciliation_incidents(state, reconciliation)
-        _dispatch_success_alerts(state, entry_result.order, broker_fill)
+        _dispatch_success_alerts(state, entry_result.order, broker_fill, stop_order)
         _generate_report_and_dashboard(state)
 
         passed = (
@@ -955,6 +955,7 @@ def _dispatch_success_alerts(
     state: _DryRunState,
     entry_order: BrokerOrder,
     broker_fill: BrokerFill | None,
+    stop_order: BrokerOrder | None,
 ) -> None:
     _dispatch_alert(
         state,
@@ -974,6 +975,16 @@ def _dispatch_success_alerts(
             body="Fake broker fill was persisted to the local ledger.",
             related_entity_id=broker_fill.broker_fill_id,
             payload=broker_fill.model_dump(mode="json"),
+        )
+    if stop_order is not None:
+        _dispatch_alert(
+            state,
+            category="protective_stop_verified",
+            severity="info",
+            title="Dry-run fake protective stop verified",
+            body="Fake broker protective stop was verified for the filled quantity.",
+            related_entity_id=stop_order.client_order_id,
+            payload=stop_order.model_dump(mode="json"),
         )
 
 

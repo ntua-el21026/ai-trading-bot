@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 22 adds provider-first news and structured AI analysis boundaries while paper trading
+Milestone 23 adds gated Telegram alert delivery boundaries while paper trading
 remains disabled. The repository still does not implement actual paper trading operations, retained
-real Alpaca paper order-lifecycle write evidence, real alert delivery, production dashboard
-deployment, frozen paper evidence, Level 4 readiness, or live trading.
+real Alpaca paper order-lifecycle write evidence, production dashboard deployment, frozen paper
+evidence, Level 4 readiness, or live trading.
 
 ## Purpose And Constraints
 
@@ -33,10 +33,11 @@ for broker reconciliation, fake Alpaca paper adapter boundaries, AI/news validat
 actions, report generation, fake alert dispatch, dashboard read models, failure simulation, paper
 dry-run checks, fake/local end-to-end dry-run orchestration, local ledger repository tests, opt-in
 managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
-activity tests. It also provides an opt-in read-only Alpaca paper smoke command and a separate
-gated order-lifecycle smoke harness that refuses by default. It does not connect those contracts to
-autonomous order-writing paper execution, real alert delivery, production managed database activity
-wiring, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI smoke tests remain
+activity tests. It also provides an opt-in read-only Alpaca paper smoke command, a separate gated
+order-lifecycle smoke harness that refuses by default, and a Telegram alert delivery smoke harness
+that refuses by default. It does not connect those contracts to autonomous order-writing paper
+execution, production managed database activity wiring, or actual paper execution orchestration yet.
+Milestone 22 provider/OpenAI smoke tests remain
 opt-in and skipped/refused unless explicit gates and local secrets are present.
 
 The safe local dry-run command is:
@@ -162,8 +163,19 @@ Required environment variable names only:
 - `AUTONOMOUS_EXECUTION_ENABLED`
 - `AUTONOMY_LEVEL`
 - `KILL_SWITCH_ENABLED`
+- `ALERT_PROVIDER_PRIMARY`
+- `ALERT_PROVIDER_SECONDARY`
+- `ALERT_ENABLE_REAL_DELIVERY`
+- `ALERT_DAILY_MESSAGE_LIMIT`
+- `ALERT_CRITICAL_BYPASS_DAILY_LIMIT`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
+- `RUN_TELEGRAM_ALERT_SMOKE`
+- `TELEGRAM_ALERT_SMOKE_CONFIRM`
+- `TELEGRAM_ALERT_SMOKE_MAX_MESSAGES`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_REPORT_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_TRADE_SAMPLE`
+- `TELEGRAM_ALERT_SMOKE_INCLUDE_CRITICAL_SAMPLE`
 
 Environment rules:
 
@@ -206,8 +218,8 @@ Complete this checklist before every paper session:
 - Confirm AI feedback/calibration cannot mutate strategy, risk, execution, stop, universe, or
   kill-switch rules.
 - Confirm dashboard/frontend code has no broker or AI/news provider secrets.
-- Confirm alert channels are configured, or record that only fake/fail-closed alert contracts are
-  implemented.
+- Confirm Telegram alert delivery gates are configured only for an intentional smoke, or record
+  that default fake/fail-closed alert behavior is active.
 - Confirm operator knows the manual kill-switch and pause-new-risk control paths.
 
 ## Startup Procedure
@@ -227,7 +239,7 @@ This procedure is target-state documentation until real services are wired.
 5. Confirm dashboard/control-plane read models load from safe backend contracts.
 6. Confirm broker paper account mode through server-side broker activity once implemented.
 7. Confirm managed database/audit-ledger connectivity once implemented.
-8. Confirm real alert channel delivery once implemented.
+8. Confirm Telegram alert delivery through the explicit smoke harness before relying on real alerts.
 9. Run forced reconciliation before allowing new paper risk once real broker state is connected.
 10. Record config version, code commit, spec version, and operator.
 
@@ -478,7 +490,7 @@ Before micro-live readiness review, collect and approve:
   evidence;
 - real AI/news provider integration and schema-validity evidence;
 - real dashboard deployment evidence;
-- real alert delivery evidence;
+- retained Telegram alert delivery evidence;
 - frozen paper evidence satisfying every acceptance criterion;
 - incident-free control history for the required sessions;
 - documented resolution of all Sev-1/critical incidents;

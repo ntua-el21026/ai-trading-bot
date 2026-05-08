@@ -62,7 +62,12 @@ Dashboard/frontend code may only expose explicitly safe public values. It must n
 credentials, AI/news provider keys, privileged database URLs, or Temporal API keys.
 
 Current implementation does not add Vercel deployment files, frontend dependencies, real Temporal
-clients, browser-side Temporal calls, frontend secrets, or production dashboard deployment.
+clients, browser-side Temporal calls, frontend secrets, Telegram bot access, or production dashboard
+deployment.
+
+Telegram alert delivery added in Milestone 23 is server-side and operator-facing only. Dashboard and
+frontend code must not expose Telegram tokens/chat IDs, broker credentials, AI/news provider keys,
+database URLs, or Temporal keys, and must not use Telegram as a command/control trading interface.
 
 ## Ledger Read Models
 

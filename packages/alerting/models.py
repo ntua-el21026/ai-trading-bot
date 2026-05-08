@@ -10,21 +10,39 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 AlertSeverity = Literal["info", "warning", "critical"]
 AlertChannel = Literal["fake", "telegram", "email"]
 AlertCategory = Literal[
+    "routine_status",
     "order_notification",
+    "order_submitted",
+    "order_acknowledged",
     "fill_notification",
+    "order_filled",
+    "partial_fill",
     "exit_notification",
+    "cleanup_completed",
+    "protective_stop_submitted",
+    "protective_stop_verified",
     "protective_stop_warning",
     "protective_stop_critical",
     "missing_protective_stop",
     "reconciliation_mismatch",
+    "noncritical_reconciliation_issue",
     "duplicate_order_or_intent",
     "stale_data",
+    "provider_budget_exceeded",
+    "ai_news_warning",
+    "ai_quality_degraded",
     "invalid_ai_payload",
     "repeated_invalid_ai_payloads",
     "kill_switch_activation",
     "worker_unavailable",
+    "execution_worker_unavailable",
     "broker_ambiguity",
     "report_generated",
+    "daily_report_generated",
+    "weekly_report_generated",
+    "trade_closed_win",
+    "trade_closed_loss",
+    "generic_incident",
     "manual_control_action",
 ]
 AlertDispatchStatus = Literal["sent", "captured", "failed_closed"]
@@ -76,6 +94,7 @@ class AlertDispatchResult(AlertModel):
     message: AlertMessage
     external_calls_performed: bool = False
     provider_message_id: str | None = None
+    failure_code: str | None = None
     error_message: str | None = None
 
     @model_validator(mode="after")

@@ -10,10 +10,10 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 22 provider-first news and structured AI integration with offline
-default tests and fake/local trading defaults. Milestone 21B reached the gated Alpaca paper broker
-preflight and refused safely because the paper market clock was closed; real paper order-lifecycle
-write evidence remains pending for an open paper-market session.
+This repository is at Milestone 23 Telegram alert delivery harness integration with offline default
+tests and fake/local trading defaults. Milestone 21B reached the gated Alpaca paper broker preflight
+and refused safely because the paper market clock was closed; real paper order-lifecycle write
+evidence remains pending for an open paper-market session.
 
 Implemented pieces:
 
@@ -56,8 +56,9 @@ Implemented pieces:
 - pure daily and weekly report generation from supplied ledger/read-model snapshots under
   `packages/reporting/`
 - deterministic Markdown report rendering and report persistence through the ledger repository
-- alerting contracts, severity/category routing, fake alert adapter, and fail-closed Telegram/email
-  adapter skeletons under `packages/alerting/`
+- alerting contracts, severity/category routing, fake alert adapter, Telegram message templates,
+  gated server-side Telegram adapter, and explicit Telegram delivery smoke harness under
+  `packages/alerting/`
 - reporting/alerting/dashboard Temporal activity contracts that use local ledger repositories and
   fake alert adapters by default
 - fake/local paper dry-run orchestration under `packages/paper/` that exercises fixture data,
@@ -83,6 +84,8 @@ Implemented pieces:
 - autonomous AI feedback/calibration service that evaluates historical AI outputs, computes
   calibration/coverage/fallback/missed-risk proxy metrics, emits report/event payloads, and can
   only reduce, neutralize, or escalate AI influence
+- Telegram-safe daily report, weekly report, trade win/loss, order/fill/stop, critical incident,
+  and AI/news warning alert summaries
 - versioned AI trade-research prompt template
 - strict schema-validated AI trade-research output models and neutral fallback behavior
 - deterministic AI event scoring, hard-block classification, and non-increasing size-multiplier
@@ -147,7 +150,9 @@ Not implemented yet:
   before writes because the Alpaca paper clock was closed
 - real provider/OpenAI smoke evidence if the explicit provider/OpenAI gates have not been run
 - production dashboard UI/deployment
-- real Telegram/email alert delivery
+- retained real Telegram alert delivery evidence if the explicit Telegram smoke gates have not been
+  run
+- Email/Resend delivery, intentionally deferred as a possible future secondary channel
 - production Temporal query/signal backend integration
 - production worker/schedule activation
 - actual paper trading operations
@@ -204,6 +209,14 @@ Run Milestone 15 reporting, alerting, and dashboard read-model tests:
 
 ```bash
 uv run --group dev pytest tests/unit/test_reporting*.py tests/unit/test_alerting*.py tests/unit/test_dashboard*.py tests/unit/test_control_plane*.py tests/temporal/test_workflow_contracts.py
+```
+
+Run Milestone 23 Telegram alerting tests and the default-skipped/explicitly gated smoke:
+
+```bash
+uv run --group dev pytest tests/unit/test_alerting.py tests/unit/test_telegram_alerting.py
+uv run --group dev pytest tests/integration/test_telegram_alert_delivery_smoke.py
+uv run python scripts/check_telegram_alert_delivery.py
 ```
 
 Run Milestone 16 fake/local paper dry-run orchestration tests:
@@ -357,9 +370,12 @@ frozen paper evidence.
 Milestone 15 adds `packages/reporting/`, `packages/alerting/`, and
 `apps/workers/app/activities/reporting.py`. Reports are generated from supplied ledger/read-model
 snapshots, rendered deterministically, and persisted through the ledger repository. Alert delivery
-uses fake adapters by default; Telegram/email skeletons fail closed and do not send network
-messages in this milestone. Dashboard read models can be built from ledger repositories, but a real
-dashboard deployment and real Temporal query/signal backend are still deferred.
+uses fake adapters by default. Milestone 23 makes Telegram the only real alert channel for now,
+behind explicit real-delivery gates and a smoke harness. Telegram is operator-facing only: it does
+not submit orders, modify stops, change risk, mutate strategy, or act as a command interface.
+Email/Resend is intentionally deferred as a possible future secondary channel. Dashboard read models
+can be built from ledger repositories, but a real dashboard deployment and real Temporal
+query/signal backend are still deferred.
 
 ## Database Runtime
 

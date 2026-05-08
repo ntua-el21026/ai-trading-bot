@@ -1700,7 +1700,8 @@ Frontend / dashboard:
     Next.js on Vercel
 
 Alerts:
-    Telegram + email
+    Telegram initially
+    Email/Resend optional future secondary channel after evidence review
 
 Logging:
     structured JSON logs + Postgres audit tables + cloud logs
@@ -1721,7 +1722,31 @@ Production signals must not rely solely on Alpaca free IEX feed.
 Use SIP-quality or consolidated data where possible.
 ```
 
-### 18.4 Paper Trading Policy
+### 18.4 Alert Delivery Policy
+
+Telegram is the initial v0.1 real alert delivery channel.
+
+Email/Resend is intentionally deferred and is not required before the initial Telegram alert harness
+validation. Email may be reconsidered later as an optional secondary channel for daily/weekly
+reports and critical backup alerts only after paper evidence and/or profitability justification.
+
+Deferring email does not weaken the current execution/risk safety boundary because Telegram
+critical alerts remain required for this stage and alerting remains operator-facing only.
+
+Alerting cannot:
+
+- create or modify orders,
+- change stops,
+- mutate strategy, risk, execution, universe, or kill-switch rules,
+- enable live trading,
+- enable autonomous live execution,
+- access broker credentials,
+- act as a Telegram command/control trading interface.
+
+Before Level 4 micro-live, the final readiness review must either verify Telegram-only alert
+sufficiency or explicitly approve a secondary alert delivery channel.
+
+### 18.5 Paper Trading Policy
 
 Paper trading is operational rehearsal.
 
@@ -2120,8 +2145,19 @@ LIVE_TRADING_ENABLED=
 AUTONOMOUS_EXECUTION_ENABLED=
 AUTONOMY_LEVEL=
 KILL_SWITCH_ENABLED=
+ALERT_PROVIDER_PRIMARY=
+ALERT_PROVIDER_SECONDARY=
+ALERT_ENABLE_REAL_DELIVERY=
+ALERT_DAILY_MESSAGE_LIMIT=
+ALERT_CRITICAL_BYPASS_DAILY_LIMIT=
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+RUN_TELEGRAM_ALERT_SMOKE=
+TELEGRAM_ALERT_SMOKE_CONFIRM=
+TELEGRAM_ALERT_SMOKE_MAX_MESSAGES=
+TELEGRAM_ALERT_SMOKE_INCLUDE_REPORT_SAMPLE=
+TELEGRAM_ALERT_SMOKE_INCLUDE_TRADE_SAMPLE=
+TELEGRAM_ALERT_SMOKE_INCLUDE_CRITICAL_SAMPLE=
 ```
 
 Security requirements:

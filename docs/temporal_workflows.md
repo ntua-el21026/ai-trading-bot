@@ -2,15 +2,16 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Through Milestone 22, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Through Milestone 23, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
 dry-run orchestration, managed Postgres/Supabase runtime helpers, provider placeholder activity
-boundaries, Milestone 22 AI/news activity boundary names, signal names, query names,
+boundaries, Milestone 22 AI/news activity boundary names, Telegram alert delivery activity
+boundaries behind explicit gates, signal names, query names,
 dashboard/control-plane signal mapping contracts, local Temporal SDK test-environment coverage, and
 replay coverage for a generated workflow history. It does not implement actual paper trading
-orchestration, default AI/provider external calls, real alert delivery, production schedule
+orchestration, default AI/provider external calls, production schedule
 activation, browser-side Temporal calls, real paper orders, or live trading.
 
 ## Configuration
@@ -104,6 +105,12 @@ The `ReportingWorkflow` now calls the `generate_daily_report` activity by stable
 workflow code deterministic and free of database, alert, broker, AI/news, network, wall-clock, and
 random imports. The activity performs local ledger reads/writes and returns
 `external_calls_performed=false` by default.
+
+Milestone 23 extends the alerting activity boundary with a server-side, gated Telegram adapter and
+Telegram-safe report/trade/incident summaries. Default activity wiring still uses
+`FakeAlertAdapter`, so local tests perform no Telegram calls. Real Telegram delivery can occur only
+through activity/adapter code when explicit delivery gates are loaded; workflow modules still do not
+import Telegram clients, network libraries, alert adapters, environment variables, or secrets.
 
 Milestone 16 adds `packages/paper/` as a fake/local dry-run orchestration service. It may call
 existing activity-adjacent package boundaries directly for local validation, but it does not require

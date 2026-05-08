@@ -31,6 +31,7 @@ def test_happy_path_dry_run_persists_full_fake_evidence_chain() -> None:
     assert result.evidence.reconciliation_status == "clean"
     assert result.evidence.report_id is not None
     assert result.evidence.dashboard_snapshot_status == "database_read_model"
+    assert "Dry-run fake protective stop verified" in result.evidence.alert_titles
     assert result.dashboard_snapshot is not None
     assert result.dashboard_snapshot.system_state.data_source == "database_read_model"
 

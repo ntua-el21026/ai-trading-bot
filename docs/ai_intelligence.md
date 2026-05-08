@@ -8,6 +8,10 @@ summarize candidate-specific news, extract events, classify risk/catalyst contex
 schema-validated JSON, produce explanations, and generate automated calibration reports that can
 only reduce/neutralize/escalate AI influence.
 
+Milestone 23 can route AI/news warnings and AI quality degradation events to Telegram alerts through
+the alerting boundary. Those alerts are operator-facing only and do not grant AI broker access,
+order authority, strategy mutation, risk mutation, or stop-policy mutation.
+
 AI cannot:
 
 - scan the full universe for trade ideas;
@@ -53,6 +57,8 @@ AI cannot:
 - Milestone 22 integration smoke tests for providers/OpenAI are skipped by default and require
   explicit gates. Default unit tests use fakes/fixtures only and do not call Marketaux, Alpha
   Vantage, OpenAI, broker APIs, alert services, or managed databases.
+- Milestone 23 alert templates include AI/news warning summaries. Default tests still use fake
+  alert clients and do not call AI/news providers or Telegram.
 
 ## Provider-First News Policy
 

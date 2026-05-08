@@ -16,13 +16,17 @@ reporting and safety-degradation artifacts only: they may recommend reduced infl
 behavior, or escalation, but they cannot mutate strategy, risk, execution, stop policy, universe
 membership, kill switches, or broker state.
 
+Milestone 23 adds Telegram-safe daily and weekly report summaries plus trade win/loss summaries for
+operator-facing alerts. These summaries are generated from report/trade outcome payloads and do not
+send real Telegram messages unless the explicit Telegram delivery gates are loaded.
+
 ## Implemented
 
 - `packages/reporting/models.py` defines daily/weekly report, section, metric, issue, snapshot, and
   generation-result models.
 - `packages/reporting/generators.py` builds daily and weekly reports from typed snapshots.
 - `packages/reporting/renderers.py` renders deterministic Markdown suitable for tests and audit
-  storage.
+  storage plus concise Telegram-safe daily/weekly summaries.
 - `packages/reporting/ledger.py` builds report snapshots from ledger repository reads and persists
   report records.
 - `apps/workers/app/activities/reporting.py` exposes Temporal activity boundaries for daily/weekly
@@ -31,6 +35,8 @@ membership, kill switches, or broker state.
   end-to-end dry run.
 - `packages/ai/feedback.py` builds AI calibration report payloads and AI quality event payloads
   that can be persisted through existing report/system-event ledger boundaries.
+- `packages/alerting/templates.py` converts daily reports, weekly reports, and trade outcomes into
+  concise Telegram alert messages.
 
 Daily reports include workflow summary, candidates/signals, AI stats, decisions/rejections,
 execution intents, orders/fills/positions, protective stops, reconciliation status, incidents,
@@ -45,8 +51,12 @@ operational issues, and unresolved gaps.
 - Default reporting uses in-memory SQLite or caller-supplied local repositories in tests.
 - Reports explicitly label missing evidence and do not claim profitability.
 - Report activities return `external_calls_performed=false` by default.
+- Report alert dispatch uses `FakeAlertAdapter` by default and does not call Telegram in default
+  tests.
 - Real operational reports still require managed database runtime integration and real paper run
   data.
+- Real Telegram report delivery requires the explicit Telegram smoke/delivery gates and remains
+  operator-facing only.
 - Provider/OpenAI smoke results and AI calibration reports are not actual paper trading evidence,
   frozen paper evidence, or Level 4 readiness evidence by themselves.
 - Live trading and autonomous execution remain disabled.
