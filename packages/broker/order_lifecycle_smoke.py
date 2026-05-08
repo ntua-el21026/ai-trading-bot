@@ -26,6 +26,8 @@ from packages.broker.alpaca import (
     AlpacaClientError,
     AlpacaPaperAdapter,
     AlpacaPaperCredentials,
+    build_alpaca_auth_headers,
+    build_alpaca_paper_url,
     map_alpaca_clock,
     map_alpaca_order,
 )
@@ -213,36 +215,19 @@ class AlpacaPaperOrderLifecycleHttpClient:
     ) -> object:
         encoded_body = None if body is None else json.dumps(body).encode("utf-8")
         request = urllib.request.Request(
-            _build_url(self._credentials.base_url, path, params=params),
+            build_alpaca_paper_url(self._credentials.base_url, path, params=params),
             data=encoded_body,
-            headers={
-                "APCA-API-KEY-ID": self._credentials.api_key,
-                "APCA-API-SECRET-KEY": self._credentials.secret_key,
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
+            headers=build_alpaca_auth_headers(
+                self._credentials,
+                include_content_type=body is not None,
+            ),
             method=method,
         )
         try:
             with self._opener(request, timeout=self._timeout_seconds) as response:
                 response_body = response.read()
         except urllib.error.HTTPError as exc:
-            if exc.code == 404:
-                raise AlpacaClientError(
-                    "order_not_found",
-                    "Alpaca paper resource was not found",
-                ) from exc
-            if exc.code in {401, 403}:
-                raise AlpacaClientError(
-                    "credential_rejected",
-                    f"Alpaca paper write-smoke request was rejected with HTTP {exc.code}",
-                    pause_new_risk=True,
-                ) from exc
-            raise AlpacaClientError(
-                "rest_fallback_unavailable",
-                f"Alpaca paper write-smoke request failed with HTTP {exc.code}",
-                retryable=500 <= exc.code < 600,
-            ) from exc
+            raise _map_order_lifecycle_http_error(exc, method=method) from exc
         except (urllib.error.URLError, OSError) as exc:
             raise AlpacaClientError(
                 "rest_fallback_unavailable",
@@ -482,10 +467,33 @@ def run_alpaca_paper_order_lifecycle_smoke(
         run_mode="runtime",
     )
 
-    account = adapter.account_snapshot()
-    clock_snapshot = map_alpaca_clock(client.get_clock())
-    open_orders = tuple(adapter.open_orders())
-    positions = tuple(adapter.positions())
+    account_reachable = False
+    clock_reachable = False
+    try:
+        account = adapter.account_snapshot()
+        account_reachable = True
+        clock_snapshot = map_alpaca_clock(client.get_clock())
+        clock_reachable = True
+        open_orders = tuple(adapter.open_orders())
+        positions = tuple(adapter.positions())
+    except AlpacaClientError as exc:
+        return _summary(
+            app_config=active_config,
+            gates_loaded=True,
+            refused=True,
+            refusal_reasons=(f"broker_preflight_error:{exc.code}",),
+            target_symbol=settings.symbol,
+            base_url=ALPACA_PAPER_BASE_URL,
+            credentials_loaded=True,
+            paper_endpoint_used=True,
+            live_endpoint_used=False,
+            clock_reachable=clock_reachable,
+            account_snapshot_reachable=account_reachable,
+            external_calls_performed=True,
+            broker_ambiguity_detected=exc.ambiguous,
+            pause_new_risk_recommended=exc.pause_new_risk or exc.ambiguous,
+            estimated_notional_usd=settings.estimated_notional_usd,
+        )
     preflight_refusals = _preflight_refusals(
         settings=settings,
         app_config=active_config,
@@ -934,18 +942,6 @@ def _parse_float(value: str) -> float | None:
         return None
 
 
-def _build_url(
-    base_url: str,
-    path: str,
-    *,
-    params: Mapping[str, str] | None = None,
-) -> str:
-    normalized_base = base_url.rstrip("/")
-    normalized_path = path if path.startswith("/") else f"/{path}"
-    query = "" if not params else f"?{urllib.parse.urlencode(params)}"
-    return f"{normalized_base}{normalized_path}{query}"
-
-
 def _json_mapping(value: object) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise AlpacaClientError(
@@ -962,6 +958,43 @@ def _json_mapping_sequence(value: object) -> tuple[Mapping[str, Any], ...]:
             f"expected JSON list from Alpaca, got {type(value).__name__}",
         )
     return tuple(_json_mapping(item) for item in value)
+
+
+def _map_order_lifecycle_http_error(
+    exc: urllib.error.HTTPError,
+    *,
+    method: str,
+) -> AlpacaClientError:
+    if exc.code == 404:
+        return AlpacaClientError(
+            "order_not_found",
+            "Alpaca paper resource was not found",
+        )
+    if exc.code == 401:
+        return AlpacaClientError(
+            "credential_rejected",
+            "Alpaca paper write-smoke request was rejected by credential authentication",
+            pause_new_risk=True,
+        )
+    if exc.code == 403 and method in {"POST", "DELETE"}:
+        return AlpacaClientError(
+            "invalid_order_request",
+            "Alpaca paper write-smoke write request was forbidden after credential preflight",
+            pause_new_risk=True,
+            details={"http_status": str(exc.code), "method": method},
+        )
+    if exc.code == 403:
+        return AlpacaClientError(
+            "rest_fallback_unavailable",
+            "Alpaca paper write-smoke read request was forbidden after credential preflight",
+            pause_new_risk=True,
+            details={"http_status": str(exc.code), "method": method},
+        )
+    return AlpacaClientError(
+        "rest_fallback_unavailable",
+        f"Alpaca paper write-smoke request failed with HTTP {exc.code}",
+        retryable=500 <= exc.code < 600,
+    )
 
 
 class _NoopOrderLifecycleClient:

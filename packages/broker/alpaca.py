@@ -15,7 +15,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any, Literal, Protocol, Self, cast, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from packages.broker.adapters import BrokerAdapterNotConfigured
 from packages.broker.models import (
@@ -77,11 +77,15 @@ class AlpacaPaperCredentials(AlpacaModel):
     secret_key: str = Field(min_length=1)
     base_url: str = Field(default=ALPACA_PAPER_BASE_URL, min_length=1)
 
+    @field_validator("base_url", mode="before")
+    @classmethod
+    def normalize_base_url(cls, value: object) -> str:
+        return str(value).strip().rstrip("/")
+
     @model_validator(mode="after")
     def validate_paper_url(self) -> Self:
-        normalized = self.base_url.lower()
-        if "paper" not in normalized or "live" in normalized:
-            raise ValueError("Alpaca credentials must target the paper endpoint")
+        if self.base_url != ALPACA_PAPER_BASE_URL:
+            raise ValueError("Alpaca credentials must target the exact paper endpoint")
         return self
 
 
@@ -306,12 +310,8 @@ class AlpacaPaperReadOnlyHttpClient:
         params: Mapping[str, str] | None = None,
     ) -> object:
         request = urllib.request.Request(
-            _build_read_only_url(self._credentials.base_url, path, params=params),
-            headers={
-                "APCA-API-KEY-ID": self._credentials.api_key,
-                "APCA-API-SECRET-KEY": self._credentials.secret_key,
-                "Accept": "application/json",
-            },
+            build_alpaca_paper_url(self._credentials.base_url, path, params=params),
+            headers=build_alpaca_auth_headers(self._credentials),
             method="GET",
         )
         try:
@@ -952,7 +952,7 @@ def _json_mapping_sequence(value: object) -> tuple[Mapping[str, Any], ...]:
     return tuple(_json_mapping(item) for item in value)
 
 
-def _build_read_only_url(
+def build_alpaca_paper_url(
     base_url: str,
     path: str,
     *,
@@ -962,6 +962,21 @@ def _build_read_only_url(
     normalized_path = path if path.startswith("/") else f"/{path}"
     query = "" if not params else f"?{urllib.parse.urlencode(params)}"
     return f"{normalized_base}{normalized_path}{query}"
+
+
+def build_alpaca_auth_headers(
+    credentials: AlpacaPaperCredentials,
+    *,
+    include_content_type: bool = False,
+) -> dict[str, str]:
+    headers = {
+        "APCA-API-KEY-ID": credentials.api_key,
+        "APCA-API-SECRET-KEY": credentials.secret_key,
+        "Accept": "application/json",
+    }
+    if include_content_type:
+        headers["Content-Type"] = "application/json"
+    return headers
 
 
 def _read_only_write_error(operation: str) -> AlpacaClientError:

@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 import json
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections.abc import Callable
+from email.message import Message
+from io import BytesIO
+from typing import Any
+
+import pytest
+from pydantic import ValidationError
 
 from packages.broker.alpaca import ALPACA_PAPER_BASE_URL, AlpacaClientError, AlpacaPaperCredentials
 from packages.broker.fakes import FakeAlpacaClient
@@ -14,6 +23,7 @@ from packages.broker.order_lifecycle_smoke import (
     ORDER_LIFECYCLE_TIMEOUT_ENV_VAR,
     RUN_ORDER_LIFECYCLE_SMOKE_ENV_VAR,
     AlpacaPaperOrderLifecycleClient,
+    AlpacaPaperOrderLifecycleHttpClient,
     AlpacaPaperOrderLifecycleSmokeSettings,
     failed_alpaca_paper_order_lifecycle_smoke_gates,
     run_alpaca_paper_order_lifecycle_smoke,
@@ -131,6 +141,132 @@ def test_order_lifecycle_smoke_refuses_live_alpaca_base_url() -> None:
     assert summary.write_operations_attempted is False
 
 
+def test_order_lifecycle_credentials_normalize_paper_url_and_refuse_live_endpoint() -> None:
+    credentials = AlpacaPaperCredentials(
+        api_key="paper-key",
+        secret_key="paper-secret",
+        base_url=f"{ALPACA_PAPER_BASE_URL}/",
+    )
+
+    assert credentials.base_url == ALPACA_PAPER_BASE_URL
+
+    with pytest.raises(ValidationError):
+        AlpacaPaperCredentials(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            base_url="https://api.alpaca.markets",
+        )
+
+
+def test_order_lifecycle_http_client_uses_apca_headers_and_single_v2_path() -> None:
+    calls: list[urllib.request.Request] = []
+
+    def opener(request: urllib.request.Request, timeout: float) -> _Response:
+        calls.append(request)
+        path = urllib.parse.urlparse(request.full_url).path
+        if path == "/v2/account":
+            return _Response(_account_payload())
+        if path == "/v2/orders":
+            if request.get_method() == "POST":
+                return _Response(_order_payload(client_order_id="smoke-AAPL-test"))
+            return _Response([])
+        if path == "/v2/orders:by_client_order_id":
+            raise urllib.error.HTTPError(
+                request.full_url,
+                404,
+                "Not Found",
+                Message(),
+                BytesIO(b"{}"),
+            )
+        raise AssertionError(f"unexpected lifecycle path: {path}")
+
+    client = AlpacaPaperOrderLifecycleHttpClient(
+        credentials=AlpacaPaperCredentials(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            base_url=f"{ALPACA_PAPER_BASE_URL}/",
+        ),
+        timeout_seconds=1,
+        opener=opener,
+    )
+
+    assert client.get_account()["id"] == "paper-account"
+    assert client.list_open_orders() == ()
+    assert client.get_order_by_client_order_id("smoke-AAPL-test") is None
+    client.submit_order(
+        {
+            "symbol": "AAPL",
+            "side": "buy",
+            "type": "limit",
+            "time_in_force": "day",
+            "qty": "1",
+            "limit_price": "200",
+            "client_order_id": "smoke-AAPL-test",
+            "extended_hours": False,
+        }
+    )
+
+    assert calls
+    for request in calls:
+        headers = {key.lower(): value for key, value in request.header_items()}
+        assert headers["apca-api-key-id"] == "paper-key"
+        assert headers["apca-api-secret-key"] == "paper-secret"
+        assert request.full_url.startswith(ALPACA_PAPER_BASE_URL)
+        assert "/v2/v2/" not in request.full_url
+
+
+def test_order_lifecycle_http_client_maps_only_401_to_credential_rejected() -> None:
+    def opener(request: urllib.request.Request, timeout: float) -> _Response:
+        raise urllib.error.HTTPError(
+            request.full_url,
+            403,
+            "Forbidden",
+            Message(),
+            BytesIO(b"{}"),
+        )
+
+    client = AlpacaPaperOrderLifecycleHttpClient(
+        credentials=AlpacaPaperCredentials(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            base_url=ALPACA_PAPER_BASE_URL,
+        ),
+        timeout_seconds=1,
+        opener=opener,
+    )
+
+    with pytest.raises(AlpacaClientError) as exc_info:
+        client.submit_order({"client_order_id": "smoke-AAPL-test"})
+
+    assert exc_info.value.code == "invalid_order_request"
+
+
+def test_order_lifecycle_http_client_maps_401_to_credential_rejected() -> None:
+    def opener(request: urllib.request.Request, timeout: float) -> _Response:
+        raise urllib.error.HTTPError(
+            request.full_url,
+            401,
+            "Unauthorized",
+            Message(),
+            BytesIO(b"{}"),
+        )
+
+    client = AlpacaPaperOrderLifecycleHttpClient(
+        credentials=AlpacaPaperCredentials(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            base_url=ALPACA_PAPER_BASE_URL,
+        ),
+        timeout_seconds=1,
+        opener=opener,
+    )
+
+    with pytest.raises(AlpacaClientError) as exc_info:
+        client.get_account()
+
+    assert exc_info.value.code == "credential_rejected"
+
+
 def test_order_lifecycle_smoke_refuses_live_and_autonomous_config_flags() -> None:
     live_summary = run_alpaca_paper_order_lifecycle_smoke(
         environ=_safe_env(),
@@ -219,6 +355,28 @@ def test_order_lifecycle_smoke_refuses_existing_open_order_for_symbol() -> None:
     assert summary.refused is True
     assert "no_existing_open_order_for_symbol" in summary.refusal_reasons
     assert summary.write_operations_attempted is False
+
+
+def test_order_lifecycle_smoke_refuses_before_writes_on_account_preflight_auth_failure() -> None:
+    client = FakeAlpacaClient(
+        rest_error=AlpacaClientError(
+            "credential_rejected",
+            "paper account preflight was rejected",
+            pause_new_risk=True,
+        )
+    )
+
+    summary = run_alpaca_paper_order_lifecycle_smoke(
+        environ=_safe_env(),
+        app_config=load_app_config(),
+        client_factory=_client_factory(client),
+    )
+
+    assert summary.refused is True
+    assert "broker_preflight_error:credential_rejected" in summary.refusal_reasons
+    assert summary.account_snapshot_reachable is False
+    assert summary.write_operations_attempted is False
+    assert client.submitted_order_requests == []
 
 
 def test_fake_client_happy_path_submits_stop_cleans_up_and_sanitizes_summary() -> None:
@@ -321,3 +479,28 @@ def test_fake_client_ambiguity_path_pauses_without_blind_retry() -> None:
     assert summary.pause_new_risk_recommended is True
     assert summary.entry_order_submitted is False
     assert client.submitted_order_requests == []
+
+
+class _Response:
+    def __init__(self, payload: object) -> None:
+        self._payload = payload
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return json.dumps(self._payload).encode("utf-8")
+
+
+def _account_payload() -> dict[str, Any]:
+    return {
+        "id": "paper-account",
+        "equity": "100000",
+        "cash": "90000",
+        "buying_power": "180000",
+        "currency": "USD",
+        "as_of": "2026-05-04T14:30:00Z",
+    }
