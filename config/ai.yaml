@@ -1,6 +1,6 @@
 ai:
   enabled: true
-  provider: "openai_or_anthropic"
+  provider: "openai"
   model: "configured_in_env"
   require_json_schema: true
   allow_ai_to_create_orders: false
@@ -18,3 +18,25 @@ ai:
   hard_block_confidence_min: 0.70
   prompt_version: "ai_trade_research_v0_3"
   schema_version: "ai_trade_research_schema_v0_3"
+  news_provider_primary: "marketaux"
+  news_provider_fallback: "alpha_vantage"
+  marketaux_daily_request_limit: 90
+  alpha_vantage_daily_request_limit: 20
+  news_max_symbols_per_run: 5
+  news_max_articles_per_symbol: 3
+  news_enable_openai_web_fallback: false
+  news_openai_web_daily_request_limit: 5
+  openai_model: "gpt-5.2"
+  openai_escalation_model: "gpt-5.2-pro"
+  openai_fallback_model: "gpt-5-mini"
+  ai_daily_request_limit: 25
+  ai_max_symbols_per_run: 5
+  ai_max_articles_per_symbol: 3
+  ai_require_structured_output: true
+  ai_neutral_fallback_on_error: true
+  ai_enable_escalation: false
+  ai_feedback_enabled: true
+  ai_feedback_min_schema_validity_rate: 0.99
+  ai_feedback_min_provider_coverage_rate: 0.60
+  ai_feedback_max_fallback_rate: 0.35
+  ai_feedback_max_missed_risk_false_negative_proxy_rate: 0.15

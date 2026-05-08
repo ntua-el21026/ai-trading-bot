@@ -26,6 +26,10 @@ managed database operation gates, and extends schema checks to include key uniqu
 expectations. In this run the managed database gates were absent, so no migration was applied and
 managed CRUD validation was skipped.
 
+Milestone 22 uses the existing raw provider payload, AI research output, system event, and report
+boundaries for provider-first news, OpenAI structured-analysis audit hashes, provider budget events,
+and AI calibration reports. No destructive schema change is required for this milestone.
+
 The package name is `packages/ledger` because the latest spec describes Postgres as the durable
 business and audit ledger. Domain logic remains in the existing domain packages; ledger code owns
 schema and persistence boundaries only.
@@ -71,6 +75,13 @@ Implemented:
   - `apps/workers/app/activities/fakes.py`
   - `tests/unit/test_ledger_activities.py`
   - `tests/temporal/test_workflow_contracts.py`
+- AI/news audit payload helpers:
+  - `packages/ai/providers.py`
+  - `packages/ai/openai.py`
+  - `packages/ai/feedback.py`
+  - `tests/unit/test_news_provider_integration.py`
+  - `tests/unit/test_openai_structured_analysis.py`
+  - `tests/unit/test_ai_feedback_calibration.py`
 
 No real managed database connection is required by default tests.
 
@@ -173,6 +184,7 @@ The local SQLite repository supports:
 
 - raw provider payload insert/get by provider, endpoint, and payload hash;
 - AI research output insert/get with raw prompt/output hashes and parsed payload;
+- system event/report insertion for AI quality warnings and calibration reports;
 - execution intent insert/get by ID and `client_order_id_root`;
 - order insert/get by `client_order_id`;
 - fill insert with broker fill ID uniqueness;

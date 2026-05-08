@@ -79,6 +79,7 @@ class DeterministicShortlistNewsRequest(AIModel):
 
 class ProviderNewsArticle(AIModel):
     provider: str
+    endpoint: str | None = None
     provider_article_id: str | None = None
     symbol: str
     tickers: tuple[str, ...]
@@ -88,6 +89,8 @@ class ProviderNewsArticle(AIModel):
     published_at: datetime
     summary: str | None = None
     body: str | None = None
+    language: str | None = None
+    sentiment: str | None = None
     raw_provider_payload: dict[str, Any] | None = None
     raw_payload_hash: str | None = None
     source_quality: SourceQuality = "secondary_aggregation"
@@ -123,6 +126,7 @@ class ProviderNewsArticle(AIModel):
 
 class NormalizedNewsArticle(AIModel):
     provider: str
+    endpoint: str | None = None
     provider_article_id: str | None = None
     symbol: str
     tickers: tuple[str, ...]
@@ -134,6 +138,8 @@ class NormalizedNewsArticle(AIModel):
     normalized_canonical_url: str | None = None
     published_at: datetime
     content: str | None = None
+    language: str | None = None
+    sentiment: str | None = None
     raw_payload_hash: str | None = None
     source_quality: SourceQuality
 

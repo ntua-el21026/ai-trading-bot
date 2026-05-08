@@ -2,14 +2,16 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-21A
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-22
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
 opt-in Alpaca paper read-only smoke tooling, and a default-refusing gated Alpaca paper
-order-lifecycle smoke harness. This does not validate actual paper trading operations, real AI/news
-provider credentials, real alert delivery, production dashboard deployment, production Temporal
-backend behavior, live trading, or profitability.
+order-lifecycle smoke harness. Milestone 22 adds Marketaux/Alpha Vantage provider-first news
+retrieval, OpenAI structured analysis, disabled-by-default OpenAI web fallback, and autonomous AI
+feedback/calibration using offline default tests. This does not validate actual paper trading
+operations, retained real paper order-lifecycle write evidence, real alert delivery, production
+dashboard deployment, production Temporal backend behavior, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -59,6 +61,20 @@ backend behavior, live trading, or profitability.
 - Reconciliation comparison is fixture-tested for clean state, missing/extra positions, missing protective stops, duplicate open entry orders, unexpected short positions, unsupported broker asset classes, unknown open broker orders, missing fills, quantity mismatch, average-price mismatch, account-equity mismatch, stale snapshots, and Temporal workflow inconsistency.
 - Incident severity, pause-new-risk recommendations, and flatten-if-safe recommendations are fixture-tested.
 - AI article validation, normalization, deduplication, and deterministic-shortlist provider boundaries are fixture-tested.
+- Marketaux and Alpha Vantage payload normalization, provider-first fallback/cross-check behavior,
+  per-provider request budgets, per-run symbol/article caps, provider outage/no-news behavior,
+  malformed payload handling, deduplication, raw payload hashes, and no full-universe scanning are
+  fixture-tested without external calls.
+- OpenAI structured-output analysis, strict Responses-API schema generation, optional model-list
+  validation through fake clients, invalid JSON/schema fallback, no-news/provider-outage/budget
+  fallback, prompt/model/schema version recording, raw prompt/output hashes, hard-block policy, and
+  no execution-intent/order authority are fixture-tested without OpenAI calls.
+- OpenAI web fallback disabled-by-default behavior, runtime policy requirement, exception-only
+  trigger rules, separate budget refusal, and provider-covered skip behavior are fixture-tested
+  without OpenAI web-search calls.
+- AI feedback/calibration metrics, report generation, AI quality warning/event payloads, safety
+  downgrades to reduced/neutral/escalation states, and no strategy/risk/execution/broker mutation
+  are fixture-tested.
 - AI prompt loading, strict JSON parsing, invalid JSON fallback, schema-violation fallback, no-news fallback, provider-outage fallback, and conflicting-source fallback are fixture-tested.
 - AI recency decay, source quality weighting, score clipping, hard-block confidence threshold, and non-increasing size-multiplier behavior are fixture-tested.
 - AI persistence payload hashes are fixture-tested without database writes.
@@ -116,6 +132,9 @@ backend behavior, live trading, or profitability.
 | Alpaca paper order-lifecycle smoke harness | `tests/unit/test_alpaca_paper_order_lifecycle_smoke.py`, `tests/integration/test_alpaca_paper_order_lifecycle_write_smoke.py` |
 | Reconciliation | `tests/unit/test_reconciliation.py`, `tests/unit/test_failure_simulations.py` |
 | AI schema, fallback, scoring, persistence | `tests/unit/test_ai_news.py`, `tests/unit/test_ai_parser.py`, `tests/unit/test_ai_scoring.py`, `tests/unit/test_ai_persistence.py`, `tests/unit/test_failure_simulations.py` |
+| Provider-first news | `tests/unit/test_news_provider_integration.py`, `tests/integration/test_news_provider_external_smoke.py` |
+| OpenAI structured analysis and web fallback | `tests/unit/test_openai_structured_analysis.py`, `tests/unit/test_openai_web_fallback.py`, `tests/integration/test_openai_external_smoke.py` |
+| AI feedback/calibration | `tests/unit/test_ai_feedback_calibration.py` |
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py` |
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
@@ -124,13 +143,13 @@ backend behavior, live trading, or profitability.
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: real Alpaca paper order-lifecycle smoke evidence if the write-gated
-command has not been separately run, production managed Postgres/Supabase activity wiring, real
-provider integrations, real alert delivery, production Temporal backend integration, production
-dashboard deployment, paper trading operations, and Level 4 micro-live readiness evidence are not
-implemented. Milestone 20 read-only Alpaca paper smoke evidence has passed for account, open-order,
-position, and clock/status reads only. Milestone 21A adds the harness and default-refusal evidence,
-not actual paper trading evidence.
+Remaining gaps are explicit: real Alpaca paper order-lifecycle write evidence remains pending after
+the latest 21B closed-market preflight refusal, production managed Postgres/Supabase activity
+wiring, real provider/OpenAI smoke evidence if gates are absent or not run, real alert delivery,
+production Temporal backend integration, production dashboard deployment, paper trading operations,
+and Level 4 micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
+smoke evidence has passed for account, open-order, position, and clock/status reads only.
+Milestone 22 provider/OpenAI/calibration support is not actual paper trading evidence.
 
 ## Validation Harness Contracts
 
@@ -228,8 +247,9 @@ Current blockers:
 - Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
   integration is deferred.
 - Alpaca paper read-only smoke evidence exists for account/open-order/position/clock reads; the
-  paper order-lifecycle smoke harness exists and refuses by default; real order-lifecycle smoke
-  evidence and real AI/news provider integrations are deferred unless separately gated and run.
+  paper order-lifecycle smoke harness exists and refuses by default; retained real
+  order-lifecycle write evidence remains pending after the latest closed-market 21B refusal. Real
+  provider/OpenAI smoke evidence is required if the optional gates have not been separately run.
 - Real dashboard deployment is deferred.
 - Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
 - Live trading remains disabled.

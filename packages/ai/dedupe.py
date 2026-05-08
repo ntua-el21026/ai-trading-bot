@@ -15,6 +15,7 @@ def normalize_article(article: ProviderNewsArticle) -> NormalizedNewsArticle:
     content = article.summary or article.body
     return NormalizedNewsArticle(
         provider=article.provider,
+        endpoint=article.endpoint,
         provider_article_id=article.provider_article_id,
         symbol=article.symbol,
         tickers=article.tickers,
@@ -26,6 +27,8 @@ def normalize_article(article: ProviderNewsArticle) -> NormalizedNewsArticle:
         normalized_canonical_url=normalize_url(article.canonical_url),
         published_at=article.published_at,
         content=content.strip() if content else None,
+        language=article.language,
+        sentiment=article.sentiment,
         raw_payload_hash=article.raw_payload_hash,
         source_quality=article.source_quality,
     )

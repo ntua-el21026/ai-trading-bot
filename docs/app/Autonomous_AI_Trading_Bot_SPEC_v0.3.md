@@ -1066,23 +1066,25 @@ AI does not scan the full universe for trades in v0.1.
 
 ### 12.2 Data Sources
 
-Recommended v0.1 data providers:
+Milestone 22 provider-first news policy:
 
 ```text
 Primary ticker-tagged news:
-    Polygon / Massive News
+    Marketaux
 
-Secondary company news / earnings calendar:
-    Finnhub
+Fallback / cross-check ticker-tagged news:
+    Alpha Vantage
 
-Transcripts / press releases / timing metadata:
-    Financial Modeling Prep
+Structured AI analysis:
+    OpenAI structured output over provider-fetched deterministic shortlist news only
 
 Sparse-case web fallback:
-    Tavily or Brave Search only when structured sources are insufficient
+    OpenAI web search, disabled by default and allowed only as audited exception behavior
 ```
 
-Raw news payloads must be persisted.
+Raw news payloads, normalized articles, AI prompt/output hashes, parsed outputs, provider budget
+events, and calibration reports must be persisted or made available through ledger/reporting
+boundaries where feasible.
 
 ### 12.3 Retrieval Policy
 
@@ -1091,11 +1093,30 @@ ai_news:
   default_lookback_calendar_days: 7
   extended_event_lookback_calendar_days: 14
   max_articles_per_symbol: 12
+  provider_primary: "marketaux"
+  provider_fallback: "alpha_vantage"
+  marketaux_daily_request_limit: 90
+  alpha_vantage_daily_request_limit: 20
+  max_symbols_per_run: 5
+  openai_web_fallback_enabled: false
+  openai_web_daily_request_limit: 5
   no_social_media: true
   no_forum_scraping: true
   persist_raw_payloads: true
   persist_canonical_urls: true
 ```
+
+Provider retrieval rules:
+
+- never scan the full universe,
+- accept only explicit deterministic shortlist symbols,
+- enforce max symbols and max articles per run,
+- enforce daily request budgets before each real provider request,
+- use 7 calendar days by default and 14 days for extended event/risk lookups,
+- normalize provider-specific payloads into a provider-independent article model,
+- deduplicate by canonical URL, provider ID, and title/source/timestamp heuristics,
+- use neutral/no-news behavior when no articles are found,
+- never allow provider data to create broker orders directly.
 
 ### 12.4 Event Taxonomy
 
@@ -1178,6 +1199,56 @@ Conflicting sources:
 ```
 
 AI failure does not trigger a global trading kill switch by itself.
+
+### 12.7 OpenAI Model And Web Fallback Controls
+
+Configured OpenAI model names must be read from environment/config and must not be assumed valid.
+Default tests must not require OpenAI credentials or valid remote model IDs. If an OpenAI model-list
+smoke is explicitly requested, the model list may be checked only with:
+
+```text
+RUN_OPENAI_MODEL_LIST_SMOKE=1
+OPENAI_MODEL_LIST_CONFIRM=LIST_AVAILABLE_MODELS_ONLY
+```
+
+If the configured model is unavailable, the AI path fails closed with sanitized status and neutral
+behavior. Raw API keys and raw provider responses must not be printed.
+
+OpenAI web fallback is disabled by default and exception-only. It may run only when enabled by
+policy, explicitly allowed at runtime, within its daily request budget, and one of these conditions
+holds:
+
+- Marketaux and Alpha Vantage return no articles for a shortlisted symbol,
+- providers conflict on high-severity news,
+- legal/regulatory/accounting/FDA-style risk is suspected but provider context is incomplete,
+- AI confidence is low and the trade would otherwise pass,
+- a hard-block decision depends on missing context.
+
+Web fallback output is advisory only. It cannot create orders, modify orders, change stops, change
+strategy rules, change risk limits, expand the universe, or access broker credentials.
+
+### 12.8 AI Feedback And Calibration
+
+Autonomous AI feedback/calibration is approved only as evaluation, reporting, warning, escalation,
+and safety-degradation behavior.
+
+Allowed behavior:
+
+- evaluate historical AI outputs against later outcomes,
+- compute schema-validity, provider-coverage, no-news, fallback, hard-block, missed-risk,
+  confidence-bucket, score-bucket, drawdown/outcome proxy, and version-breakdown metrics,
+- generate calibration reports,
+- produce AI quality warnings or incident recommendations,
+- recommend or set internal AI safety states:
+  - `AI_NORMAL`,
+  - `AI_REDUCED_INFLUENCE`,
+  - `AI_NEUTRAL_ONLY`,
+  - `AI_ESCALATION_REQUIRED`.
+
+AI safety states may only reduce, neutralize, or escalate AI influence. They must never increase
+position size, mutate strategy rules, change risk limits, change execution rules, change stop
+policy, expand the universe, enable live trading, override deterministic risk checks, override kill
+switches, or call broker APIs.
 
 ---
 
@@ -1956,7 +2027,7 @@ risk_level_4_expanded:
 ```yaml
 ai:
   enabled: true
-  provider: "openai_or_anthropic"
+  provider: "openai"
   model: "configured_in_env"
   require_json_schema: true
   allow_ai_to_create_orders: false
@@ -1974,6 +2045,28 @@ ai:
   hard_block_confidence_min: 0.70
   prompt_version: "ai_trade_research_v0_3"
   schema_version: "ai_trade_research_schema_v0_3"
+  news_provider_primary: "marketaux"
+  news_provider_fallback: "alpha_vantage"
+  marketaux_daily_request_limit: 90
+  alpha_vantage_daily_request_limit: 20
+  news_max_symbols_per_run: 5
+  news_max_articles_per_symbol: 3
+  news_enable_openai_web_fallback: false
+  news_openai_web_daily_request_limit: 5
+  openai_model: "gpt-5.2"
+  openai_escalation_model: "gpt-5.2-pro"
+  openai_fallback_model: "gpt-5-mini"
+  ai_daily_request_limit: 25
+  ai_max_symbols_per_run: 5
+  ai_max_articles_per_symbol: 3
+  ai_require_structured_output: true
+  ai_neutral_fallback_on_error: true
+  ai_enable_escalation: false
+  ai_feedback_enabled: true
+  ai_feedback_min_schema_validity_rate: 0.99
+  ai_feedback_min_provider_coverage_rate: 0.60
+  ai_feedback_max_fallback_rate: 0.35
+  ai_feedback_max_missed_risk_false_negative_proxy_rate: 0.15
 ```
 
 ---
@@ -1992,13 +2085,36 @@ ALPACA_SECRET_KEY=
 ALPACA_BASE_URL=
 AI_PROVIDER=
 OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-POLYGON_API_KEY=
-FINNHUB_API_KEY=
-FMP_API_KEY=
-TIINGO_API_KEY=
-TAVILY_API_KEY=
-BRAVE_SEARCH_API_KEY=
+OPENAI_MODEL=
+OPENAI_ESCALATION_MODEL=
+OPENAI_FALLBACK_MODEL=
+MARKETAUX_API_KEY=
+ALPHA_VANTAGE_API_KEY=
+NEWS_PROVIDER_PRIMARY=
+NEWS_PROVIDER_FALLBACK=
+NEWS_MARKETAUX_DAILY_REQUEST_LIMIT=
+NEWS_ALPHA_VANTAGE_DAILY_REQUEST_LIMIT=
+NEWS_MAX_SYMBOLS_PER_RUN=
+NEWS_MAX_ARTICLES_PER_SYMBOL=
+NEWS_DEFAULT_LOOKBACK_DAYS=
+NEWS_EXTENDED_LOOKBACK_DAYS=
+NEWS_ENABLE_OPENAI_WEB_FALLBACK=
+NEWS_OPENAI_WEB_DAILY_REQUEST_LIMIT=
+AI_DAILY_REQUEST_LIMIT=
+AI_MAX_SYMBOLS_PER_RUN=
+AI_MAX_ARTICLES_PER_SYMBOL=
+AI_REQUIRE_STRUCTURED_OUTPUT=
+AI_NEUTRAL_FALLBACK_ON_ERROR=
+AI_ENABLE_ESCALATION=
+RUN_NEWS_PROVIDER_SMOKE=
+NEWS_PROVIDER_SMOKE_CONFIRM=
+NEWS_PROVIDER_SMOKE_SYMBOLS=
+RUN_OPENAI_MODEL_LIST_SMOKE=
+OPENAI_MODEL_LIST_CONFIRM=
+RUN_OPENAI_AI_SMOKE=
+OPENAI_AI_SMOKE_CONFIRM=
+RUN_OPENAI_WEB_FALLBACK_SMOKE=
+OPENAI_WEB_FALLBACK_CONFIRM=
 APP_ENV=
 LIVE_TRADING_ENABLED=
 AUTONOMOUS_EXECUTION_ENABLED=

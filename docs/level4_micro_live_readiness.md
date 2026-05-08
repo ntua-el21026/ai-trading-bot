@@ -2,11 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 21A adds opt-in Alpaca paper read-only smoke tooling plus a default-refusing, explicitly
-gated Alpaca paper order-lifecycle smoke harness while preserving the readiness boundary. It does
-not enable live trading, autonomous live execution, live credentials, real Alpaca calls in default
-tests, real alert delivery, actual paper trading operations, live orders, production schedules,
-expanded Level 4, or Level 5.
+Milestone 22 adds provider-first news retrieval, OpenAI structured-analysis boundaries,
+disabled-by-default OpenAI web fallback, and autonomous AI feedback/calibration safety downgrades
+while preserving the readiness boundary. It does not enable live trading, autonomous live
+execution, live credentials, real Alpaca calls in default tests, real alert delivery, actual paper
+trading operations, live orders, production schedules, expanded Level 4, or Level 5.
 
 ## Purpose And Scope
 
@@ -39,21 +39,24 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-21A are complete as local/offline code, opt-in validation scaffolding, local
+- Milestones 00-22 are complete as local/offline code, opt-in validation scaffolding, local
   Temporal SDK test-server/replay coverage, opt-in Alpaca paper read-only smoke tooling, and a
-  default-refusing gated paper order-lifecycle smoke harness.
+  default-refusing gated paper order-lifecycle smoke harness, plus provider/OpenAI/calibration
+  boundaries with offline default tests.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
   Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist.
 - Paper-only Alpaca adapter, fake broker activity boundaries, passing opt-in read-only paper smoke
-  evidence, and a gated order-lifecycle smoke harness exist; real paper order lifecycle smoke-test
-  evidence is absent unless the write-gated command is separately run and retained.
+  evidence, and a gated order-lifecycle smoke harness exist. The latest 21B write-smoke attempt
+  reached gated paper preflight and refused before writes because the Alpaca paper clock was closed;
+  retained real paper order lifecycle write evidence is still absent.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
   but it is not actual paper trading evidence.
 - Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
   integration is deferred.
-- Real AI/news provider integrations are deferred.
+- Provider-first Marketaux/Alpha Vantage and OpenAI structured-analysis support exists with opt-in
+  smoke gates; real provider/OpenAI smoke evidence is required if not separately run and retained.
 - Real dashboard deployment is deferred.
 - Alerting contracts and fake adapters exist; real alert delivery evidence is absent.
 - Live trading remains disabled.
@@ -63,9 +66,9 @@ Hard blockers:
 
 - No production managed database activity wiring evidence.
 - No production Temporal backend/live worker evidence.
-- No retained real Alpaca paper order lifecycle smoke-test evidence or paper execution evidence.
+- No retained real Alpaca paper order lifecycle write evidence or paper execution evidence.
 - No controlled real paper operations evidence.
-- No real AI/news provider integration evidence.
+- No retained real provider/OpenAI smoke evidence unless separately gated and run.
 - No production Temporal query/signal backend evidence.
 - No real alert delivery evidence.
 - No frozen paper run evidence.
@@ -140,6 +143,9 @@ The config also keeps futures, crypto, and prediction markets disabled.
 - `config/ai.yaml` keeps `allow_ai_to_modify_risk_limits: false`.
 - `config/ai.yaml` keeps `analyze_full_universe: false`.
 - `config/ai.yaml` keeps `analyze_deterministic_shortlist_only: true`.
+- `config/ai.yaml` keeps Marketaux as primary news provider and Alpha Vantage as fallback.
+- `config/ai.yaml` keeps OpenAI web fallback disabled by default.
+- `config/ai.yaml` permits AI feedback/calibration only for safety downgrade/reporting behavior.
 
 ## Credential Separation And Secret Manager Requirements
 
@@ -176,6 +182,24 @@ Variable names only:
 - `TEMPORAL_API_KEY`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `OPENAI_ESCALATION_MODEL`
+- `OPENAI_FALLBACK_MODEL`
+- `MARKETAUX_API_KEY`
+- `ALPHA_VANTAGE_API_KEY`
+- `NEWS_PROVIDER_PRIMARY`
+- `NEWS_PROVIDER_FALLBACK`
+- `NEWS_MARKETAUX_DAILY_REQUEST_LIMIT`
+- `NEWS_ALPHA_VANTAGE_DAILY_REQUEST_LIMIT`
+- `NEWS_ENABLE_OPENAI_WEB_FALLBACK`
+- `RUN_NEWS_PROVIDER_SMOKE`
+- `NEWS_PROVIDER_SMOKE_CONFIRM`
+- `RUN_OPENAI_MODEL_LIST_SMOKE`
+- `OPENAI_MODEL_LIST_CONFIRM`
+- `RUN_OPENAI_AI_SMOKE`
+- `OPENAI_AI_SMOKE_CONFIRM`
+- `RUN_OPENAI_WEB_FALLBACK_SMOKE`
+- `OPENAI_WEB_FALLBACK_CONFIRM`
 - `ANTHROPIC_API_KEY`
 - `POLYGON_API_KEY`
 - `FINNHUB_API_KEY`
@@ -231,7 +255,8 @@ schema/repository/activity foundations exist, opt-in managed DB CRUD validation 
 local Temporal SDK signal/query tests cover the reconciliation workflow. Read-only paper smoke
 evidence validates account/open-order/position/clock reads through explicit gates. The Milestone 21A
 order-lifecycle harness can produce sanitized smoke evidence only when separately write-gated; by
-default it refuses before broker write calls. Real broker stream, retained order-lifecycle evidence,
+default it refuses before broker write calls. The latest 21B attempt refused safely before writes
+because the paper clock was closed. Real broker stream, retained order-lifecycle write evidence,
 REST fallback during active orders, production managed database activity wiring, and Temporal/DB
 consistency evidence are pending.
 

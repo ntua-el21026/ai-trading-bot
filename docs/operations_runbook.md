@@ -2,18 +2,20 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 21A does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 22 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
-provider clients, production Temporal query/signal backend integration, real alert delivery,
-dashboard deployment, Level 4 live readiness evidence, or live trading. It does define passive
-broker/reconciliation, fake-tested paper Alpaca boundaries, opt-in read-only Alpaca paper smoke
-tooling, a default-refusing gated Alpaca paper order-lifecycle smoke harness, AI/news, reporting,
+provider/API smoke evidence by default, production Temporal query/signal backend integration, real
+alert delivery, dashboard deployment, Level 4 live readiness evidence, or live trading. It does
+define passive broker/reconciliation, fake-tested paper Alpaca boundaries, opt-in read-only Alpaca
+paper smoke tooling, a default-refusing gated Alpaca paper order-lifecycle smoke harness, AI/news, reporting,
 alerting, dashboard/control-plane, validation/testing contracts, fake/local paper dry-run
 orchestration, explicit Postgres/Supabase runtime migration/check helpers with second opt-in gates,
 opt-in managed repository CRUD validation, local Temporal SDK test-server/replay coverage, paper
 trading operations documentation, Level 4 readiness documentation with incident/fallback
-recommendations, a local database/audit-ledger foundation, and safe Temporal activity boundaries
-backed by local/fake repositories.
+recommendations, Marketaux/Alpha Vantage provider-first news boundaries, OpenAI structured-analysis
+and disabled web-fallback boundaries, AI feedback/calibration safety downgrades, a local
+database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
+repositories.
 
 ## Current Foundation Operations
 
@@ -115,20 +117,49 @@ schedules, does not route through autonomous strategy execution, does not call A
 does not send alerts, does not deploy the dashboard, does not use live Alpaca, and does not satisfy
 Level 4 readiness.
 
-## Current AI Operations
+## Current AI And News Operations
 
-AI/news intelligence is currently a fixture-safe contract:
+AI/news intelligence is server-side and explicitly gated for real external calls:
 
 1. Request ticker-tagged news only for deterministic shortlist symbols.
-2. Normalize and deduplicate articles.
-3. Build a versioned prompt and validate strict AI JSON output.
-4. Fall back to neutral behavior for no news, invalid JSON, schema violations, provider outages, or
-   insufficient data.
-5. Persist only payload contracts for future managed database integration.
+2. Use Marketaux as primary provider and Alpha Vantage as fallback/cross-check provider.
+3. Enforce daily request budgets before real provider requests.
+4. Normalize and deduplicate articles and persist/hash raw payloads through ledger boundaries where
+   feasible.
+5. Build a versioned prompt and validate strict OpenAI structured JSON output.
+6. Keep OpenAI web fallback disabled by default and exception-only when explicitly allowed.
+7. Generate AI calibration reports and safety-state downgrade recommendations.
 
-No current operation calls AI providers, news providers, real broker APIs, or managed databases. AI has no
-broker credentials and cannot create or modify orders, stops, strategy rules, risk limits, or kill
-switches.
+Default tests and default activity implementations use fixtures/fakes or refuse safely. Real
+provider/OpenAI smoke tests require explicit gates:
+
+- `RUN_NEWS_PROVIDER_SMOKE=1`
+- `NEWS_PROVIDER_SMOKE_CONFIRM=FETCH_SHORTLIST_NEWS_ONLY`
+- `RUN_OPENAI_MODEL_LIST_SMOKE=1`
+- `OPENAI_MODEL_LIST_CONFIRM=LIST_AVAILABLE_MODELS_ONLY`
+- `RUN_OPENAI_AI_SMOKE=1`
+- `OPENAI_AI_SMOKE_CONFIRM=STRUCTURED_OUTPUT_SHORTLIST_NEWS_ONLY`
+- `RUN_OPENAI_WEB_FALLBACK_SMOKE=1`
+- `OPENAI_WEB_FALLBACK_CONFIRM=AUDITED_EXCEPTION_ONLY_WEB_SEARCH`
+
+AI may:
+
+- classify catalysts and adverse risks;
+- produce `ai_score`, `hard_block`, and `size_multiplier <= 1.0`;
+- produce reports, warnings, and escalation recommendations;
+- reduce or neutralize AI influence when calibration quality degrades.
+
+AI may not:
+
+- create or modify orders;
+- change stops;
+- mutate strategy, risk, execution, universe, or kill-switch rules;
+- increase position size above deterministic caps;
+- access broker credentials;
+- call broker APIs.
+
+No current operation sends real alerts, deploys the dashboard, activates schedules, starts paper
+trading operations, or completes Level 4 readiness.
 
 ## Current Ledger Operations
 

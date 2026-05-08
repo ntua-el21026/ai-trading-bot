@@ -29,6 +29,13 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.ai.allow_ai_to_modify_risk_limits is False
     assert config.ai.analyze_full_universe is False
     assert config.ai.analyze_deterministic_shortlist_only is True
+    assert config.ai.news_provider_primary == "marketaux"
+    assert config.ai.news_provider_fallback == "alpha_vantage"
+    assert config.ai.news_enable_openai_web_fallback is False
+    assert config.ai.ai_require_structured_output is True
+    assert config.ai.ai_neutral_fallback_on_error is True
+    assert config.ai.ai_enable_escalation is False
+    assert config.ai.ai_feedback_enabled is True
 
 
 def test_load_app_config_rejects_missing_files(tmp_path: Path) -> None:

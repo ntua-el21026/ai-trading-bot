@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from temporalio import activity
 
+from apps.workers.app.activities.ai import AI_ACTIVITY_FUNCTIONS
 from apps.workers.app.activities.broker import BROKER_ACTIVITY_FUNCTIONS
 from apps.workers.app.activities.ledger import LEDGER_ACTIVITY_FUNCTIONS
 from apps.workers.app.activities.reporting import REPORTING_ACTIVITY_FUNCTIONS
@@ -153,6 +154,7 @@ ACTIVITY_FUNCTIONS = (
     compare_reconciliation_snapshots,
     apply_kill_switch_state,
     generate_report,
+    *AI_ACTIVITY_FUNCTIONS,
     *LEDGER_ACTIVITY_FUNCTIONS,
     *BROKER_ACTIVITY_FUNCTIONS,
     *REPORTING_ACTIVITY_FUNCTIONS,

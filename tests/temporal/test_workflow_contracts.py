@@ -91,9 +91,16 @@ def test_activity_contracts_include_ledger_boundaries_without_external_calls() -
     assert "dispatch_report_alert" in activity_names
     assert "build_dashboard_snapshot" in activity_names
     assert "fetch_candidate_news" in activity_names
+    assert "fetch_shortlist_news" in activity_names
+    assert "fetch_marketaux_news" in activity_names
+    assert "fetch_alpha_vantage_news" in activity_names
     assert "run_ai_trade_research" in activity_names
+    assert "run_openai_web_fallback" in activity_names
     assert "validate_ai_research_output" in activity_names
     assert "store_ai_research_payload" in activity_names
+    assert "persist_news_payloads" in activity_names
+    assert "persist_ai_research_output" in activity_names
+    assert "generate_ai_calibration_report" in activity_names
     assert "fetch_broker_reconciliation_snapshot" in activity_names
     assert "fetch_internal_ledger_snapshot" in activity_names
     assert "compare_reconciliation_snapshots" in activity_names

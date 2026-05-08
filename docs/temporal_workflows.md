@@ -2,16 +2,16 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 19 includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Through Milestone 22, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
 dry-run orchestration, managed Postgres/Supabase runtime helpers, provider placeholder activity
-boundaries, signal names, query names, dashboard/control-plane signal mapping contracts, local
-Temporal SDK test-environment coverage, and replay coverage for a generated workflow history. It
-does not implement actual paper trading orchestration, AI calls, market/news provider calls, real
-alert delivery, production schedule activation, browser-side Temporal calls, real paper orders, or
-live trading.
+boundaries, Milestone 22 AI/news activity boundary names, signal names, query names,
+dashboard/control-plane signal mapping contracts, local Temporal SDK test-environment coverage, and
+replay coverage for a generated workflow history. It does not implement actual paper trading
+orchestration, default AI/provider external calls, real alert delivery, production schedule
+activation, browser-side Temporal calls, real paper orders, or live trading.
 
 ## Configuration
 
@@ -132,7 +132,19 @@ Milestone 07 adds placeholder boundaries for:
 - AI output validation;
 - AI research payload storage.
 
-Provider-facing activities remain placeholders only. Workflow code still calls activities by name
+Milestone 22 adds explicit AI/news activity boundary names for:
+
+- shortlist news retrieval;
+- Marketaux news retrieval;
+- Alpha Vantage news retrieval;
+- OpenAI web fallback;
+- news payload persistence;
+- AI research output persistence;
+- AI calibration report generation.
+
+Provider-facing activities remain fake/refuse placeholders by default. Real Marketaux, Alpha
+Vantage, OpenAI structured-output, or OpenAI web-search calls must be injected only through activity
+implementations after explicit smoke gates are present. Workflow code still calls activities by name
 and performs no broker API, AI API, news API, database, websocket, or REST calls directly.
 
 Future real side effects must stay in activities:

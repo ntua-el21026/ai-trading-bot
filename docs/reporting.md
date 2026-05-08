@@ -11,6 +11,11 @@ Milestone 16 uses the daily report generator inside the fake/local paper dry-run
 are generated from local ledger records created during the dry run and are not production paper
 trading evidence.
 
+Milestone 22 adds AI calibration report payloads and AI quality warning/event payloads. These are
+reporting and safety-degradation artifacts only: they may recommend reduced influence, neutral-only
+behavior, or escalation, but they cannot mutate strategy, risk, execution, stop policy, universe
+membership, kill switches, or broker state.
+
 ## Implemented
 
 - `packages/reporting/models.py` defines daily/weekly report, section, metric, issue, snapshot, and
@@ -24,6 +29,8 @@ trading evidence.
   report generation and dashboard snapshot reads.
 - `packages/paper/dry_run.py` generates and persists a daily report as part of the fake/local
   end-to-end dry run.
+- `packages/ai/feedback.py` builds AI calibration report payloads and AI quality event payloads
+  that can be persisted through existing report/system-event ledger boundaries.
 
 Daily reports include workflow summary, candidates/signals, AI stats, decisions/rejections,
 execution intents, orders/fills/positions, protective stops, reconciliation status, incidents,
@@ -40,6 +47,8 @@ operational issues, and unresolved gaps.
 - Report activities return `external_calls_performed=false` by default.
 - Real operational reports still require managed database runtime integration and real paper run
   data.
+- Provider/OpenAI smoke results and AI calibration reports are not actual paper trading evidence,
+  frozen paper evidence, or Level 4 readiness evidence by themselves.
 - Live trading and autonomous execution remain disabled.
 
 ## Tests

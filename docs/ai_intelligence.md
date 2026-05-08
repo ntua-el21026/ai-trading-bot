@@ -2,9 +2,11 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 07 implements bounded AI/news intelligence contracts only. AI is advisory and may analyze
-deterministic shortlist candidates, summarize candidate-specific news, extract events, classify
-risk/catalyst context, return schema-validated JSON, and produce explanations.
+Milestone 22 implements provider-first news and OpenAI structured-analysis boundaries while
+preserving offline defaults. AI is advisory and may analyze deterministic shortlist candidates,
+summarize candidate-specific news, extract events, classify risk/catalyst context, return
+schema-validated JSON, produce explanations, and generate automated calibration reports that can
+only reduce/neutralize/escalate AI influence.
 
 AI cannot:
 
@@ -20,9 +22,22 @@ AI cannot:
 ## Implemented Contracts
 
 - `packages/ai/news.py` defines deterministic-shortlist news provider boundaries.
+- `packages/ai/providers.py` implements Marketaux-first and Alpha Vantage fallback/cross-check
+  retrieval behind explicit provider clients, per-provider request budgets, per-run symbol/article
+  caps, lookback limits, normalization, deduplication, and raw payload hashing/persistence
+  boundaries.
+- `packages/ai/budget.py` defines in-memory request-budget enforcement for providers, OpenAI
+  structured analysis, and OpenAI web fallback.
 - `packages/ai/models.py` defines strict news, citation, event, output, fallback, and provider-failure models.
 - `packages/ai/dedupe.py` normalizes and deduplicates ticker-tagged articles.
 - `packages/ai/prompts/ai_trade_research_v0_3.md` is the versioned prompt template.
+- `packages/ai/openai.py` implements fake/default and explicitly gated OpenAI client boundaries,
+  strict Responses-API JSON schema generation, optional model-list validation, structured-output
+  analysis over already-normalized shortlist articles, neutral fallbacks, prompt/output hashes, and
+  disabled-by-default web-search fallback.
+- `packages/ai/feedback.py` implements autonomous historical feedback/calibration reports and AI
+  safety-state recommendations: `AI_NORMAL`, `AI_REDUCED_INFLUENCE`, `AI_NEUTRAL_ONLY`, and
+  `AI_ESCALATION_REQUIRED`.
 - `packages/ai/parser.py` parses strict JSON and returns neutral fallbacks for invalid JSON or schema violations.
 - `packages/ai/fallback.py` defines neutral no-news, provider-outage, and conflicting-source fallback contracts.
 - `packages/ai/scoring.py` implements deterministic recency/source/event scoring, hard-block classification, and non-increasing size multipliers.
@@ -35,6 +50,70 @@ AI cannot:
   submission, order modification, stop modification, or broker credential path.
 - Milestone 16 paper dry-run orchestration uses neutral/fake AI fallback output only and persists it
   through the local ledger. It does not call AI or news providers.
+- Milestone 22 integration smoke tests for providers/OpenAI are skipped by default and require
+  explicit gates. Default unit tests use fakes/fixtures only and do not call Marketaux, Alpha
+  Vantage, OpenAI, broker APIs, alert services, or managed databases.
+
+## Provider-First News Policy
+
+- Marketaux is the primary ticker-tagged news provider.
+- Alpha Vantage is the fallback/cross-check provider.
+- News is fetched only for caller-supplied deterministic shortlist symbols.
+- Full-universe AI/news scanning is forbidden.
+- `NEWS_MAX_SYMBOLS_PER_RUN` and `NEWS_MAX_ARTICLES_PER_SYMBOL` cap each run.
+- `NEWS_MARKETAUX_DAILY_REQUEST_LIMIT` and `NEWS_ALPHA_VANTAGE_DAILY_REQUEST_LIMIT` are checked
+  before any real provider request.
+- Default lookback is 7 calendar days; event/risk lookups may extend to 14 calendar days.
+- Articles preserve provider, endpoint, symbol, title, summary/content, canonical URL, source,
+  publication timestamp, language/sentiment when supplied, and raw payload hash.
+- Raw provider payload persistence uses the existing ledger boundary; no schema change is required.
+
+## OpenAI Structured Analysis
+
+- OpenAI analysis runs only on normalized provider-fetched shortlist articles.
+- `AI_REQUIRE_STRUCTURED_OUTPUT=true` and neutral fallback on error are required.
+- Configured model names are read from env/config; default tests do not require valid OpenAI model
+  IDs or API keys.
+- Real model-list validation is allowed only with
+  `RUN_OPENAI_MODEL_LIST_SMOKE=1` and
+  `OPENAI_MODEL_LIST_CONFIRM=LIST_AVAILABLE_MODELS_ONLY`.
+- Parsed output records prompt version, schema version, model version, raw prompt hash, and raw
+  output hash.
+- AI output may set `hard_block` and `size_multiplier <= 1.0`; it may not increase deterministic
+  position caps or create execution intents/orders.
+
+## OpenAI Web Fallback
+
+OpenAI web fallback is disabled by default with `NEWS_ENABLE_OPENAI_WEB_FALLBACK=false`.
+Even when enabled, runtime policy must explicitly allow it. It is exception-only for no provider
+articles, conflicting providers, incomplete high-severity legal/regulatory/accounting/FDA-style
+context, low-confidence trade-pass cases, or hard-block decisions that depend on missing context.
+`NEWS_OPENAI_WEB_DAILY_REQUEST_LIMIT` is checked before any web-search request.
+
+Real web fallback smoke is skipped/refused unless:
+
+- `RUN_OPENAI_WEB_FALLBACK_SMOKE=1`
+- `OPENAI_WEB_FALLBACK_CONFIRM=AUDITED_EXCEPTION_ONLY_WEB_SEARCH`
+
+Web fallback output is advisory only and cannot create orders or modify broker state.
+
+## Feedback And Calibration
+
+Autonomous feedback/calibration may evaluate historical AI outputs against later outcomes, produce
+calibration metrics, generate reports, recommend warnings/incidents, and reduce or neutralize AI
+influence when quality degrades.
+
+It may not:
+
+- mutate strategy rules;
+- change risk limits;
+- change stop policy;
+- change execution policy;
+- increase position size;
+- expand the universe;
+- enable live trading;
+- override kill switches;
+- call broker APIs.
 
 ## Fallback Policy
 
@@ -49,14 +128,16 @@ global kill switch by itself.
 
 ## Deferred Work
 
-Real news provider clients, real AI provider clients, managed database runtime integration,
-production dashboard deployment, and paper/live validation remain deferred. Tests and the Milestone
-16 dry run use fixtures only and require no API keys or network calls. Dashboard contracts can
-display AI output read models but do not call AI providers from frontend code.
+Real provider/OpenAI smoke evidence remains optional and gated. Managed database production activity
+wiring, production dashboard deployment, real alert delivery, frozen paper evidence, and paper/live
+validation remain deferred. Tests and the Milestone 16 dry run use fixtures only and require no API
+keys or network calls. Dashboard contracts can display AI output read models but do not call AI
+providers from frontend code.
 
 ## Level 4 Readiness Evidence
 
 `docs/level4_micro_live_readiness.md` requires AI evidence before Level 4 micro-live: deterministic
 shortlist-only analysis, strict schema validation, neutral fallbacks for invalid/provider-failure
-cases, no broker access, and AI valid-schema rate >= 99% during frozen paper. Current AI
-implementation is fixture-only and has no real provider evidence.
+cases, no broker access, provider coverage/fallback calibration, and AI valid-schema rate >= 99%
+during frozen paper. Milestone 22 adds the provider/OpenAI/calibration implementation, but it is not
+frozen paper evidence and does not satisfy Level 4 readiness.

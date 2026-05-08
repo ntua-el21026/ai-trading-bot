@@ -10,9 +10,10 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 21A Alpaca paper order-lifecycle smoke harness preparation with
-offline default tests and fake/local trading defaults. The new order-lifecycle harness refuses by
-default unless explicit write-smoke gates are present.
+This repository is at Milestone 22 provider-first news and structured AI integration with offline
+default tests and fake/local trading defaults. Milestone 21B reached the gated Alpaca paper broker
+preflight and refused safely because the paper market clock was closed; real paper order-lifecycle
+write evidence remains pending for an open paper-market session.
 
 Implemented pieces:
 
@@ -69,7 +70,19 @@ Implemented pieces:
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations
 - bounded AI/news provider protocols for deterministic shortlist candidates only
+- provider-first shortlist news retrieval with Marketaux primary support, Alpha Vantage
+  fallback/cross-check support, request-budget enforcement, per-run symbol/article caps,
+  provider-independent normalization, deduplication, raw payload hashing, and ledger persistence
+  boundaries
 - ticker-tagged news article normalization and deduplication helpers
+- OpenAI structured-output analysis over normalized shortlist articles, explicit model config
+  parsing, optional model-list validation behind smoke gates, strict schema normalization,
+  neutral fallback behavior, prompt/model/schema version recording, and raw prompt/output hashes
+- disabled-by-default OpenAI web-search fallback with exception-only rules, runtime policy
+  requirement, separate request budget, and sanitized audit result hashes
+- autonomous AI feedback/calibration service that evaluates historical AI outputs, computes
+  calibration/coverage/fallback/missed-risk proxy metrics, emits report/event payloads, and can
+  only reduce, neutralize, or escalate AI influence
 - versioned AI trade-research prompt template
 - strict schema-validated AI trade-research output models and neutral fallback behavior
 - deterministic AI event scoring, hard-block classification, and non-increasing size-multiplier
@@ -130,9 +143,9 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- real Alpaca paper order lifecycle smoke-test evidence
-- real news provider integration
-- real AI provider integration
+- real Alpaca paper order lifecycle smoke-test write evidence; the last 21B attempt refused safely
+  before writes because the Alpaca paper clock was closed
+- real provider/OpenAI smoke evidence if the explicit provider/OpenAI gates have not been run
 - production dashboard UI/deployment
 - real Telegram/email alert delivery
 - production Temporal query/signal backend integration
@@ -267,6 +280,23 @@ ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS=60 \
   uv run python scripts/check_alpaca_paper_order_lifecycle.py
 ```
 
+Run Milestone 22 AI/news tests offline:
+
+```bash
+uv run --group dev pytest tests/unit/test_news_provider_integration.py \
+  tests/unit/test_openai_structured_analysis.py \
+  tests/unit/test_openai_web_fallback.py \
+  tests/unit/test_ai_feedback_calibration.py
+```
+
+Provider/OpenAI integration tests are skipped by default unless their explicit smoke gates and
+local secret variables are present:
+
+```bash
+uv run --group dev pytest tests/integration/test_news_provider_external_smoke.py \
+  tests/integration/test_openai_external_smoke.py
+```
+
 Run the safe fake/local dry-run script:
 
 ```bash
@@ -359,12 +389,18 @@ Milestone 11 adds readiness documentation only:
 - `docs/templates/level4_micro_live_go_no_go_template.md`
 
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
-real provider integrations, production Temporal query/signal backend integration, production
-dashboard deployment, real alert delivery, controlled paper operations, and live go/no-go approval.
-The Milestone 21A harness does not change that status.
+retained real paper order-lifecycle write evidence, production Temporal query/signal backend
+integration, production dashboard deployment, real alert delivery, controlled paper operations, and
+live go/no-go approval. The Milestone 22 provider/OpenAI support and AI calibration logic do not
+change that status.
 
 ## Safety Defaults
 
-The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution disabled. It does not contain secrets and does not execute AI/news provider calls. Ledger, reporting, alerting, and activity tests use local in-memory SQLite or fake adapters and do not require `DATABASE_URL`, managed Postgres/Supabase credentials, or alert credentials. Broker tests use fake Alpaca clients by default and do not call Alpaca or submit real orders. Real provider wiring must be added explicitly through server-side Temporal activities or API services.
+The foundation config defaults to paper/dry-run behavior with live trading and autonomous execution
+disabled. It does not contain secrets and does not execute AI/news provider calls by default.
+Ledger, reporting, alerting, and activity tests use local in-memory SQLite or fake adapters and do
+not require `DATABASE_URL`, managed Postgres/Supabase credentials, or alert credentials. Broker
+tests use fake Alpaca clients by default and do not call Alpaca or submit real orders. Provider and
+OpenAI smoke paths require explicit environment gates and remain server-side only.
 
 Backtests in this repository are validation tools only. They are not proof of live profitability. Stock-universe backtests without point-in-time universe data must be treated as optimistic.

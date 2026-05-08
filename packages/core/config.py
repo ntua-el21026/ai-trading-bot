@@ -286,6 +286,32 @@ class AiConfig(StrictModel):
     hard_block_confidence_min: float = Field(ge=0, le=1)
     prompt_version: str
     schema_version: str
+    news_provider_primary: Literal["marketaux", "alpha_vantage"] = "marketaux"
+    news_provider_fallback: Literal["marketaux", "alpha_vantage"] = "alpha_vantage"
+    marketaux_daily_request_limit: int = Field(default=90, ge=0)
+    alpha_vantage_daily_request_limit: int = Field(default=20, ge=0)
+    news_max_symbols_per_run: int = Field(default=5, gt=0)
+    news_max_articles_per_symbol: int = Field(default=3, gt=0)
+    news_enable_openai_web_fallback: bool = False
+    news_openai_web_daily_request_limit: int = Field(default=5, ge=0)
+    openai_model: str = "gpt-5.2"
+    openai_escalation_model: str = "gpt-5.2-pro"
+    openai_fallback_model: str = "gpt-5-mini"
+    ai_daily_request_limit: int = Field(default=25, ge=0)
+    ai_max_symbols_per_run: int = Field(default=5, gt=0)
+    ai_max_articles_per_symbol: int = Field(default=3, gt=0)
+    ai_require_structured_output: bool = True
+    ai_neutral_fallback_on_error: bool = True
+    ai_enable_escalation: bool = False
+    ai_feedback_enabled: bool = True
+    ai_feedback_min_schema_validity_rate: float = Field(default=0.99, ge=0, le=1)
+    ai_feedback_min_provider_coverage_rate: float = Field(default=0.60, ge=0, le=1)
+    ai_feedback_max_fallback_rate: float = Field(default=0.35, ge=0, le=1)
+    ai_feedback_max_missed_risk_false_negative_proxy_rate: float = Field(
+        default=0.15,
+        ge=0,
+        le=1,
+    )
 
     @model_validator(mode="after")
     def validate_ai_boundaries(self) -> Self:
@@ -303,6 +329,20 @@ class AiConfig(StrictModel):
             raise ValueError("AI outputs must require JSON schema validation")
         if self.batch_size_symbols > self.max_batch_size_symbols:
             raise ValueError("batch_size_symbols cannot exceed max_batch_size_symbols")
+        if self.news_provider_primary == self.news_provider_fallback:
+            raise ValueError("primary and fallback news providers must differ")
+        if self.news_max_symbols_per_run > self.max_batch_size_symbols:
+            raise ValueError("news_max_symbols_per_run cannot exceed max_batch_size_symbols")
+        if self.news_max_articles_per_symbol > self.max_articles_per_symbol:
+            raise ValueError("news_max_articles_per_symbol cannot exceed max_articles_per_symbol")
+        if self.ai_max_symbols_per_run > self.max_batch_size_symbols:
+            raise ValueError("ai_max_symbols_per_run cannot exceed max_batch_size_symbols")
+        if self.ai_max_articles_per_symbol > self.max_articles_per_symbol:
+            raise ValueError("ai_max_articles_per_symbol cannot exceed max_articles_per_symbol")
+        if not self.ai_require_structured_output:
+            raise ValueError("OpenAI analysis must require structured output")
+        if not self.ai_neutral_fallback_on_error:
+            raise ValueError("AI provider failures must fall back to neutral behavior")
         return self
 
 

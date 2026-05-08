@@ -2,11 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 21A adds explicit Alpaca paper read-only smoke tooling plus a default-refusing,
-operator-gated Alpaca paper order-lifecycle smoke harness while paper trading remains disabled. The
-repository still does not implement actual paper trading operations, real AI/news provider calls,
-real alert delivery, production dashboard deployment, frozen paper evidence, Level 4 readiness, or
-live trading.
+Milestone 22 adds provider-first news and structured AI analysis boundaries while paper trading
+remains disabled. The repository still does not implement actual paper trading operations, retained
+real Alpaca paper order-lifecycle write evidence, real alert delivery, production dashboard
+deployment, frozen paper evidence, Level 4 readiness, or live trading.
 
 ## Purpose And Constraints
 
@@ -36,8 +35,9 @@ dry-run checks, fake/local end-to-end dry-run orchestration, local ledger reposi
 managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
 activity tests. It also provides an opt-in read-only Alpaca paper smoke command and a separate
 gated order-lifecycle smoke harness that refuses by default. It does not connect those contracts to
-autonomous order-writing paper execution, real AI/news provider clients, real alert delivery,
-production managed database activity wiring, or actual paper execution orchestration yet.
+autonomous order-writing paper execution, real alert delivery, production managed database activity
+wiring, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI smoke tests remain
+opt-in and skipped/refused unless explicit gates and local secrets are present.
 
 The safe local dry-run command is:
 
@@ -63,6 +63,11 @@ cancel, replace, close, liquidate, or place protective-stop orders.
 Milestone 20 read-only smoke status: passed after corrected local paper credentials were loaded.
 This proves paper account connectivity and normalized read-only mapping only. It is not actual paper
 trading and it does not validate the paper order lifecycle.
+
+Milestone 21B status: the real paper order-lifecycle smoke was run through gated paper broker
+preflight and refused safely before write operations because the Alpaca paper clock was closed. No
+order was submitted, no stop was submitted, no cleanup was needed, and actual paper trading did not
+start. Real paper write-lifecycle evidence remains pending for an open paper-market session.
 
 The Alpaca paper order-lifecycle smoke harness is also opt-in and must not be treated as paper
 trading:
@@ -115,6 +120,36 @@ Required environment variable names only:
 - `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `OPENAI_ESCALATION_MODEL`
+- `OPENAI_FALLBACK_MODEL`
+- `MARKETAUX_API_KEY`
+- `ALPHA_VANTAGE_API_KEY`
+- `NEWS_PROVIDER_PRIMARY`
+- `NEWS_PROVIDER_FALLBACK`
+- `NEWS_MARKETAUX_DAILY_REQUEST_LIMIT`
+- `NEWS_ALPHA_VANTAGE_DAILY_REQUEST_LIMIT`
+- `NEWS_MAX_SYMBOLS_PER_RUN`
+- `NEWS_MAX_ARTICLES_PER_SYMBOL`
+- `NEWS_DEFAULT_LOOKBACK_DAYS`
+- `NEWS_EXTENDED_LOOKBACK_DAYS`
+- `NEWS_ENABLE_OPENAI_WEB_FALLBACK`
+- `NEWS_OPENAI_WEB_DAILY_REQUEST_LIMIT`
+- `AI_DAILY_REQUEST_LIMIT`
+- `AI_MAX_SYMBOLS_PER_RUN`
+- `AI_MAX_ARTICLES_PER_SYMBOL`
+- `AI_REQUIRE_STRUCTURED_OUTPUT`
+- `AI_NEUTRAL_FALLBACK_ON_ERROR`
+- `AI_ENABLE_ESCALATION`
+- `RUN_NEWS_PROVIDER_SMOKE`
+- `NEWS_PROVIDER_SMOKE_CONFIRM`
+- `NEWS_PROVIDER_SMOKE_SYMBOLS`
+- `RUN_OPENAI_MODEL_LIST_SMOKE`
+- `OPENAI_MODEL_LIST_CONFIRM`
+- `RUN_OPENAI_AI_SMOKE`
+- `OPENAI_AI_SMOKE_CONFIRM`
+- `RUN_OPENAI_WEB_FALLBACK_SMOKE`
+- `OPENAI_WEB_FALLBACK_CONFIRM`
 - `ANTHROPIC_API_KEY`
 - `POLYGON_API_KEY`
 - `FINNHUB_API_KEY`
@@ -166,6 +201,10 @@ Complete this checklist before every paper session:
 - Confirm no unsupported assets are enabled: no shorting, margin, options, futures, crypto,
   leveraged ETFs, inverse ETFs, or prediction markets.
 - Confirm AI has no broker credentials and no broker API access.
+- Confirm AI/news real calls are gated; default tests and dry runs use fakes or refuse safely.
+- Confirm OpenAI web fallback is disabled by default and exception-only.
+- Confirm AI feedback/calibration cannot mutate strategy, risk, execution, stop, universe, or
+  kill-switch rules.
 - Confirm dashboard/frontend code has no broker or AI/news provider secrets.
 - Confirm alert channels are configured, or record that only fake/fail-closed alert contracts are
   implemented.
@@ -228,8 +267,14 @@ readiness and expected future operations, not active trading capability.
 ### 08:45-09:10 - AIShortlistResearchWorkflow Refresh
 
 - Fetch ticker-tagged news only for deterministic shortlist candidates.
-- Normalize and deduplicate articles.
-- Run schema-validated AI research once provider integration exists.
+- Use Marketaux primary and Alpha Vantage fallback/cross-check when explicit provider gates and
+  credentials are present; otherwise use fixtures/refusal in default tests.
+- Enforce provider request budgets, max symbols, max articles, and lookback windows.
+- Normalize and deduplicate articles and preserve raw payload hashes.
+- Run schema-validated OpenAI research only through explicit server-side activity boundaries and
+  optional smoke gates.
+- Keep OpenAI web fallback disabled by default and exception-only.
+- Generate calibration reports/warnings that can only reduce, neutralize, or escalate AI influence.
 - Apply neutral fallback for no news, invalid JSON, schema violations, provider outage, or
   insufficient data.
 - Track invalid AI payload rate.
