@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 26 adds a dashboard-only Vercel preview harness while preserving the readiness boundary.
+Milestone 27 adds a controlled paper operations readiness harness while preserving the readiness boundary.
 It does not enable live trading, autonomous live execution, live credentials, real Alpaca calls in
 default tests, actual paper trading operations, live orders, production schedules, execution
 services on Vercel, expanded Level 4, or Level 5. Email/Resend remains deferred.
@@ -69,6 +69,9 @@ Known status:
   deployment/alias exists at `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` and
   `https://ai-trading-bot-silk.vercel.app`; it was audited as static/read-only and
   non-operational. It is not paper evidence and does not satisfy Level 4 readiness.
+- Controlled paper operations readiness aggregation exists and reports local/config/documented smoke
+  evidence for a future first controlled paper session. It does not start that session, activate
+  schedules, submit orders, call providers, send alerts, deploy, or create frozen paper evidence.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
   harness exist. Real Telegram smoke evidence has run through gated paths, while Email/Resend
   remains deferred.
@@ -79,6 +82,7 @@ Hard blockers:
 
 - No production managed database activity wiring evidence.
 - No actual paper-operation worker evidence or schedule activation evidence.
+- No first controlled paper session evidence.
 - No controlled real paper operations evidence beyond the one-shot smoke.
 - No production Temporal schedule evidence.
 - No production dashboard deployment evidence.

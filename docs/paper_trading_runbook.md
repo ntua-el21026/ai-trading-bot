@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 26 adds a dashboard-only Vercel preview harness while paper trading remains disabled. The
+Milestone 27 adds a controlled paper operations readiness harness while paper trading remains disabled. The
 repository still does not implement actual paper trading operations, production dashboard
 deployment, frozen paper evidence, Level 4 readiness, or live trading.
 
@@ -38,7 +38,9 @@ that refuses by default. Milestone 24 adds a Temporal Cloud dev smoke harness th
 default and uses fake/local activities only when gated. Milestone 25 adds a dashboard/control-plane
 dev runtime smoke that builds fake/local read-only snapshots and validates safe controls through a
 fake dispatcher by default. Milestone 26 adds a static dashboard-only Vercel preview harness with
-no workers, no order-entry controls, no secrets, and no browser-side privileged service calls. It
+no workers, no order-entry controls, no secrets, and no browser-side privileged service calls.
+Milestone 27 adds `scripts/check_paper_operations_readiness.py`, a read-only readiness aggregator
+for existing database, Temporal, broker, AI/news, alerting, dashboard, and paper-status evidence. It
 does not connect those contracts to autonomous order-writing paper
 execution, production managed database activity wiring, production schedule activation, production
 dashboard deployment, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI
@@ -52,6 +54,16 @@ uv run python scripts/run_paper_dry_run.py
 
 It prints `This is a fake/local dry run. No broker orders are submitted.`, uses in-memory SQLite
 and fake adapters, and does not call external services.
+
+The controlled paper operations readiness command is:
+
+```bash
+uv run python scripts/check_paper_operations_readiness.py
+```
+
+It aggregates readiness evidence only. It does not start paper trading, activate schedules, submit
+or cancel broker orders, run strategy-generated paper trading, call AI/news providers, send real
+alerts, or deploy anything.
 
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
@@ -225,6 +237,8 @@ Complete this checklist before every paper session:
   any future paper order lifecycle smoke test is approved.
 - Confirm the order-lifecycle smoke harness refuses by default unless every explicit write-smoke
   gate is loaded before the command starts.
+- Confirm the paper operations readiness harness reports readiness evidence only and still reports
+  actual paper trading started as false, frozen paper evidence as absent, and Level 4 as not ready.
 - Confirm kill switch is enabled.
 - Confirm broker reconciliation is required before new-risk orders.
 - Confirm protective stops are required.

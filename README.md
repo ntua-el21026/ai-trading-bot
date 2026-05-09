@@ -10,7 +10,7 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 26 Vercel dashboard preview harness wiring with offline default
+This repository is at Milestone 27 controlled paper operations readiness harness wiring with offline default
 tests, fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B
 completed a controlled Alpaca paper order-lifecycle smoke with final target-symbol state
 clean/flat; Milestone 22 real provider/OpenAI smokes, Milestone 23 real Telegram smoke, and
@@ -21,8 +21,9 @@ deployment evidence: the preview deployment
 production deployment/alias also exists at
 `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` and
 `https://ai-trading-bot-silk.vercel.app`. These are dashboard-only static/read-only artifacts, not
-worker or execution deployments. Actual paper trading operations remain deferred, frozen paper
-evidence is absent, and Level 4 is not ready.
+worker or execution deployments. Milestone 27 adds a read-only readiness harness that aggregates
+existing evidence and local-safe status checks only. Actual paper trading operations remain
+deferred, frozen paper evidence is absent, and Level 4 is not ready.
 
 Implemented pieces:
 
@@ -139,6 +140,10 @@ Implemented pieces:
 - minimal `apps/api/` and static `apps/dashboard/` scaffolds with frontend environment guardrails,
   no frontend framework dependencies, and a dashboard-only Vercel preview configuration that
   excludes workers, backend packages, scripts, tests, local env files, and privileged secrets
+- controlled paper operations readiness models and `scripts/check_paper_operations_readiness.py`,
+  which aggregate existing database, Temporal, broker, AI/news, alerting, dashboard, and paper
+  status evidence without starting paper trading, activating schedules, submitting orders, calling
+  providers, sending alerts, or deploying anything
 - validation harness contracts for spec-defined backtest splits, benchmarks, costs, ablations,
   Monte Carlo placeholders, failure simulations, and paper dry-run checks
 - paper trading runbook, daily/weekly checklist templates, report templates, incident response flow,
@@ -162,6 +167,7 @@ Implemented pieces:
 Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
+- first controlled paper trading session
 - real Alpaca SDK-backed runtime wiring
 - production dashboard deployment
 - Email/Resend delivery, intentionally deferred as a possible future secondary channel
@@ -253,6 +259,16 @@ npm run lint
 npm run build
 uv run python scripts/check_vercel_dashboard_preview.py
 ```
+
+Run Milestone 27 controlled paper operations readiness aggregation:
+
+```bash
+uv run --group dev pytest tests/unit/test_paper_operations_readiness.py
+uv run python scripts/check_paper_operations_readiness.py
+```
+
+This aggregates readiness evidence only. It does not start paper trading, activate schedules,
+submit broker orders, call AI/news providers, send real alerts, or deploy anything.
 
 Run Milestone 16 fake/local paper dry-run orchestration tests:
 
@@ -458,9 +474,11 @@ Milestone 11 adds readiness documentation only:
 - `docs/templates/level4_micro_live_go_no_go_template.md`
 
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
-actual controlled paper operations, production dashboard deployment, production schedule activation,
-and live go/no-go approval. The Milestone 21B/22/23/24/25 smoke evidence does not change that
-status.
+actual controlled paper operations, production operational dashboard integration, production
+schedule activation, and live go/no-go approval. The Milestone 21B/22/23/24/25/26/27 evidence does
+not change that status. Milestone 27 readiness aggregation may report readiness for a future first controlled paper
+session, but the session itself remains a separate future milestone and frozen paper evidence is
+still absent.
 
 ## Safety Defaults
 

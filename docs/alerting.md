@@ -11,6 +11,9 @@ Milestone 25 surfaces alerting status in the dashboard/control-plane read model.
 status is read-only; it does not send Telegram messages, expose Telegram tokens/chat IDs, implement
 Telegram commands, or use alerts as a control path.
 
+Milestone 27 readiness aggregation records Telegram harness and prior smoke evidence as local
+status only. It does not send Telegram messages or use alerts as a control path.
+
 ## Implemented
 
 - `packages/alerting/models.py` defines alert severity, channels, categories, messages, dispatch

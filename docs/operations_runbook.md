@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 26 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 27 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does
@@ -22,6 +22,9 @@ fake/local read models, safe control validation, fake/default dispatch, and a sm
 does not deploy or perform external side effects.
 Milestone 26 adds a dashboard-only Vercel preview harness with static output and no workers,
 execution services, schedules, secrets, broker calls, AI/news calls, or alerts.
+Milestone 27 adds a controlled paper operations readiness harness that aggregates existing local
+status and documented smoke evidence only. It does not start paper trading, activate schedules,
+submit broker orders, call providers, send real alerts, or deploy anything.
 
 ## Current Foundation Operations
 
@@ -124,6 +127,25 @@ This harness is not paper trading. It is not frozen paper evidence, does not act
 schedules, does not route through autonomous strategy execution, does not call AI/news providers,
 does not send alerts, does not deploy the dashboard, does not use live Alpaca, and does not satisfy
 Level 4 readiness.
+
+## Current Controlled Paper Operations Readiness
+
+Milestone 27 provides a read-only readiness aggregation command:
+
+```bash
+uv run python scripts/check_paper_operations_readiness.py
+```
+
+The command checks local config safety invariants and aggregates evidence for managed database
+validation, Temporal local/Cloud dev status, Alpaca read-only and controlled lifecycle smokes,
+AI/news provider and OpenAI smokes, Telegram alert smoke, dashboard/control-plane smoke, and Vercel
+dashboard deployment audit status. It may call only local/fake read-model helpers by default. It
+does not invoke the Alpaca order-lifecycle smoke, AI/news external smokes, Telegram delivery smoke,
+schedule activation, paper trading workflows, or deployment.
+
+The readiness result distinguishes readiness for a future first controlled paper session from
+actual paper operations. Actual paper trading remains not started, frozen paper evidence remains
+absent, and Level 4 remains not ready.
 
 ## Current AI And News Operations
 

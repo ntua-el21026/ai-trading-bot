@@ -134,8 +134,9 @@ The sanitized result confirmed account, open-order, position, and clock/status r
 successfully against `https://paper-api.alpaca.markets`, with zero submitted, cancelled, replaced,
 or stop orders and no live endpoint use.
 
-Real paper order-lifecycle smoke evidence remains deferred until the new write-smoke gates are
-explicitly loaded and an operator chooses to run the harness.
+Milestone 21B controlled order-lifecycle smoke status: passed through the gated harness with final
+target-symbol state clean/flat. This remains smoke evidence only; it is not actual paper trading or
+frozen paper evidence.
 
 ## Optional Paper Order-Lifecycle Smoke Harness
 
@@ -169,4 +170,6 @@ single operator-invoked broker lifecycle smoke harness.
   paper trading or frozen paper evidence.
 - Protective-stop and reconciliation behavior are fake-client contract tests, not production paper
   evidence.
+- Milestone 27 readiness aggregation does not invoke broker write smokes or touch broker state; it
+  records existing broker evidence only.
 - Level 4 micro-live readiness remains unsatisfied.

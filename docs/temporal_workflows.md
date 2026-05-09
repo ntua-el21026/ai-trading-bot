@@ -204,7 +204,10 @@ Dashboard/control-plane actions map only to safe signal names through server-sid
 `apps/api/app/control_plane.py`. The Milestone 25 dev runtime smoke validates these mappings through
 a fake dispatcher by default; browser/dashboard code must not call Temporal directly.
 Milestone 26 keeps Vercel dashboard-only: the static preview does not run workers, connect to
-Temporal from browser code, activate schedules, or expose Temporal credentials.
+Temporal from browser code, activate schedules, or expose Temporal credentials. Milestone 27
+readiness aggregation checks Temporal local/Cloud evidence and schedule status as read-only
+evidence; it does not connect to Temporal Cloud, create schedules, activate schedules, or run paper
+operation workflows by default.
 
 ## Queries
 

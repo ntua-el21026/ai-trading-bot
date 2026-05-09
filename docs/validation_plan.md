@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-26
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-27
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -21,6 +21,9 @@ dashboard-only preview deployment. Milestone 26B records Vercel deployment evide
 production deployment/alias as non-operational static dashboard-only after audit. This does not
 validate actual paper trading operations, production operational dashboard integration, production
 schedule activation, live trading, or profitability.
+Milestone 27 adds controlled paper operations readiness tests and a read-only readiness script that
+aggregate existing evidence only; they do not start paper trading, activate schedules, submit broker
+orders, call providers, send alerts, or deploy.
 
 ## Foundation Checks
 
@@ -95,6 +98,8 @@ schedule activation, live trading, or profitability.
   order-entry controls, runtime status sections, fixture dispatch behavior, fake/local runtime
   smoke behavior, deployment refusal, managed-DB runtime refusal, and frontend secret guardrails are
   fixture-tested.
+- Controlled paper operations readiness evidence aggregation is fixture-tested for success, missing
+  evidence, hard-failure safety flags, default no-external-call behavior, and sanitized output.
 - Validation harness assumptions are fixture-tested for historical splits, benchmarks, fee/slippage
   assumptions, required ablations, Monte Carlo placeholders, point-in-time universe optimism
   warnings, and explicit no-profitability-proof language.
@@ -153,6 +158,7 @@ schedule activation, live trading, or profitability.
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py`, `tests/unit/test_telegram_alerting.py`, `tests/integration/test_telegram_alert_delivery_smoke.py` |
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py`, `tests/unit/test_dashboard_control_plane_runtime.py` |
+| Controlled paper operations readiness | `tests/unit/test_paper_operations_readiness.py` |
 | Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py`, `tests/temporal/test_temporal_sdk_environment.py` |
 | Temporal Cloud dev runtime smoke | `tests/unit/test_temporal_cloud_runtime.py` |
 | Validation harness assumptions | `tests/unit/test_validation_harness.py` |
@@ -160,8 +166,10 @@ schedule activation, live trading, or profitability.
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
 Remaining gaps are explicit: production managed Postgres/Supabase activity wiring, production
-dashboard deployment, production schedule activation, actual paper trading operations, frozen paper
-evidence, and Level 4 micro-live readiness evidence are not complete. Milestone 25 dashboard/control-plane
+operational dashboard/backend integration, production schedule activation, actual paper trading
+operations, frozen paper evidence, and Level 4 micro-live readiness evidence are not complete.
+Milestone 27 reports readiness for a future first controlled paper session only; it is not the
+session itself and is not frozen paper evidence. Milestone 25 dashboard/control-plane
 runtime smoke is dev-only and not a production deployment. Milestone 20 read-only Alpaca paper
 smoke evidence has passed for account, open-order, position, and clock/status reads only. Milestone
 21B controlled paper order-lifecycle smoke evidence has passed, but it is not actual paper trading

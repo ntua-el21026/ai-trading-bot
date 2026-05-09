@@ -123,6 +123,10 @@ and cannot enable live trading or autonomous execution.
 Running `vercel --prod` is not part of preview-only milestones. If a production deployment is
 needed later, it must be explicitly requested, gated, and revalidated as dashboard-only.
 
+Milestone 27 readiness aggregation consumes dashboard/control-plane and Vercel evidence as local
+status inputs only. It does not deploy, send real control signals, activate schedules, call
+broker/AI/news/alert services, or change dashboard behavior.
+
 ## Ledger Read Models
 
 `LedgerDashboardReadModelProvider` builds dashboard snapshots from repository records for:

@@ -189,7 +189,8 @@ AI_Trading_Bot/
 │   │   ├── __init__.py
 │   │   ├── dry_run.py
 │   │   ├── fixtures.py
-│   │   └── models.py
+│   │   ├── models.py
+│   │   └── readiness.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -225,6 +226,7 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_dashboard_control_plane_runtime.py
 │   ├── check_ledger_database.py
+│   ├── check_paper_operations_readiness.py
 │   ├── check_telegram_alert_delivery.py
 │   ├── check_temporal_cloud_runtime.py
 │   ├── check_vercel_dashboard_preview.py
@@ -280,6 +282,7 @@ AI_Trading_Bot/
 │       ├── test_openai_web_fallback.py
 │       ├── test_paper_dry_run.py
 │       ├── test_paper_dry_run_orchestration.py
+│       ├── test_paper_operations_readiness.py
 │       ├── test_position_sizing.py
 │       ├── test_reconciliation.py
 │       ├── test_regime.py
@@ -307,4 +310,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 45, Total files: 263
+Total directories: 45, Total files: 266

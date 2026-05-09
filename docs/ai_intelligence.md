@@ -16,6 +16,10 @@ Milestone 25 surfaces AI/news outputs, provider budget status, and AI quality st
 dashboard/control-plane read model. These dashboard sections are read-only, may be unavailable-safe
 when local records are absent, and do not call AI/news providers or give AI any broker authority.
 
+Milestone 27 readiness aggregation treats AI/news implementation and prior gated smoke evidence as
+read-only status inputs. It does not call Marketaux, Alpha Vantage, OpenAI structured analysis, or
+OpenAI web fallback by default.
+
 AI cannot:
 
 - scan the full universe for trade ideas;
