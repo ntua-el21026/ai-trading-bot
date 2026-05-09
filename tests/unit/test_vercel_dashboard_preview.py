@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from fnmatch import fnmatch
 from pathlib import Path
 
 from scripts.check_vercel_dashboard_preview import (
@@ -33,6 +34,7 @@ def test_preview_smoke_validates_gates_when_present() -> None:
     assert result.refused is False
     assert result.gates_loaded is True
     assert result.frontend_scaffold_present is True
+    assert result.dashboard_files_included is True
     assert result.public_env_valid is True
     assert result.secret_env_guardrails is True
     assert result.no_workers is True
@@ -53,6 +55,20 @@ def test_vercel_config_is_dashboard_only_static_preview() -> None:
     assert "crons" not in config
 
 
+def test_vercel_ignore_includes_dashboard_build_inputs() -> None:
+    required_files = (
+        "package.json",
+        "package-lock.json",
+        "vercel.json",
+        "apps/dashboard/build-preview.mjs",
+        "apps/dashboard/src/index.html",
+        "apps/dashboard/src/styles.css",
+        "apps/dashboard/public_env.py",
+    )
+
+    assert all(not _vercelignored(path) for path in required_files)
+
+
 def test_vercel_ignore_excludes_workers_backend_and_local_env() -> None:
     text = Path(".vercelignore").read_text(encoding="utf-8")
 
@@ -63,6 +79,10 @@ def test_vercel_ignore_excludes_workers_backend_and_local_env() -> None:
     assert "packages/" in text
     assert "scripts/" in text
     assert "tests/" in text
+    assert _vercelignored(".env")
+    assert _vercelignored("apps/workers/app/worker.py")
+    assert _vercelignored("apps/api/app/control_plane.py")
+    assert _vercelignored("packages/broker/alpaca.py")
 
 
 def test_dashboard_build_uses_only_approved_public_env_names() -> None:
@@ -89,3 +109,25 @@ def test_dashboard_preview_has_no_order_entry_ui_or_privileged_browser_calls() -
     assert "fetch(" not in script
     assert "WebSocket" not in script
     assert "@temporalio" not in script
+
+
+def _vercelignored(path: str) -> bool:
+    ignored = False
+    for raw_line in Path(".vercelignore").read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        negated = line.startswith("!")
+        pattern = line[1:] if negated else line
+        if _matches(path, pattern):
+            ignored = not negated
+    return ignored
+
+
+def _matches(path: str, pattern: str) -> bool:
+    normalized = pattern.strip("/")
+    if not normalized:
+        return False
+    if pattern.endswith("/"):
+        return path == normalized or path.startswith(f"{normalized}/")
+    return fnmatch(path, normalized) or fnmatch(Path(path).name, normalized)

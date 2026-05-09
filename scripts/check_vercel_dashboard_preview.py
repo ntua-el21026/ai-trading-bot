@@ -77,6 +77,7 @@ class VercelDashboardPreviewResult:
     secrets_printed: bool
     custom_domain_used: bool
     frontend_scaffold_present: bool
+    dashboard_files_included: bool
     public_env_valid: bool
     secret_env_guardrails: bool
     no_workers: bool
@@ -110,6 +111,7 @@ def check_vercel_dashboard_preview(
         refusal_reasons.append("missing_vercel_dashboard_preview_gates")
 
     frontend_scaffold_present = _frontend_scaffold_present()
+    dashboard_files_included = _dashboard_files_included()
     public_env_valid = _public_env_valid()
     secret_env_guardrails = _secret_env_guardrails()
     no_workers = _vercel_excludes_workers()
@@ -122,6 +124,7 @@ def check_vercel_dashboard_preview(
         code
         for code, ok in (
             ("frontend_scaffold_missing", frontend_scaffold_present),
+            ("vercel_upload_excludes_dashboard_file", dashboard_files_included),
             ("unsafe_public_env_contract", public_env_valid),
             ("frontend_secret_reference_detected", secret_env_guardrails),
             ("vercel_worker_scope_detected", no_workers),
@@ -149,6 +152,7 @@ def check_vercel_dashboard_preview(
         secrets_printed=False,
         custom_domain_used=False,
         frontend_scaffold_present=frontend_scaffold_present,
+        dashboard_files_included=dashboard_files_included,
         public_env_valid=public_env_valid,
         secret_env_guardrails=secret_env_guardrails,
         no_workers=no_workers,
@@ -172,6 +176,19 @@ def _frontend_scaffold_present() -> bool:
         and (DASHBOARD_DIR / "build-preview.mjs").is_file()
         and PACKAGE_JSON.is_file()
     )
+
+
+def _dashboard_files_included() -> bool:
+    required_paths = (
+        Path("package.json"),
+        Path("package-lock.json"),
+        Path("vercel.json"),
+        Path("apps/dashboard/build-preview.mjs"),
+        Path("apps/dashboard/src/index.html"),
+        Path("apps/dashboard/src/styles.css"),
+        Path("apps/dashboard/public_env.py"),
+    )
+    return all(not _is_vercelignored(path) for path in required_paths)
 
 
 def _public_env_valid() -> bool:
@@ -254,6 +271,33 @@ def _vercel_login_available() -> bool:
 def _tokens_from_text(text: str) -> set[str]:
     normalized = text.replace('"', " ").replace("'", " ").replace("`", " ")
     return {token.strip(" ,;:()[]{}") for token in normalized.split()}
+
+
+def _is_vercelignored(path: Path) -> bool:
+    ignored = False
+    path_text = path.as_posix()
+    if not VERCEL_IGNORE.is_file():
+        return False
+    for raw_line in VERCEL_IGNORE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        negated = line.startswith("!")
+        pattern = line[1:] if negated else line
+        if _matches_ignore_pattern(path_text, pattern):
+            ignored = not negated
+    return ignored
+
+
+def _matches_ignore_pattern(path_text: str, pattern: str) -> bool:
+    from fnmatch import fnmatch
+
+    normalized = pattern.strip("/")
+    if not normalized:
+        return False
+    if pattern.endswith("/"):
+        return path_text == normalized or path_text.startswith(f"{normalized}/")
+    return fnmatch(path_text, normalized) or fnmatch(Path(path_text).name, normalized)
 
 
 def _forbidden_references_in_path(root: Path) -> tuple[str, ...]:
