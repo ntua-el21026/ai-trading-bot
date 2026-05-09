@@ -83,3 +83,5 @@ checkpoints/
 models/
 outputs/
 runs/
+.vercel
+.env*.local
