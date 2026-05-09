@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-24
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-25
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -13,8 +13,10 @@ feedback/calibration using offline default tests. Milestone 23 adds Telegram-onl
 contracts, templates, routing, report/trade summaries, fake-default behavior, and an explicitly
 gated Telegram smoke harness. Milestone 24 adds Temporal Cloud dev runtime helpers and a
 default-refusing Cloud smoke harness for harmless workflow execution with fake/local activities.
-This does not validate actual paper trading operations, production dashboard deployment, production
-schedule activation, live trading, or profitability.
+Milestone 25 adds dashboard/control-plane dev runtime smoke coverage for read-only snapshots,
+runtime status sections, safe control schemas, fake/default dispatch, and frontend secret
+guardrails. This does not validate actual paper trading operations, production dashboard
+deployment, production schedule activation, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -86,7 +88,9 @@ schedule activation, live trading, or profitability.
 - Workflow skeletons are fixture-tested to call ledger activity boundaries by stable names while
   avoiding direct side-effect imports.
 - Dashboard/control-plane read models, safe control action shapes, Temporal signal mapping, no
-  order-entry controls, fixture dispatch behavior, and frontend secret guardrails are fixture-tested.
+  order-entry controls, runtime status sections, fixture dispatch behavior, fake/local runtime
+  smoke behavior, deployment refusal, managed-DB runtime refusal, and frontend secret guardrails are
+  fixture-tested.
 - Validation harness assumptions are fixture-tested for historical splits, benchmarks, fee/slippage
   assumptions, required ablations, Monte Carlo placeholders, point-in-time universe optimism
   warnings, and explicit no-profitability-proof language.
@@ -144,17 +148,17 @@ schedule activation, live trading, or profitability.
 | AI feedback/calibration | `tests/unit/test_ai_feedback_calibration.py` |
 | Reporting and alerting | `tests/unit/test_reporting.py`, `tests/unit/test_reporting_activities.py`, `tests/unit/test_alerting.py`, `tests/unit/test_telegram_alerting.py`, `tests/integration/test_telegram_alert_delivery_smoke.py` |
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
-| Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
+| Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py`, `tests/unit/test_dashboard_control_plane_runtime.py` |
 | Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py`, `tests/temporal/test_temporal_sdk_environment.py` |
 | Temporal Cloud dev runtime smoke | `tests/unit/test_temporal_cloud_runtime.py` |
 | Validation harness assumptions | `tests/unit/test_validation_harness.py` |
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: production managed Postgres/Supabase activity wiring, retained
-Temporal Cloud dev smoke evidence if the explicit gates are absent or not run, production dashboard
-deployment, production schedule activation, actual paper trading operations, frozen paper evidence,
-and Level 4 micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
+Remaining gaps are explicit: production managed Postgres/Supabase activity wiring, production
+dashboard deployment, production schedule activation, actual paper trading operations, frozen paper
+evidence, and Level 4 micro-live readiness evidence are not complete. Milestone 25 dashboard/control-plane
+runtime smoke is dev-only and not a production deployment. Milestone 20 read-only Alpaca paper
 smoke evidence has passed for account, open-order, position, and clock/status reads only. Milestone
 21B controlled paper order-lifecycle smoke evidence has passed, but it is not actual paper trading
 operations or frozen paper evidence. Milestone 22 provider/OpenAI/calibration support and Milestone
@@ -253,13 +257,14 @@ Current blockers:
 - Actual paper trading operations have not started.
 - Database/audit-ledger foundation, local/fake Temporal activity persistence, explicit
   Postgres/Supabase runtime helpers, and opt-in managed CRUD validation exist.
-- Local Temporal SDK test-server/replay coverage exists; the Temporal Cloud dev smoke harness exists
-  and refuses by default unless explicit gates are loaded. Production schedule activation and
-  actual paper-operation worker evidence are deferred.
+- Local Temporal SDK test-server/replay coverage exists; the Temporal Cloud dev smoke harness has
+  completed through explicit gates. Production schedule activation and actual paper-operation worker
+  evidence are deferred.
 - Alpaca paper read-only smoke evidence exists for account/open-order/position/clock reads; the
   controlled paper order-lifecycle smoke has passed through the gated harness. This is smoke
   evidence only, not actual paper trading operations or frozen paper evidence.
-- Real dashboard deployment is deferred.
+- Dashboard/control-plane dev runtime smoke exists and uses fake/default dispatch. Real dashboard
+  deployment is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram smoke harness
   exist. Real Telegram smoke evidence has run through gated paths.
 - Live trading remains disabled.

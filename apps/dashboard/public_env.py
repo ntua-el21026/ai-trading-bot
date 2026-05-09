@@ -7,6 +7,7 @@ from collections.abc import Mapping
 SAFE_PUBLIC_ENV_NAMES: tuple[str, ...] = (
     "NEXT_PUBLIC_DASHBOARD_API_BASE_URL",
     "NEXT_PUBLIC_APP_ENV",
+    "NEXT_PUBLIC_DASHBOARD_ENV",
 )
 
 

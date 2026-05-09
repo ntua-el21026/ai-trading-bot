@@ -12,15 +12,19 @@ def test_dashboard_public_env_selector_exposes_only_safe_public_values() -> None
         {
             "NEXT_PUBLIC_DASHBOARD_API_BASE_URL": "https://dashboard.example.test",
             "NEXT_PUBLIC_APP_ENV": "test",
+            "NEXT_PUBLIC_DASHBOARD_ENV": "paper-dev",
             "ALPACA_API_KEY": "should-not-expose",
             "OPENAI_API_KEY": "should-not-expose",
             "DATABASE_URL": "postgres://should-not-expose",
+            "TEMPORAL_API_KEY": "should-not-expose",
+            "TELEGRAM_BOT_TOKEN": "should-not-expose",
         }
     )
 
     assert selected == {
         "NEXT_PUBLIC_DASHBOARD_API_BASE_URL": "https://dashboard.example.test",
         "NEXT_PUBLIC_APP_ENV": "test",
+        "NEXT_PUBLIC_DASHBOARD_ENV": "paper-dev",
     }
     assert set(selected).issubset(SAFE_PUBLIC_ENV_NAMES)
 

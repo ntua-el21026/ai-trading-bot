@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 24 adds a Temporal Cloud dev runtime smoke harness while preserving the readiness
+Milestone 25 adds a dashboard/control-plane dev runtime smoke harness while preserving the readiness
 boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
-calls in default tests, actual paper trading operations, live orders, production schedules, expanded
-Level 4, or Level 5. Email/Resend remains deferred.
+calls in default tests, actual paper trading operations, live orders, production schedules,
+deployment, expanded Level 4, or Level 5. Email/Resend remains deferred.
 
 ## Purpose And Scope
 
@@ -38,10 +38,11 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-24 are complete as local/offline code, opt-in validation scaffolding, local
+- Milestones 00-25 are complete as local/offline code, opt-in validation scaffolding, local
   Temporal SDK test-server/replay coverage, opt-in Alpaca paper read-only smoke tooling, and a
   default-refusing gated paper order-lifecycle smoke harness, plus provider/OpenAI/calibration,
-  Telegram alerting, and Temporal Cloud dev runtime boundaries with offline default tests.
+  Telegram alerting, Temporal Cloud dev runtime boundaries, and dashboard/control-plane dev runtime
+  boundaries with offline default tests.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
@@ -58,7 +59,8 @@ Known status:
 - Provider-first Marketaux/Alpha Vantage and OpenAI structured-analysis support exists with opt-in
   smoke gates; real provider/OpenAI smoke evidence has run through gated paths but is not paper
   trading evidence.
-- Real dashboard deployment is deferred.
+- Dashboard/control-plane dev runtime smoke exists and validates read-only snapshots plus safe
+  control mappings through fake/default dispatch. Real dashboard deployment is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
   harness exist. Real Telegram smoke evidence has run through gated paths, while Email/Resend
   remains deferred.
@@ -71,6 +73,7 @@ Hard blockers:
 - No actual paper-operation worker evidence or schedule activation evidence.
 - No controlled real paper operations evidence beyond the one-shot smoke.
 - No production Temporal schedule evidence.
+- No production dashboard deployment evidence.
 - No frozen paper run evidence.
 - No Level 4 go/no-go report.
 
@@ -184,6 +187,13 @@ Variable names only:
 - `TEMPORAL_CLOUD_SMOKE_CONFIRM`
 - `TEMPORAL_CLOUD_SMOKE_TASK_QUEUE`
 - `TEMPORAL_CLOUD_SMOKE_WORKFLOW`
+- `RUN_DASHBOARD_CONTROL_PLANE_SMOKE`
+- `DASHBOARD_CONTROL_PLANE_SMOKE_CONFIRM`
+- `DASHBOARD_CONTROL_PLANE_USE_TEMPORAL_DEV`
+- `DASHBOARD_CONTROL_PLANE_USE_MANAGED_DB`
+- `DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS`
+- `RUN_VERCEL_DASHBOARD_PREVIEW`
+- `VERCEL_DASHBOARD_PREVIEW_CONFIRM`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`

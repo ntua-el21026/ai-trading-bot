@@ -2,8 +2,8 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 24 adds gated Temporal Cloud dev runtime wiring while paper trading remains disabled. The
-repository still does not implement actual paper trading operations, production dashboard
+Milestone 25 adds dashboard/control-plane dev runtime wiring while paper trading remains disabled.
+The repository still does not implement actual paper trading operations, production dashboard
 deployment, frozen paper evidence, Level 4 readiness, or live trading.
 
 ## Purpose And Constraints
@@ -35,9 +35,11 @@ managed repository CRUD validation, safe local/fake Temporal activity tests, and
 activity tests. It also provides an opt-in read-only Alpaca paper smoke command, a separate gated
 order-lifecycle smoke harness that refuses by default, and a Telegram alert delivery smoke harness
 that refuses by default. Milestone 24 adds a Temporal Cloud dev smoke harness that refuses by
-default and uses fake/local activities only when gated. It does not connect those contracts to
-autonomous order-writing paper execution, production managed database activity wiring, production
-schedule activation, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI
+default and uses fake/local activities only when gated. Milestone 25 adds a dashboard/control-plane
+dev runtime smoke that builds fake/local read-only snapshots and validates safe controls through a
+fake dispatcher by default. It does not connect those contracts to autonomous order-writing paper
+execution, production managed database activity wiring, production schedule activation, production
+dashboard deployment, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI
 smoke tests remain opt-in and skipped/refused unless explicit gates and local secrets are present.
 
 The safe local dry-run command is:
@@ -164,10 +166,19 @@ Required environment variable names only:
 - `TAVILY_API_KEY`
 - `BRAVE_SEARCH_API_KEY`
 - `APP_ENV`
+- `NEXT_PUBLIC_APP_ENV`
+- `NEXT_PUBLIC_DASHBOARD_ENV`
 - `LIVE_TRADING_ENABLED`
 - `AUTONOMOUS_EXECUTION_ENABLED`
 - `AUTONOMY_LEVEL`
 - `KILL_SWITCH_ENABLED`
+- `RUN_DASHBOARD_CONTROL_PLANE_SMOKE`
+- `DASHBOARD_CONTROL_PLANE_SMOKE_CONFIRM`
+- `DASHBOARD_CONTROL_PLANE_USE_TEMPORAL_DEV`
+- `DASHBOARD_CONTROL_PLANE_USE_MANAGED_DB`
+- `DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS`
+- `RUN_VERCEL_DASHBOARD_PREVIEW`
+- `VERCEL_DASHBOARD_PREVIEW_CONFIRM`
 - `ALERT_PROVIDER_PRIMARY`
 - `ALERT_PROVIDER_SECONDARY`
 - `ALERT_ENABLE_REAL_DELIVERY`
@@ -223,6 +234,9 @@ Complete this checklist before every paper session:
 - Confirm AI feedback/calibration cannot mutate strategy, risk, execution, stop, universe, or
   kill-switch rules.
 - Confirm dashboard/frontend code has no broker or AI/news provider secrets.
+- Confirm dashboard/control-plane runtime uses fake dispatch by default and has no order-entry,
+  live-enable, autonomous-enable, strategy/risk/execution mutation, or natural-language trading
+  controls.
 - Confirm Telegram alert delivery gates are configured only for an intentional smoke, or record
   that default fake/fail-closed alert behavior is active.
 - Confirm Temporal Cloud dev smoke gates are configured only for an intentional dev-namespace
@@ -246,6 +260,9 @@ This procedure is target-state documentation until real services are wired.
    - `reporting-task-queue`
 4. Confirm worker registration and task queue polling.
 5. Confirm dashboard/control-plane read models load from safe backend contracts.
+   - Use `uv run python scripts/check_dashboard_control_plane_runtime.py` for the dev runtime
+     smoke. It does not deploy, activate schedules, call broker/AI/news/alert services, or send real
+     Temporal control signals by default.
 6. Confirm broker paper account mode through server-side broker activity once implemented.
 7. Confirm managed database/audit-ledger connectivity once implemented.
 8. Confirm Telegram alert delivery through the explicit smoke harness before relying on real alerts.

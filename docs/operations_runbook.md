@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 24 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 25 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does
@@ -17,7 +17,9 @@ and disabled web-fallback boundaries, AI feedback/calibration safety downgrades,
 database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
 repositories. It also adds a Telegram-only real alert delivery harness behind explicit gates while
 keeping Email/Resend deferred, plus a Temporal Cloud dev smoke harness that refuses by default and
-uses fake/local activities only.
+uses fake/local activities only. Milestone 25 adds dashboard/control-plane dev runtime wiring with
+fake/local read models, safe control validation, fake/default dispatch, and a smoke harness that
+does not deploy or perform external side effects.
 
 ## Current Foundation Operations
 
@@ -325,16 +327,28 @@ commands, deploys anything, or satisfies Level 4 readiness.
 
 ## Current Dashboard Operations
 
-Dashboard/control-plane behavior is currently contract-only:
+Dashboard/control-plane behavior is server-side and safe by default:
 
 1. Read dashboard snapshots from fixture providers or the local ledger-backed read-model provider.
 2. Represent safe manual controls as auditable command objects.
 3. Map safe controls to existing Temporal signal names through server-side contracts.
 4. Expose only explicitly safe public dashboard environment values.
+5. Validate dev runtime behavior with `scripts/check_dashboard_control_plane_runtime.py`.
 
 No current dashboard operation submits broker orders, calls broker APIs, calls AI/news providers,
 calls Temporal from browser code, sends alerts, exposes broker/AI provider secrets, or changes
 risk/autonomy configuration.
+
+Default dashboard smoke behavior:
+
+```bash
+uv run python scripts/check_dashboard_control_plane_runtime.py
+```
+
+This builds a fake/local snapshot, validates required dashboard sections, validates safe control
+requests, dispatches through the fake dispatcher, and prints sanitized status only. Real Temporal
+control signals are disabled by default. Managed DB dashboard runtime and Vercel preview deployment
+are refused in this milestone.
 
 ## Current Validation Operations
 

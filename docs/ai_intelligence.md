@@ -12,6 +12,10 @@ Milestone 23 can route AI/news warnings and AI quality degradation events to Tel
 the alerting boundary. Those alerts are operator-facing only and do not grant AI broker access,
 order authority, strategy mutation, risk mutation, or stop-policy mutation.
 
+Milestone 25 surfaces AI/news outputs, provider budget status, and AI quality state in the
+dashboard/control-plane read model. These dashboard sections are read-only, may be unavailable-safe
+when local records are absent, and do not call AI/news providers or give AI any broker authority.
+
 AI cannot:
 
 - scan the full universe for trade ideas;
@@ -59,6 +63,8 @@ AI cannot:
   Vantage, OpenAI, broker APIs, alert services, or managed databases.
 - Milestone 23 alert templates include AI/news warning summaries. Default tests still use fake
   alert clients and do not call AI/news providers or Telegram.
+- Milestone 25 dashboard/control-plane runtime tests validate read-only AI quality and provider
+  budget sections without calling Marketaux, Alpha Vantage, OpenAI, broker APIs, or alert services.
 
 ## Provider-First News Policy
 
@@ -134,11 +140,10 @@ global kill switch by itself.
 
 ## Deferred Work
 
-Real provider/OpenAI smoke evidence remains optional and gated. Managed database production activity
-wiring, production dashboard deployment, real alert delivery, frozen paper evidence, and paper/live
-validation remain deferred. Tests and the Milestone 16 dry run use fixtures only and require no API
-keys or network calls. Dashboard contracts can display AI output read models but do not call AI
-providers from frontend code.
+Managed database production activity wiring, production dashboard deployment, frozen paper
+evidence, and paper/live validation remain deferred. Tests and the Milestone 16 dry run use
+fixtures only and require no API keys or network calls. Dashboard contracts can display AI output,
+budget, and quality read models but do not call AI providers from frontend code.
 
 ## Level 4 Readiness Evidence
 

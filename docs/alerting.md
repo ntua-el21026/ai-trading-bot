@@ -7,6 +7,10 @@ intentionally deferred and is not required for this stage. Default tests and def
 still use fake/fail-closed adapters and do not send Telegram, email, broker, AI/news, or other
 network messages.
 
+Milestone 25 surfaces alerting status in the dashboard/control-plane read model. The dashboard
+status is read-only; it does not send Telegram messages, expose Telegram tokens/chat IDs, implement
+Telegram commands, or use alerts as a control path.
+
 ## Implemented
 
 - `packages/alerting/models.py` defines alert severity, channels, categories, messages, dispatch
@@ -25,6 +29,8 @@ network messages.
   report-alert Temporal activity boundaries. They use fake adapters by default.
 - `packages/paper/dry_run.py` captures fake dry-run alerts for order, fill, protective stop,
   incident, and report-generated events.
+- `packages/control_plane/models.py` and `packages/control_plane/runtime.py` expose a read-only
+  alerting status section for dashboard smoke validation without calling real alert adapters.
 
 ## Telegram Real Delivery Gates
 

@@ -233,6 +233,41 @@ class AIResearchOutputView(ControlPlaneModel):
         return _uppercase_symbol(symbol)
 
 
+class AIQualityStateView(ControlPlaneModel):
+    state: Literal[
+        "AI_NORMAL",
+        "AI_REDUCED_INFLUENCE",
+        "AI_NEUTRAL_ONLY",
+        "AI_ESCALATION_REQUIRED",
+        "unavailable",
+    ] = "unavailable"
+    schema_validity_rate: float | None = Field(default=None, ge=0, le=1)
+    fallback_rate: float | None = Field(default=None, ge=0, le=1)
+    provider_coverage_rate: float | None = Field(default=None, ge=0, le=1)
+    data_source: DashboardDataSource = "unavailable"
+
+
+class ProviderBudgetStatusView(ControlPlaneModel):
+    provider: str
+    daily_limit: int | None = Field(default=None, ge=0)
+    used: int | None = Field(default=None, ge=0)
+    remaining: int | None = Field(default=None, ge=0)
+    status: Literal["ok", "warning", "exceeded", "unavailable"] = "unavailable"
+    data_source: DashboardDataSource = "unavailable"
+
+    @model_validator(mode="after")
+    def validate_budget_counts(self) -> Self:
+        if self.daily_limit is not None and self.used is not None and self.used > self.daily_limit:
+            raise ValueError("provider budget used count cannot exceed daily limit")
+        if (
+            self.daily_limit is not None
+            and self.remaining is not None
+            and self.remaining > self.daily_limit
+        ):
+            raise ValueError("provider budget remaining count cannot exceed daily limit")
+        return self
+
+
 class ReportSummaryView(ControlPlaneModel):
     report_id: str
     report_type: Literal["daily", "weekly", "manual"]
@@ -243,6 +278,48 @@ class ReportSummaryView(ControlPlaneModel):
     @model_validator(mode="after")
     def validate_generated_at(self) -> Self:
         _require_aware(self.generated_at, "generated_at")
+        return self
+
+
+class AlertingStatusView(ControlPlaneModel):
+    primary_provider: str = "telegram"
+    real_delivery_enabled: bool = False
+    fake_adapter_active: bool = True
+    last_delivery_status: str = "unavailable"
+    data_source: DashboardDataSource = "unavailable"
+
+
+class TemporalRuntimeStatusView(ControlPlaneModel):
+    connected: bool = False
+    namespace_present: bool = False
+    task_queue: str | None = None
+    worker_started: bool = False
+    workflow_completed: bool = False
+    signal_query_checked: bool = False
+    schedules_created: bool = False
+    schedules_activated: bool = False
+    data_source: DashboardDataSource = "unavailable"
+
+    @model_validator(mode="after")
+    def validate_temporal_status(self) -> Self:
+        if self.schedules_created or self.schedules_activated:
+            raise ValueError("dashboard runtime status cannot report schedule creation/activation")
+        return self
+
+
+class PaperOperationReadinessView(ControlPlaneModel):
+    controlled_lifecycle_smoke_complete: bool | None = None
+    actual_paper_trading_started: bool = False
+    frozen_paper_evidence_available: bool = False
+    level4_ready: bool = False
+    data_source: DashboardDataSource = "unavailable"
+
+    @model_validator(mode="after")
+    def validate_readiness_boundary(self) -> Self:
+        if self.actual_paper_trading_started:
+            raise ValueError("dashboard dev runtime cannot claim actual paper trading has started")
+        if self.level4_ready:
+            raise ValueError("dashboard dev runtime cannot claim Level 4 readiness")
         return self
 
 
@@ -258,7 +335,16 @@ class DashboardSnapshot(ControlPlaneModel):
     recent_incidents: tuple[IncidentView, ...] = ()
     candidate_signals: tuple[CandidateSignalView, ...] = ()
     ai_outputs: tuple[AIResearchOutputView, ...] = ()
+    ai_quality_state: AIQualityStateView = Field(default_factory=AIQualityStateView)
+    provider_budget_status: tuple[ProviderBudgetStatusView, ...] = ()
     reports: tuple[ReportSummaryView, ...] = ()
+    alerting_status: AlertingStatusView = Field(default_factory=AlertingStatusView)
+    temporal_runtime_status: TemporalRuntimeStatusView = Field(
+        default_factory=TemporalRuntimeStatusView
+    )
+    paper_operation_readiness: PaperOperationReadinessView = Field(
+        default_factory=PaperOperationReadinessView
+    )
 
 
 class ControlActionRequest(ControlPlaneModel):

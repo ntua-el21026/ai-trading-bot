@@ -7,7 +7,9 @@ from datetime import UTC, datetime
 from typing import Literal, Protocol
 
 from packages.control_plane.models import (
+    AIQualityStateView,
     AIResearchOutputView,
+    AlertingStatusView,
     CandidateSignalView,
     ControlActionReceipt,
     ControlActionRequest,
@@ -17,11 +19,14 @@ from packages.control_plane.models import (
     IncidentView,
     KillSwitchStateView,
     OrderView,
+    PaperOperationReadinessView,
     PositionView,
+    ProviderBudgetStatusView,
     ReconciliationStatusView,
     ReportSummaryView,
     RiskStatusView,
     SystemStateView,
+    TemporalRuntimeStatusView,
 )
 from packages.core.config import AppConfig, load_app_config
 from packages.ledger.repositories import SQLiteLedgerRepository
@@ -216,6 +221,36 @@ class LedgerDashboardReadModelProvider:
                 )
                 for report in reports
             ),
+            ai_quality_state=AIQualityStateView(
+                state="AI_NORMAL" if ai_outputs else "unavailable",
+                data_source="database_read_model" if ai_outputs else "unavailable",
+            ),
+            provider_budget_status=(
+                ProviderBudgetStatusView(provider="marketaux"),
+                ProviderBudgetStatusView(provider="alpha_vantage"),
+                ProviderBudgetStatusView(provider="openai"),
+            ),
+            alerting_status=AlertingStatusView(
+                primary_provider="telegram",
+                real_delivery_enabled=False,
+                fake_adapter_active=True,
+                last_delivery_status="fake_or_unavailable",
+                data_source="database_read_model",
+            ),
+            temporal_runtime_status=TemporalRuntimeStatusView(
+                connected=False,
+                namespace_present=False,
+                schedules_created=False,
+                schedules_activated=False,
+                data_source="unavailable",
+            ),
+            paper_operation_readiness=PaperOperationReadinessView(
+                controlled_lifecycle_smoke_complete=None,
+                actual_paper_trading_started=False,
+                frozen_paper_evidence_available=False,
+                level4_ready=False,
+                data_source="database_read_model",
+            ),
         )
 
 
@@ -276,6 +311,21 @@ def build_unavailable_dashboard_snapshot(
             severity="warning",
             mismatch_count=0,
             pause_new_risk_recommended=True,
+            data_source="unavailable",
+        ),
+        ai_quality_state=AIQualityStateView(),
+        provider_budget_status=(
+            ProviderBudgetStatusView(provider="marketaux"),
+            ProviderBudgetStatusView(provider="alpha_vantage"),
+            ProviderBudgetStatusView(provider="openai"),
+        ),
+        alerting_status=AlertingStatusView(),
+        temporal_runtime_status=TemporalRuntimeStatusView(),
+        paper_operation_readiness=PaperOperationReadinessView(
+            controlled_lifecycle_smoke_complete=None,
+            actual_paper_trading_started=False,
+            frozen_paper_evidence_available=False,
+            level4_ready=False,
             data_source="unavailable",
         ),
     )

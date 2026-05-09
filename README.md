@@ -10,12 +10,12 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 24 Temporal Cloud dev runtime wiring with offline default tests,
-fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B completed a
-controlled Alpaca paper order-lifecycle smoke with final target-symbol state clean/flat; Milestone
-22 real provider/OpenAI smokes and Milestone 23 real Telegram smoke have also run through gated
-paths. Actual paper trading operations remain deferred, frozen paper evidence is absent, and Level
-4 is not ready.
+This repository is at Milestone 25 dashboard/control-plane dev runtime wiring with offline default
+tests, fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B
+completed a controlled Alpaca paper order-lifecycle smoke with final target-symbol state
+clean/flat; Milestone 22 real provider/OpenAI smokes, Milestone 23 real Telegram smoke, and
+Milestone 24 Temporal Cloud dev smoke have also run through gated paths. Actual paper trading
+operations remain deferred, frozen paper evidence is absent, and Level 4 is not ready.
 
 Implemented pieces:
 
@@ -122,8 +122,13 @@ Implemented pieces:
 - worker registration tests for configured task queues and workflow mappings
 - Temporal AI/news activity boundaries that perform no external calls
 - dashboard/control-plane read models for system state, workflows, intents, orders, positions,
-  incidents, reconciliation, kill switch, candidates/signals, AI outputs, reports, and risk status
+  incidents, reconciliation, kill switch, candidates/signals, AI outputs, AI quality state,
+  provider budget status, reports, risk status, alerting status, Temporal status, and paper
+  readiness status
 - server-side control-plane contracts mapping safe manual controls to existing Temporal signal names
+- dashboard/control-plane dev runtime smoke harness that builds a fake/local snapshot, validates
+  safe controls through a fake dispatcher by default, refuses managed DB/deployment modes, and
+  performs no broker, AI/news, alert, schedule, or deployment side effects
 - minimal `apps/api/` and `apps/dashboard/` scaffolds with frontend environment guardrails and no
   frontend framework dependencies
 - validation harness contracts for spec-defined backtest splits, benchmarks, costs, ablations,
@@ -150,8 +155,6 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- retained Temporal Cloud dev smoke evidence if the explicit Temporal Cloud smoke gates have not
-  been run
 - production dashboard UI/deployment
 - Email/Resend delivery, intentionally deferred as a possible future secondary channel
 - production Temporal query/signal backend integration
@@ -225,6 +228,13 @@ Run Milestone 24 Temporal Cloud runtime tests and the default-refusing smoke:
 ```bash
 uv run --group dev pytest tests/unit/test_temporal_config.py tests/unit/test_temporal_cloud_runtime.py tests/temporal
 uv run python scripts/check_temporal_cloud_runtime.py
+```
+
+Run Milestone 25 dashboard/control-plane runtime tests and the fake/local smoke:
+
+```bash
+uv run --group dev pytest tests/unit/test_control_plane_models.py tests/unit/test_control_plane_api.py tests/unit/test_dashboard_read_models.py tests/unit/test_dashboard_env_security.py tests/unit/test_dashboard_control_plane_runtime.py
+uv run python scripts/check_dashboard_control_plane_runtime.py
 ```
 
 Run Milestone 16 fake/local paper dry-run orchestration tests:
@@ -382,8 +392,8 @@ uses fake adapters by default. Milestone 23 makes Telegram the only real alert c
 behind explicit real-delivery gates and a smoke harness. Telegram is operator-facing only: it does
 not submit orders, modify stops, change risk, mutate strategy, or act as a command interface.
 Email/Resend is intentionally deferred as a possible future secondary channel. Dashboard read models
-can be built from ledger repositories, but a real dashboard deployment and real Temporal
-query/signal backend are still deferred.
+can be built from ledger repositories, and Milestone 25 adds a dev runtime smoke for read-only
+snapshots plus safe fake-dispatched controls, but real dashboard deployment is still deferred.
 
 ## Database Runtime
 
@@ -413,10 +423,9 @@ Milestone 11 adds readiness documentation only:
 - `docs/templates/level4_micro_live_go_no_go_template.md`
 
 Current conclusion: Level 4 micro-live is not ready. The repo still lacks frozen paper evidence,
-retained real paper order-lifecycle write evidence, production Temporal query/signal backend
-integration, production dashboard deployment, real alert delivery, controlled paper operations, and
-live go/no-go approval. The Milestone 22 provider/OpenAI support and AI calibration logic do not
-change that status.
+actual controlled paper operations, production dashboard deployment, production schedule activation,
+and live go/no-go approval. The Milestone 21B/22/23/24/25 smoke evidence does not change that
+status.
 
 ## Safety Defaults
 

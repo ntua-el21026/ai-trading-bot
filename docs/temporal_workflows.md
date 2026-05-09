@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Through Milestone 24, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Through Milestone 25, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
@@ -10,7 +10,8 @@ dry-run orchestration, managed Postgres/Supabase runtime helpers, provider place
 boundaries, Milestone 22 AI/news activity boundary names, Telegram alert delivery activity
 boundaries behind explicit gates, Temporal Cloud dev client/runtime helpers, a default-refusing
 Temporal Cloud smoke harness, signal names, query names, dashboard/control-plane signal mapping
-contracts, local Temporal SDK test-environment coverage, and replay coverage for a generated
+contracts, a dashboard/control-plane dev runtime smoke harness, local Temporal SDK
+test-environment coverage, and replay coverage for a generated
 workflow history. It does not implement actual paper trading orchestration, default AI/provider
 external calls, production schedule activation, browser-side Temporal calls, actual paper trading
 operations, or live trading.
@@ -200,7 +201,8 @@ The kill-switch skeleton records deterministic state transitions that block new 
 preserving risk-reducing exits.
 
 Dashboard/control-plane actions map only to safe signal names through server-side contracts under
-`apps/api/app/control_plane.py`. Browser/dashboard code must not call Temporal directly.
+`apps/api/app/control_plane.py`. The Milestone 25 dev runtime smoke validates these mappings through
+a fake dispatcher by default; browser/dashboard code must not call Temporal directly.
 
 ## Queries
 
@@ -285,6 +287,6 @@ uv run --group dev pytest tests/temporal -vv
 
 `docs/level4_micro_live_readiness.md` requires real Temporal query/signal backend evidence before
 Level 4 micro-live. Current workflow tests include local SDK test-server signal/query coverage and
-replay evidence, and the Milestone 24 harness can gather dev-namespace Cloud smoke evidence when
-explicitly gated. Production schedule activation, actual paper operations, and Level 4 readiness
-remain deferred.
+replay evidence, and the Milestone 24 harness has gathered dev-namespace Cloud smoke evidence
+through explicit gates. Production schedule activation, actual paper operations, and Level 4
+readiness remain deferred.

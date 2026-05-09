@@ -20,6 +20,11 @@ Milestone 23 adds Telegram-safe daily and weekly report summaries plus trade win
 operator-facing alerts. These summaries are generated from report/trade outcome payloads and do not
 send real Telegram messages unless the explicit Telegram delivery gates are loaded.
 
+Milestone 25 surfaces report summaries through the dashboard/control-plane read model and smoke
+harness. Dashboard report sections are read-only and may be empty or unavailable-safe when no local
+ledger records exist; they do not generate new reports, send alerts, deploy a dashboard, or start
+paper trading.
+
 ## Implemented
 
 - `packages/reporting/models.py` defines daily/weekly report, section, metric, issue, snapshot, and
@@ -37,6 +42,8 @@ send real Telegram messages unless the explicit Telegram delivery gates are load
   that can be persisted through existing report/system-event ledger boundaries.
 - `packages/alerting/templates.py` converts daily reports, weekly reports, and trade outcomes into
   concise Telegram alert messages.
+- `packages/control_plane/runtime.py` validates that dashboard report summary sections are present
+  in the dev runtime snapshot without calling report generation or alert delivery services.
 
 Daily reports include workflow summary, candidates/signals, AI stats, decisions/rejections,
 execution intents, orders/fills/positions, protective stops, reconciliation status, incidents,

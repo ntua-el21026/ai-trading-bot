@@ -159,6 +159,7 @@ AI_Trading_Bot/
 │   ├── control_plane/
 │   │   ├── __init__.py
 │   │   ├── models.py
+│   │   ├── runtime.py
 │   │   ├── security.py
 │   │   └── service.py
 │   ├── core/
@@ -218,6 +219,7 @@ AI_Trading_Bot/
 │   ├── apply_ledger_migrations.py
 │   ├── check_alpaca_paper_order_lifecycle.py
 │   ├── check_alpaca_paper_readonly.py
+│   ├── check_dashboard_control_plane_runtime.py
 │   ├── check_ledger_database.py
 │   ├── check_telegram_alert_delivery.py
 │   ├── check_temporal_cloud_runtime.py
@@ -252,6 +254,7 @@ AI_Trading_Bot/
 │       ├── test_config.py
 │       ├── test_control_plane_api.py
 │       ├── test_control_plane_models.py
+│       ├── test_dashboard_control_plane_runtime.py
 │       ├── test_dashboard_env_security.py
 │       ├── test_dashboard_read_models.py
 │       ├── test_data_models.py
@@ -294,4 +297,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 44, Total files: 251
+Total directories: 44, Total files: 254
