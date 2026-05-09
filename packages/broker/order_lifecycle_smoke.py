@@ -33,6 +33,7 @@ from packages.broker.alpaca import (
 )
 from packages.broker.models import (
     BrokerAccountSnapshot,
+    BrokerErrorCode,
     BrokerOrder,
     BrokerPosition,
     BrokerProtectiveStop,
@@ -296,12 +297,20 @@ class AlpacaPaperOrderLifecycleSmokeSummary(BaseModel):
     partial_fill_observed: bool = False
     protective_stop_submitted: bool = False
     protective_stop_verified: bool = False
+    protective_stop_cancelled_after_cleanup: bool = False
     entry_order_cancelled: bool = False
     cleanup_exit_submitted: bool = False
     cleanup_exit_filled_or_confirmed: bool = False
     smoke_orders_cancelled: int = Field(default=0, ge=0)
+    final_open_smoke_orders: int = Field(default=0, ge=0)
     final_position_flat_for_symbol: bool = False
     broker_reconciliation_clean: bool = False
+    cleanup_needed: bool = False
+    broker_error_code: BrokerErrorCode | None = None
+    broker_error_retryable: bool = False
+    broker_error_ambiguous: bool = False
+    sanitized_http_status: str | None = None
+    sanitized_reason: str | None = None
     raw_payloads_printed: bool = False
     secrets_printed: bool = False
     actual_paper_trading_started: bool = False
@@ -618,6 +627,7 @@ def run_alpaca_paper_order_lifecycle_smoke(
     stop_verified = False
     cleanup_submitted = False
     cleanup_filled = False
+    protective_stop_cancelled_after_cleanup = False
 
     if filled_quantity <= 0:
         if entry_order.is_open:
@@ -650,22 +660,73 @@ def run_alpaca_paper_order_lifecycle_smoke(
         entry_cancelled = cancel_result.status == "succeeded"
         smoke_cancel_count += 1 if entry_cancelled else 0
 
-    cleanup_order = _submit_cleanup_exit(
-        client=client,
-        symbol=settings.symbol,
-        filled_quantity=filled_quantity,
-        reference_limit_price=entry_order.limit_price or settings.limit_price,
-        client_order_id=f"{intent.client_order_id_root}-cleanup-exit",
-    )
-    cleanup_submitted = cleanup_order is not None
-    cleanup_filled = (
-        cleanup_order is not None
-        and (cleanup_order.status == "filled" or cleanup_order.filled_quantity >= filled_quantity)
-    )
-    smoke_cancel_count += _cancel_open_smoke_orders(
+    cleanup_client_order_id = f"{intent.client_order_id_root}-cleanup-exit"
+    cleanup_error: AlpacaClientError | None = None
+    try:
+        cleanup_order = _submit_cleanup_exit(
+            client=client,
+            symbol=settings.symbol,
+            filled_quantity=filled_quantity,
+            client_order_id=cleanup_client_order_id,
+        )
+    except AlpacaClientError as exc:
+        cleanup_error = exc
+        smoke_cancel_result = _cancel_open_smoke_orders(
+            adapter=adapter,
+            symbol=settings.symbol,
+            client_order_id_root=intent.client_order_id_root,
+        )
+        smoke_cancel_count += smoke_cancel_result.cancelled
+        protective_stop_cancelled_after_cleanup = (
+            smoke_cancel_result.protective_stops_cancelled > 0
+        )
+        try:
+            cleanup_order = _submit_cleanup_exit(
+                client=client,
+                symbol=settings.symbol,
+                filled_quantity=filled_quantity,
+                client_order_id=cleanup_client_order_id,
+            )
+            cleanup_error = None
+        except AlpacaClientError as retry_exc:
+            cleanup_order = None
+            cleanup_error = retry_exc
+
+    if cleanup_order is not None:
+        cleanup_submitted = True
+        cleanup_filled = (
+            cleanup_order.status == "filled" or cleanup_order.filled_quantity >= filled_quantity
+        )
+    if cleanup_error is not None:
+        return _final_summary(
+            adapter=adapter,
+            app_config=active_config,
+            account=account,
+            symbol=settings.symbol,
+            summary_updates=lifecycle_updates,
+            protective_stop_submitted=stop_submitted,
+            protective_stop_verified=stop_verified,
+            protective_stop_cancelled_after_cleanup=protective_stop_cancelled_after_cleanup,
+            entry_cancelled=entry_cancelled,
+            cleanup_exit_submitted=cleanup_submitted,
+            cleanup_exit_filled_or_confirmed=cleanup_filled,
+            smoke_cancel_count=smoke_cancel_count,
+            cleanup_needed=True,
+            error=cleanup_error,
+            sanitized_reason="cleanup_exit_failed",
+            refused=True,
+            as_of=(current_time or (lambda: datetime.now(UTC)))(),
+        )
+
+    smoke_cancel_result = _cancel_open_smoke_orders(
         adapter=adapter,
         symbol=settings.symbol,
         client_order_id_root=intent.client_order_id_root,
+    )
+    smoke_cancel_count += smoke_cancel_result.cancelled
+    protective_stop_cancelled_after_cleanup = (
+        protective_stop_cancelled_after_cleanup
+        or smoke_cancel_result.protective_stops_cancelled > 0
     )
 
     return _final_summary(
@@ -676,6 +737,7 @@ def run_alpaca_paper_order_lifecycle_smoke(
         summary_updates=lifecycle_updates,
         protective_stop_submitted=stop_submitted,
         protective_stop_verified=stop_verified,
+        protective_stop_cancelled_after_cleanup=protective_stop_cancelled_after_cleanup,
         entry_cancelled=entry_cancelled,
         cleanup_exit_submitted=cleanup_submitted,
         cleanup_exit_filled_or_confirmed=cleanup_filled,
@@ -781,17 +843,14 @@ def _submit_cleanup_exit(
     client: AlpacaPaperOrderLifecycleClient,
     symbol: str,
     filled_quantity: float,
-    reference_limit_price: float,
     client_order_id: str,
 ) -> BrokerOrder | None:
-    limit_price = max(0.01, round(reference_limit_price * 0.5, 2))
     request = {
         "symbol": symbol,
         "side": "sell",
-        "type": "limit",
+        "type": "market",
         "time_in_force": "day",
-        "qty": str(filled_quantity),
-        "limit_price": str(limit_price),
+        "qty": _format_quantity(filled_quantity),
         "client_order_id": client_order_id,
         "extended_hours": False,
     }
@@ -803,8 +862,9 @@ def _cancel_open_smoke_orders(
     adapter: AlpacaPaperAdapter,
     symbol: str,
     client_order_id_root: str,
-) -> int:
+) -> SmokeOrderCancelResult:
     cancelled = 0
+    protective_stops_cancelled = 0
     for order in adapter.open_orders():
         if order.symbol != symbol:
             continue
@@ -813,7 +873,12 @@ def _cancel_open_smoke_orders(
         result = adapter.cancel_order(order.client_order_id)
         if result.status == "succeeded":
             cancelled += 1
-    return cancelled
+            if order.order_type in {"stop", "stop_limit"}:
+                protective_stops_cancelled += 1
+    return SmokeOrderCancelResult(
+        cancelled=cancelled,
+        protective_stops_cancelled=protective_stops_cancelled,
+    )
 
 
 def _final_summary(
@@ -826,12 +891,24 @@ def _final_summary(
     as_of: datetime,
     protective_stop_submitted: bool = False,
     protective_stop_verified: bool = False,
+    protective_stop_cancelled_after_cleanup: bool = False,
     entry_cancelled: bool = False,
     cleanup_exit_submitted: bool = False,
     cleanup_exit_filled_or_confirmed: bool = False,
     smoke_cancel_count: int = 0,
+    cleanup_needed: bool = False,
+    error: AlpacaClientError | None = None,
+    sanitized_reason: str | None = None,
+    refused: bool = False,
 ) -> AlpacaPaperOrderLifecycleSmokeSummary:
     open_orders = tuple(order for order in adapter.open_orders() if order.symbol == symbol)
+    client_order_id_root = summary_updates.get("client_order_id_root")
+    smoke_open_orders = tuple(
+        order
+        for order in open_orders
+        if isinstance(client_order_id_root, str)
+        and order.client_order_id.startswith(client_order_id_root)
+    )
     positions = tuple(
         position
         for position in adapter.positions()
@@ -839,6 +916,9 @@ def _final_summary(
     )
     protective_stops = tuple(adapter.protective_stops(symbol))
     final_flat = not positions
+    cleanup_confirmed = cleanup_exit_filled_or_confirmed or (
+        cleanup_exit_submitted and final_flat
+    )
     reconciliation_clean = _reconcile_symbol_state(
         app_config=app_config,
         account=account,
@@ -850,14 +930,19 @@ def _final_summary(
     return _summary(
         app_config=app_config,
         **summary_updates,
+        refused=refused,
         protective_stop_submitted=protective_stop_submitted,
         protective_stop_verified=protective_stop_verified,
+        protective_stop_cancelled_after_cleanup=protective_stop_cancelled_after_cleanup,
         entry_order_cancelled=entry_cancelled,
         cleanup_exit_submitted=cleanup_exit_submitted,
-        cleanup_exit_filled_or_confirmed=cleanup_exit_filled_or_confirmed,
+        cleanup_exit_filled_or_confirmed=cleanup_confirmed,
         smoke_orders_cancelled=smoke_cancel_count,
+        final_open_smoke_orders=len(smoke_open_orders),
         final_position_flat_for_symbol=final_flat,
-        broker_reconciliation_clean=reconciliation_clean,
+        broker_reconciliation_clean=reconciliation_clean and final_flat and not smoke_open_orders,
+        cleanup_needed=cleanup_needed or bool(positions or smoke_open_orders),
+        **_broker_error_summary(error, sanitized_reason=sanitized_reason),
     )
 
 
@@ -942,6 +1027,37 @@ def _parse_float(value: str) -> float | None:
         return None
 
 
+class SmokeOrderCancelResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    cancelled: int = Field(default=0, ge=0)
+    protective_stops_cancelled: int = Field(default=0, ge=0)
+
+
+def _format_quantity(quantity: float) -> str:
+    if float(quantity).is_integer():
+        return str(int(quantity))
+    return f"{quantity:.6f}".rstrip("0").rstrip(".")
+
+
+def _broker_error_summary(
+    error: AlpacaClientError | None,
+    *,
+    sanitized_reason: str | None,
+) -> dict[str, Any]:
+    if error is None:
+        return {}
+    return {
+        "broker_error_code": error.code,
+        "broker_error_retryable": error.retryable,
+        "broker_error_ambiguous": error.ambiguous,
+        "sanitized_http_status": error.details.get("http_status"),
+        "sanitized_reason": sanitized_reason,
+        "broker_ambiguity_detected": error.ambiguous,
+        "pause_new_risk_recommended": error.pause_new_risk or error.ambiguous,
+    }
+
+
 def _json_mapping(value: object) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise AlpacaClientError(
@@ -980,6 +1096,13 @@ def _map_order_lifecycle_http_error(
         return AlpacaClientError(
             "invalid_order_request",
             "Alpaca paper write-smoke write request was forbidden after credential preflight",
+            pause_new_risk=True,
+            details={"http_status": str(exc.code), "method": method},
+        )
+    if exc.code in {400, 422}:
+        return AlpacaClientError(
+            "invalid_order_request",
+            f"Alpaca paper write-smoke request failed with HTTP {exc.code}",
             pause_new_risk=True,
             details={"http_status": str(exc.code), "method": method},
         )

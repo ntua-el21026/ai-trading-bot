@@ -4,7 +4,7 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from email.message import Message
 from io import BytesIO
 from typing import Any
@@ -398,9 +398,11 @@ def test_fake_client_happy_path_submits_stop_cleans_up_and_sanitizes_summary() -
     assert summary.entry_order_filled is True
     assert summary.protective_stop_submitted is True
     assert summary.protective_stop_verified is True
+    assert summary.protective_stop_cancelled_after_cleanup is True
     assert summary.cleanup_exit_submitted is True
     assert summary.cleanup_exit_filled_or_confirmed is True
     assert summary.smoke_orders_cancelled == 1
+    assert summary.final_open_smoke_orders == 0
     assert summary.final_position_flat_for_symbol is True
     assert summary.broker_reconciliation_clean is True
     assert summary.actual_paper_trading_started is False
@@ -409,10 +411,113 @@ def test_fake_client_happy_path_submits_stop_cleans_up_and_sanitizes_summary() -
     assert client.submitted_order_requests[0]["type"] == "limit"
     assert client.submitted_order_requests[0]["time_in_force"] == "day"
     assert client.submitted_order_requests[0]["extended_hours"] is False
+    cleanup_request = client.submitted_order_requests[2]
+    assert cleanup_request["side"] == "sell"
+    assert cleanup_request["type"] == "market"
+    assert cleanup_request["time_in_force"] == "day"
+    assert cleanup_request["qty"] == "1"
+    assert cleanup_request["client_order_id"].endswith("-cleanup-exit")
+    assert cleanup_request["extended_hours"] is False
+    assert "limit_price" not in cleanup_request
+    assert "stop_price" not in cleanup_request
+    assert "notional" not in cleanup_request
+    assert "position_intent" not in cleanup_request
     serialized = json.dumps(summary.model_dump(mode="json"))
     assert "paper-key" not in serialized
     assert "paper-secret" not in serialized
     assert "raw_broker_payload" not in serialized
+
+
+def test_cleanup_retry_cancels_smoke_stop_then_closes_position_cleanly() -> None:
+    client = _CleanupRejectingFakeAlpacaClient(
+        cleanup_rejections=1,
+        submit_outcomes=(("filled", 1.0), ("accepted", 0.0), ("filled", 1.0)),
+        mutate_positions_on_submit=True,
+    )
+
+    summary = run_alpaca_paper_order_lifecycle_smoke(
+        environ=_safe_env(),
+        app_config=load_app_config(),
+        client_factory=_client_factory(client),
+    )
+
+    assert summary.refused is False
+    assert summary.protective_stop_submitted is True
+    assert summary.protective_stop_verified is True
+    assert summary.protective_stop_cancelled_after_cleanup is True
+    assert summary.cleanup_exit_submitted is True
+    assert summary.cleanup_exit_filled_or_confirmed is True
+    assert summary.cleanup_needed is False
+    assert summary.final_open_smoke_orders == 0
+    assert summary.final_position_flat_for_symbol is True
+    assert summary.broker_reconciliation_clean is True
+    cleanup_requests = [
+        request
+        for request in client.submitted_order_requests
+        if str(request["client_order_id"]).endswith("-cleanup-exit")
+    ]
+    assert len(cleanup_requests) == 2
+
+
+def test_cleanup_failure_returns_sanitized_cleanup_needed_summary() -> None:
+    client = _CleanupRejectingFakeAlpacaClient(
+        cleanup_rejections=2,
+        submit_outcomes=(("filled", 1.0), ("accepted", 0.0)),
+        mutate_positions_on_submit=True,
+    )
+
+    summary = run_alpaca_paper_order_lifecycle_smoke(
+        environ=_safe_env(),
+        app_config=load_app_config(),
+        client_factory=_client_factory(client),
+    )
+
+    assert summary.refused is True
+    assert summary.protective_stop_submitted is True
+    assert summary.protective_stop_verified is True
+    assert summary.protective_stop_cancelled_after_cleanup is True
+    assert summary.cleanup_exit_submitted is False
+    assert summary.cleanup_exit_filled_or_confirmed is False
+    assert summary.cleanup_needed is True
+    assert summary.final_position_flat_for_symbol is False
+    assert summary.broker_reconciliation_clean is False
+    assert summary.broker_error_code == "invalid_order_request"
+    assert summary.sanitized_http_status == "422"
+    assert summary.sanitized_reason == "cleanup_exit_failed"
+    assert summary.broker_error_retryable is False
+    assert summary.broker_error_ambiguous is False
+    serialized = json.dumps(summary.model_dump(mode="json"))
+    assert "paper-key" not in serialized
+    assert "paper-secret" not in serialized
+    assert "raw_broker_payload" not in serialized
+
+
+def test_cleanup_cancels_only_smoke_created_orders() -> None:
+    non_smoke_order = _order_payload(
+        id="manual-order-1",
+        client_order_id="manual-QQQ-stop",
+        symbol="QQQ",
+        side="sell",
+        type="stop",
+        time_in_force="gtc",
+        stop_price="300",
+    )
+    client = FakeAlpacaClient(
+        orders=(non_smoke_order,),
+        submit_outcomes=(("filled", 1.0), ("accepted", 0.0), ("filled", 1.0)),
+        mutate_positions_on_submit=True,
+    )
+
+    summary = run_alpaca_paper_order_lifecycle_smoke(
+        environ=_safe_env(),
+        app_config=load_app_config(),
+        client_factory=_client_factory(client),
+    )
+
+    assert summary.refused is False
+    assert "manual-order-1" not in client.cancelled_broker_order_ids
+    assert summary.final_open_smoke_orders == 0
+    assert summary.final_position_flat_for_symbol is True
 
 
 def test_fake_client_unfilled_path_cancels_entry_without_stop_or_cleanup() -> None:
@@ -504,3 +609,22 @@ def _account_payload() -> dict[str, Any]:
         "currency": "USD",
         "as_of": "2026-05-04T14:30:00Z",
     }
+
+
+class _CleanupRejectingFakeAlpacaClient(FakeAlpacaClient):
+    def __init__(self, *, cleanup_rejections: int, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.cleanup_rejections = cleanup_rejections
+
+    def submit_order(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        if str(request["client_order_id"]).endswith("-cleanup-exit"):
+            if self.cleanup_rejections > 0:
+                self.submitted_order_requests.append(dict(request))
+                self.cleanup_rejections -= 1
+                raise AlpacaClientError(
+                    "invalid_order_request",
+                    "fake cleanup order was rejected",
+                    pause_new_risk=True,
+                    details={"http_status": "422"},
+                )
+        return super().submit_order(request)
