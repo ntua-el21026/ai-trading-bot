@@ -21,6 +21,17 @@ and can be checked with `scripts/check_vercel_dashboard_preview.py`. The generat
 URL is sufficient; no custom domain is required. This is not actual paper trading, frozen paper
 evidence, production deployment, or Level 4 readiness.
 
+Milestone 26B records deployment evidence. Preview deployment
+`https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app` exists. A production deployment
+was accidentally created at `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` with
+alias `https://ai-trading-bot-silk.vercel.app`. The production alias was verified as the expected
+static/read-only dashboard artifact. The deployment-specific preview and production URLs were
+Vercel-ready but returned anonymous HTTP 401 during audit, so their content is protected from
+unauthenticated HTTP. This production deployment is non-operational: no workers run on Vercel, no
+frontend secrets are exposed, no order-entry controls exist, and browser code performs no broker,
+AI/news, Temporal, database, or Telegram privileged calls. Future production deployments require
+explicit approval/gates.
+
 ## Implemented Contracts
 
 - `packages/control_plane/models.py` defines read-only dashboard view models and auditable control
@@ -108,6 +119,9 @@ Milestone 26 keeps Vercel dashboard-only. Preview deployment is allowed only wit
 `NEXT_PUBLIC_APP_ENV` and `NEXT_PUBLIC_DASHBOARD_ENV`; no broker, AI/news, database, Temporal, or
 Telegram secrets may be exposed to frontend code. The preview does not include order-entry controls
 and cannot enable live trading or autonomous execution.
+
+Running `vercel --prod` is not part of preview-only milestones. If a production deployment is
+needed later, it must be explicitly requested, gated, and revalidated as dashboard-only.
 
 ## Ledger Read Models
 

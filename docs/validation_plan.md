@@ -16,8 +16,11 @@ default-refusing Cloud smoke harness for harmless workflow execution with fake/l
 Milestone 25 adds dashboard/control-plane dev runtime smoke coverage for read-only snapshots,
 runtime status sections, safe control schemas, fake/default dispatch, and frontend secret
 guardrails. Milestone 26 adds static dashboard preview build/config checks for Vercel
-dashboard-only preview deployment. This does not validate actual paper trading operations,
-production dashboard deployment, production schedule activation, live trading, or profitability.
+dashboard-only preview deployment. Milestone 26B records Vercel deployment evidence for preview URL
+`https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app` and documents an accidental
+production deployment/alias as non-operational static dashboard-only after audit. This does not
+validate actual paper trading operations, production operational dashboard integration, production
+schedule activation, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -265,7 +268,9 @@ Current blockers:
   controlled paper order-lifecycle smoke has passed through the gated harness. This is smoke
   evidence only, not actual paper trading operations or frozen paper evidence.
 - Dashboard/control-plane dev runtime smoke exists and uses fake/default dispatch. Dashboard-only
-  Vercel preview harness/build guardrails exist, but production dashboard deployment is deferred.
+  Vercel preview harness/build guardrails exist. Preview deployment evidence exists, and the
+  accidental production deployment/alias has been documented as static/read-only and
+  non-operational, but production operational dashboard integration is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram smoke harness
   exist. Real Telegram smoke evidence has run through gated paths.
 - Live trading remains disabled.

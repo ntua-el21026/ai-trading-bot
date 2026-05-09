@@ -64,6 +64,11 @@ Known status:
 - Dashboard-only Vercel preview harness exists with static read-only output, safe public env values,
   no workers, no order-entry controls, and no privileged browser-side calls. It is not production
   dashboard deployment evidence.
+- Vercel deployment evidence exists for preview URL
+  `https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app`. An accidental production
+  deployment/alias exists at `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` and
+  `https://ai-trading-bot-silk.vercel.app`; it was audited as static/read-only and
+  non-operational. It is not paper evidence and does not satisfy Level 4 readiness.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
   harness exist. Real Telegram smoke evidence has run through gated paths, while Email/Resend
   remains deferred.
@@ -352,9 +357,9 @@ Required evidence:
   incidents, and resume after review through approved server-side paths.
 
 Current status: read models, ledger-backed dashboard snapshots, safe control contracts, fixture
-dispatch, frontend env guardrails, local Temporal SDK signal/query tests, and a dashboard-only
-Vercel preview harness exist. Real production dashboard deployment and production Temporal backend
-evidence are pending.
+dispatch, frontend env guardrails, local Temporal SDK signal/query tests, a dashboard-only Vercel
+preview harness, and static Vercel deployment evidence exist. Real production operational dashboard
+integration and production Temporal backend evidence are pending.
 
 ## Slippage And Fill-Quality Evidence
 

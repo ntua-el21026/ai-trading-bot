@@ -15,8 +15,14 @@ tests, fake/local trading defaults, and explicitly gated real-service smokes. Mi
 completed a controlled Alpaca paper order-lifecycle smoke with final target-symbol state
 clean/flat; Milestone 22 real provider/OpenAI smokes, Milestone 23 real Telegram smoke, and
 Milestone 24 Temporal Cloud dev smoke have also run through gated paths. Milestone 25 dashboard dev
-runtime smoke completed with fake/default dispatch. Actual paper trading operations remain
-deferred, frozen paper evidence is absent, and Level 4 is not ready.
+runtime smoke completed with fake/default dispatch. Milestone 26B records Vercel dashboard
+deployment evidence: the preview deployment
+`https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app` exists, and an accidental
+production deployment/alias also exists at
+`https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` and
+`https://ai-trading-bot-silk.vercel.app`. These are dashboard-only static/read-only artifacts, not
+worker or execution deployments. Actual paper trading operations remain deferred, frozen paper
+evidence is absent, and Level 4 is not ready.
 
 Implemented pieces:
 
@@ -409,6 +415,20 @@ preview harness. The preview uses only safe public environment values, has no or
 does not deploy workers or execution services, and does not call broker, Temporal, AI/news,
 database, or alert providers from browser code. The generated Vercel preview URL is sufficient;
 no custom domain is required. Production dashboard deployment remains deferred.
+
+Milestone 26B deployment audit evidence:
+
+- Preview deployment URL: `https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app`.
+- Accidental production deployment URL:
+  `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app`.
+- Accidental production alias: `https://ai-trading-bot-silk.vercel.app`.
+- The production alias served the expected static/read-only dashboard artifact during audit.
+- Deployment-specific preview/production URLs were Vercel-ready but anonymously protected with HTTP
+  401, so their page content was not publicly inspectable by unauthenticated HTTP.
+- No workers, backend runtime, broker/API/provider/Temporal/database/Telegram browser calls,
+  secrets, or order-entry controls are part of the dashboard artifact.
+- Future production deployments require explicit approval/gates; do not run `vercel --prod` as
+  part of preview-only milestones.
 
 ## Database Runtime
 

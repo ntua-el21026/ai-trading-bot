@@ -365,6 +365,21 @@ order-entry UI exists, and no browser-side broker, Temporal, AI/news, database, 
 present. A Vercel preview may be created only after the explicit preview gates are loaded. Do not
 run `vercel --prod`; the generated preview URL is sufficient and no custom domain is required.
 
+Milestone 26B deployment evidence:
+
+- Preview deployment: `https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app`.
+- Accidental production deployment:
+  `https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app`.
+- Accidental production alias: `https://ai-trading-bot-silk.vercel.app`.
+- Audit result: the production alias served the static/read-only dashboard. The deployment-specific
+  preview and production URLs were Vercel-ready but anonymously protected with HTTP 401.
+- No workers, execution services, backend runtime, frontend secrets, order-entry controls, or
+  browser-side broker/AI/news/Temporal/database/Telegram privileged calls were verified in the
+  dashboard artifact.
+
+Future production deployments require explicit approval/gates. Preview-only milestones must not run
+`vercel --prod`.
+
 ## Current Validation Operations
 
 Validation is currently fixture and contract based:
