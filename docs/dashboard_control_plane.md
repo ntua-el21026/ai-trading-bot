@@ -15,6 +15,12 @@ default, and reports sanitized evidence only. It does not deploy, activate sched
 Temporal control signals by default, call broker APIs, call AI/news providers, send Telegram
 alerts, or start paper trading operations.
 
+Milestone 26 adds a dashboard-only Vercel preview harness. The preview is static/read-only, uses
+only safe public environment values, excludes workers and backend packages from the Vercel upload,
+and can be checked with `scripts/check_vercel_dashboard_preview.py`. The generated Vercel preview
+URL is sufficient; no custom domain is required. This is not actual paper trading, frozen paper
+evidence, production deployment, or Level 4 readiness.
+
 ## Implemented Contracts
 
 - `packages/control_plane/models.py` defines read-only dashboard view models and auditable control
@@ -26,8 +32,12 @@ alerts, or start paper trading operations.
 - `packages/control_plane/security.py` defines frontend secret-reference guardrails.
 - `apps/api/app/control_plane.py` is a server-side API contract that maps safe control actions to
   existing Temporal signal names and can read snapshots from the ledger provider.
-- `apps/dashboard/` is a minimal scaffold with safe public environment selection and no frontend
-  framework dependency.
+- `apps/dashboard/` is a minimal static preview scaffold with safe public environment selection and
+  no frontend framework dependency.
+- `vercel.json` builds only the static dashboard preview output and does not define workers,
+  functions, or schedules.
+- `.vercelignore` excludes local env files, worker/backend packages, scripts, tests, docs, config,
+  and generated runtime state from preview uploads.
 
 ## Dashboard Views
 
@@ -79,9 +89,9 @@ Temporal-dev signal check must be explicitly gated and harmless.
 Dashboard/frontend code may only expose explicitly safe public values. It must not reference broker
 credentials, AI/news provider keys, privileged database URLs, or Temporal API keys.
 
-Current implementation does not add Vercel deployment files, frontend dependencies, real Temporal
-clients, browser-side Temporal calls, frontend secrets, Telegram bot access, or production dashboard
-deployment.
+Current implementation adds dashboard-only Vercel preview files but no frontend dependencies, real
+Temporal clients, browser-side Temporal calls, frontend secrets, Telegram bot access, workers, or
+production dashboard deployment.
 
 Telegram alert delivery added in Milestone 23 is server-side and operator-facing only. Dashboard and
 frontend code must not expose Telegram tokens/chat IDs, broker credentials, AI/news provider keys,
@@ -92,9 +102,12 @@ default-refusing smoke harness connects only when explicit dev gates are present
 workflow with fake/local activity behavior, and creates no schedules. Dashboard/browser code still
 must not hold Temporal API keys or connect directly to Temporal Cloud.
 
-Milestone 25 keeps Vercel dashboard-only and does not deploy. The optional future preview gates
-`RUN_VERCEL_DASHBOARD_PREVIEW` and `VERCEL_DASHBOARD_PREVIEW_CONFIRM` are placeholders only; this
-milestone refuses deployment mode.
+Milestone 26 keeps Vercel dashboard-only. Preview deployment is allowed only with
+`RUN_VERCEL_DASHBOARD_PREVIEW=1` and
+`VERCEL_DASHBOARD_PREVIEW_CONFIRM=DASHBOARD_ONLY_NO_SECRETS_NO_WORKERS`. The preview must use only
+`NEXT_PUBLIC_APP_ENV` and `NEXT_PUBLIC_DASHBOARD_ENV`; no broker, AI/news, database, Temporal, or
+Telegram secrets may be exposed to frontend code. The preview does not include order-entry controls
+and cannot enable live trading or autonomous execution.
 
 ## Ledger Read Models
 
@@ -125,6 +138,6 @@ through backend read-model contracts without frontend secrets or external provid
 micro-live decision: safe read models, no frontend secrets, no browser-side broker/AI/news/Temporal
 calls, no order-entry controls, server-side control routing, and operator-tested kill-switch,
 pause-new-risk, force-reconciliation, force-report, acknowledge-incident, and resume-after-review
-paths. Current dashboard/control-plane implementation has local ledger read models and contract
-tests plus a dev runtime smoke harness, but it is not deployed and does not provide production
-dashboard evidence.
+paths. Current dashboard/control-plane implementation has local ledger read models, contract tests,
+a dev runtime smoke harness, and a dashboard-only static preview harness. The preview is not
+production dashboard evidence and does not satisfy Level 4 readiness by itself.

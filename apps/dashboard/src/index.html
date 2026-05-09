@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Trading Bot Dashboard Preview</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell" aria-label="Read-only dashboard preview">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Dashboard Preview</p>
+          <h1>AI Trading Bot Control Plane</h1>
+        </div>
+        <dl class="env-grid" aria-label="Preview environment">
+          <div>
+            <dt>App environment</dt>
+            <dd>{{NEXT_PUBLIC_APP_ENV}}</dd>
+          </div>
+          <div>
+            <dt>Dashboard environment</dt>
+            <dd>{{NEXT_PUBLIC_DASHBOARD_ENV}}</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="status-band" aria-label="Safety state">
+        <article>
+          <span class="label">Live trading</span>
+          <strong>Disabled</strong>
+        </article>
+        <article>
+          <span class="label">Autonomous execution</span>
+          <strong>Disabled</strong>
+        </article>
+        <article>
+          <span class="label">Paper operations</span>
+          <strong>Not started</strong>
+        </article>
+        <article>
+          <span class="label">Level 4 readiness</span>
+          <strong>Not ready</strong>
+        </article>
+      </section>
+
+      <section class="grid" aria-label="Read-only dashboard sections">
+        <article class="panel wide">
+          <h2>System State</h2>
+          <ul class="facts">
+            <li><span>Mode</span><strong>Paper configuration</strong></li>
+            <li><span>Preview behavior</span><strong>Static read-only snapshot</strong></li>
+            <li><span>Controls</span><strong>No order-entry controls</strong></li>
+            <li><span>Backend status</span><strong>Not connected in preview</strong></li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h2>Milestone Evidence</h2>
+          <ul class="timeline">
+            <li>Paper broker read-only smoke passed</li>
+            <li>Controlled paper lifecycle smoke completed and cleaned up</li>
+            <li>Provider-first news and structured AI smokes completed</li>
+            <li>Telegram delivery smoke completed</li>
+            <li>Temporal Cloud dev smoke completed without schedules</li>
+            <li>Dashboard dev runtime smoke completed with fake dispatch</li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h2>Runtime Status</h2>
+          <ul class="facts">
+            <li><span>Control plane</span><strong>Preview only</strong></li>
+            <li><span>Temporal dev</span><strong>Evidence recorded</strong></li>
+            <li><span>Broker status</span><strong>Smoke evidence only</strong></li>
+            <li><span>AI/news status</span><strong>Smoke evidence only</strong></li>
+            <li><span>Alerting status</span><strong>Smoke evidence only</strong></li>
+          </ul>
+        </article>
+
+        <article class="panel wide">
+          <h2>Pending Blockers</h2>
+          <ul class="blockers">
+            <li>Actual controlled paper trading operations have not started</li>
+            <li>Frozen paper evidence is absent</li>
+            <li>Live trading remains disabled</li>
+            <li>Level 4 readiness remains unsatisfied</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

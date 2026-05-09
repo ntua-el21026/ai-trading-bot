@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-25
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-26
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -15,8 +15,9 @@ gated Telegram smoke harness. Milestone 24 adds Temporal Cloud dev runtime helpe
 default-refusing Cloud smoke harness for harmless workflow execution with fake/local activities.
 Milestone 25 adds dashboard/control-plane dev runtime smoke coverage for read-only snapshots,
 runtime status sections, safe control schemas, fake/default dispatch, and frontend secret
-guardrails. This does not validate actual paper trading operations, production dashboard
-deployment, production schedule activation, live trading, or profitability.
+guardrails. Milestone 26 adds static dashboard preview build/config checks for Vercel
+dashboard-only preview deployment. This does not validate actual paper trading operations,
+production dashboard deployment, production schedule activation, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -263,8 +264,8 @@ Current blockers:
 - Alpaca paper read-only smoke evidence exists for account/open-order/position/clock reads; the
   controlled paper order-lifecycle smoke has passed through the gated harness. This is smoke
   evidence only, not actual paper trading operations or frozen paper evidence.
-- Dashboard/control-plane dev runtime smoke exists and uses fake/default dispatch. Real dashboard
-  deployment is deferred.
+- Dashboard/control-plane dev runtime smoke exists and uses fake/default dispatch. Dashboard-only
+  Vercel preview harness/build guardrails exist, but production dashboard deployment is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram smoke harness
   exist. Real Telegram smoke evidence has run through gated paths.
 - Live trading remains disabled.

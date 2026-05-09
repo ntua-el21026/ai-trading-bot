@@ -1715,6 +1715,13 @@ No autonomous order execution runs on Vercel.
 No broker credentials are exposed to Vercel frontend.
 ```
 
+Milestone 26 may use a minimal static Vercel preview harness as an interim dashboard-only
+validation artifact when no frontend framework has been introduced yet. This preview must expose
+only approved public environment values, include no order-entry controls, run no workers or
+execution services, and make no broker, AI/news, database, Temporal, or alert-provider calls from
+browser code. The static preview does not replace the final dashboard target, does not constitute
+production deployment evidence, and does not satisfy paper trading or Level 4 readiness.
+
 ### 18.3 Production Data Policy
 
 ```text

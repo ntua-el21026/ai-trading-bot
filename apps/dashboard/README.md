@@ -1,6 +1,6 @@
-# Dashboard Contract
+# Dashboard Preview Contract
 
-This directory is a minimal dashboard scaffold. No frontend framework is installed.
+This directory is a minimal static dashboard preview scaffold. No frontend framework is installed.
 
 The dashboard is read-only monitoring plus safe control-plane actions routed through backend
 contracts. It must not contain broker credentials, AI provider credentials, order-entry forms,
@@ -14,3 +14,8 @@ not deploy, activate schedules, send Telegram alerts, call broker APIs, call AI/
 send real Temporal control signals by default.
 
 Allowed public environment names are defined in `public_env.py`.
+
+Milestone 26 adds `build-preview.mjs` and static preview files under `src/`. The preview displays
+safe placeholder status only: dev/preview labels, disabled live trading, disabled autonomous
+execution, paper-operation and Level 4 blockers, milestone smoke evidence, and pending evidence
+gaps. It does not connect to backend services from the browser and does not deploy workers.

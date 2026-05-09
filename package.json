@@ -1,0 +1,14 @@
+{
+  "name": "ai-trading-bot-dashboard-preview",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Static read-only dashboard preview for the AI trading bot control plane.",
+  "scripts": {
+    "build": "node apps/dashboard/build-preview.mjs",
+    "lint": "PYTHONPATH=. python scripts/check_vercel_dashboard_preview.py --frontend-only",
+    "test": "PYTHONPATH=. python scripts/check_vercel_dashboard_preview.py --frontend-only"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

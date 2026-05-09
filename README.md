@@ -10,12 +10,13 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 25 dashboard/control-plane dev runtime wiring with offline default
+This repository is at Milestone 26 Vercel dashboard preview harness wiring with offline default
 tests, fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B
 completed a controlled Alpaca paper order-lifecycle smoke with final target-symbol state
 clean/flat; Milestone 22 real provider/OpenAI smokes, Milestone 23 real Telegram smoke, and
-Milestone 24 Temporal Cloud dev smoke have also run through gated paths. Actual paper trading
-operations remain deferred, frozen paper evidence is absent, and Level 4 is not ready.
+Milestone 24 Temporal Cloud dev smoke have also run through gated paths. Milestone 25 dashboard dev
+runtime smoke completed with fake/default dispatch. Actual paper trading operations remain
+deferred, frozen paper evidence is absent, and Level 4 is not ready.
 
 Implemented pieces:
 
@@ -129,8 +130,9 @@ Implemented pieces:
 - dashboard/control-plane dev runtime smoke harness that builds a fake/local snapshot, validates
   safe controls through a fake dispatcher by default, refuses managed DB/deployment modes, and
   performs no broker, AI/news, alert, schedule, or deployment side effects
-- minimal `apps/api/` and `apps/dashboard/` scaffolds with frontend environment guardrails and no
-  frontend framework dependencies
+- minimal `apps/api/` and static `apps/dashboard/` scaffolds with frontend environment guardrails,
+  no frontend framework dependencies, and a dashboard-only Vercel preview configuration that
+  excludes workers, backend packages, scripts, tests, local env files, and privileged secrets
 - validation harness contracts for spec-defined backtest splits, benchmarks, costs, ablations,
   Monte Carlo placeholders, failure simulations, and paper dry-run checks
 - paper trading runbook, daily/weekly checklist templates, report templates, incident response flow,
@@ -155,7 +157,7 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- production dashboard UI/deployment
+- production dashboard deployment
 - Email/Resend delivery, intentionally deferred as a possible future secondary channel
 - production Temporal query/signal backend integration
 - production worker/schedule activation
@@ -235,6 +237,15 @@ Run Milestone 25 dashboard/control-plane runtime tests and the fake/local smoke:
 ```bash
 uv run --group dev pytest tests/unit/test_control_plane_models.py tests/unit/test_control_plane_api.py tests/unit/test_dashboard_read_models.py tests/unit/test_dashboard_env_security.py tests/unit/test_dashboard_control_plane_runtime.py
 uv run python scripts/check_dashboard_control_plane_runtime.py
+```
+
+Run Milestone 26 dashboard preview guardrails and static build:
+
+```bash
+uv run --group dev pytest tests/unit/test_vercel_dashboard_preview.py tests/unit/test_dashboard_env_security.py
+npm run lint
+npm run build
+uv run python scripts/check_vercel_dashboard_preview.py
 ```
 
 Run Milestone 16 fake/local paper dry-run orchestration tests:
@@ -393,7 +404,11 @@ behind explicit real-delivery gates and a smoke harness. Telegram is operator-fa
 not submit orders, modify stops, change risk, mutate strategy, or act as a command interface.
 Email/Resend is intentionally deferred as a possible future secondary channel. Dashboard read models
 can be built from ledger repositories, and Milestone 25 adds a dev runtime smoke for read-only
-snapshots plus safe fake-dispatched controls, but real dashboard deployment is still deferred.
+snapshots plus safe fake-dispatched controls. Milestone 26 adds a static dashboard-only Vercel
+preview harness. The preview uses only safe public environment values, has no order-entry controls,
+does not deploy workers or execution services, and does not call broker, Temporal, AI/news,
+database, or alert providers from browser code. The generated Vercel preview URL is sufficient;
+no custom domain is required. Production dashboard deployment remains deferred.
 
 ## Database Runtime
 

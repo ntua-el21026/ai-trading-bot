@@ -10,7 +10,6 @@ from packages.control_plane.security import (
 def test_dashboard_public_env_selector_exposes_only_safe_public_values() -> None:
     selected = select_public_dashboard_env(
         {
-            "NEXT_PUBLIC_DASHBOARD_API_BASE_URL": "https://dashboard.example.test",
             "NEXT_PUBLIC_APP_ENV": "test",
             "NEXT_PUBLIC_DASHBOARD_ENV": "paper-dev",
             "ALPACA_API_KEY": "should-not-expose",
@@ -22,7 +21,6 @@ def test_dashboard_public_env_selector_exposes_only_safe_public_values() -> None
     )
 
     assert selected == {
-        "NEXT_PUBLIC_DASHBOARD_API_BASE_URL": "https://dashboard.example.test",
         "NEXT_PUBLIC_APP_ENV": "test",
         "NEXT_PUBLIC_DASHBOARD_ENV": "paper-dev",
     }

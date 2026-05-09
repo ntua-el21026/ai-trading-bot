@@ -6,7 +6,11 @@ AI_Trading_Bot/
 │   │   │   └── control_plane.py
 │   │   └── __init__.py
 │   ├── dashboard/
+│   │   ├── src/
+│   │   │   ├── index.html
+│   │   │   └── styles.css
 │   │   ├── __init__.py
+│   │   ├── build-preview.mjs
 │   │   ├── public_env.py
 │   │   └── README.md
 │   ├── workers/
@@ -223,6 +227,7 @@ AI_Trading_Bot/
 │   ├── check_ledger_database.py
 │   ├── check_telegram_alert_delivery.py
 │   ├── check_temporal_cloud_runtime.py
+│   ├── check_vercel_dashboard_preview.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
@@ -287,14 +292,19 @@ AI_Trading_Bot/
 │       ├── test_temporal_cloud_runtime.py
 │       ├── test_temporal_config.py
 │       ├── test_universe.py
-│       └── test_validation_harness.py
+│       ├── test_validation_harness.py
+│       └── test_vercel_dashboard_preview.py
 ├── .env.example
 ├── .gitattributes
 ├── .gitignore
+├── .vercelignore
 ├── AGENTS.md
 ├── LICENSE
+├── package-lock.json
+├── package.json
 ├── pyproject.toml
 ├── README.md
-└── uv.lock
+├── uv.lock
+└── vercel.json
 
-Total directories: 44, Total files: 254
+Total directories: 45, Total files: 263

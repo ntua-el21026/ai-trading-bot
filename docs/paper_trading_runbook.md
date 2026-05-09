@@ -2,8 +2,8 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 25 adds dashboard/control-plane dev runtime wiring while paper trading remains disabled.
-The repository still does not implement actual paper trading operations, production dashboard
+Milestone 26 adds a dashboard-only Vercel preview harness while paper trading remains disabled. The
+repository still does not implement actual paper trading operations, production dashboard
 deployment, frozen paper evidence, Level 4 readiness, or live trading.
 
 ## Purpose And Constraints
@@ -37,7 +37,9 @@ order-lifecycle smoke harness that refuses by default, and a Telegram alert deli
 that refuses by default. Milestone 24 adds a Temporal Cloud dev smoke harness that refuses by
 default and uses fake/local activities only when gated. Milestone 25 adds a dashboard/control-plane
 dev runtime smoke that builds fake/local read-only snapshots and validates safe controls through a
-fake dispatcher by default. It does not connect those contracts to autonomous order-writing paper
+fake dispatcher by default. Milestone 26 adds a static dashboard-only Vercel preview harness with
+no workers, no order-entry controls, no secrets, and no browser-side privileged service calls. It
+does not connect those contracts to autonomous order-writing paper
 execution, production managed database activity wiring, production schedule activation, production
 dashboard deployment, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI
 smoke tests remain opt-in and skipped/refused unless explicit gates and local secrets are present.

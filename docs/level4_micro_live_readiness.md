@@ -2,10 +2,10 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 25 adds a dashboard/control-plane dev runtime smoke harness while preserving the readiness
-boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
-calls in default tests, actual paper trading operations, live orders, production schedules,
-deployment, expanded Level 4, or Level 5. Email/Resend remains deferred.
+Milestone 26 adds a dashboard-only Vercel preview harness while preserving the readiness boundary.
+It does not enable live trading, autonomous live execution, live credentials, real Alpaca calls in
+default tests, actual paper trading operations, live orders, production schedules, execution
+services on Vercel, expanded Level 4, or Level 5. Email/Resend remains deferred.
 
 ## Purpose And Scope
 
@@ -60,7 +60,10 @@ Known status:
   smoke gates; real provider/OpenAI smoke evidence has run through gated paths but is not paper
   trading evidence.
 - Dashboard/control-plane dev runtime smoke exists and validates read-only snapshots plus safe
-  control mappings through fake/default dispatch. Real dashboard deployment is deferred.
+  control mappings through fake/default dispatch.
+- Dashboard-only Vercel preview harness exists with static read-only output, safe public env values,
+  no workers, no order-entry controls, and no privileged browser-side calls. It is not production
+  dashboard deployment evidence.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
   harness exist. Real Telegram smoke evidence has run through gated paths, while Email/Resend
   remains deferred.
@@ -349,8 +352,9 @@ Required evidence:
   incidents, and resume after review through approved server-side paths.
 
 Current status: read models, ledger-backed dashboard snapshots, safe control contracts, fixture
-dispatch, frontend env guardrails, and local Temporal SDK signal/query tests exist. Real dashboard
-deployment and production Temporal backend evidence are pending.
+dispatch, frontend env guardrails, local Temporal SDK signal/query tests, and a dashboard-only
+Vercel preview harness exist. Real production dashboard deployment and production Temporal backend
+evidence are pending.
 
 ## Slippage And Fill-Quality Evidence
 

@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Through Milestone 25, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Through Milestone 26, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
@@ -203,6 +203,8 @@ preserving risk-reducing exits.
 Dashboard/control-plane actions map only to safe signal names through server-side contracts under
 `apps/api/app/control_plane.py`. The Milestone 25 dev runtime smoke validates these mappings through
 a fake dispatcher by default; browser/dashboard code must not call Temporal directly.
+Milestone 26 keeps Vercel dashboard-only: the static preview does not run workers, connect to
+Temporal from browser code, activate schedules, or expose Temporal credentials.
 
 ## Queries
 

@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 25 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 26 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does
@@ -20,6 +20,8 @@ keeping Email/Resend deferred, plus a Temporal Cloud dev smoke harness that refu
 uses fake/local activities only. Milestone 25 adds dashboard/control-plane dev runtime wiring with
 fake/local read models, safe control validation, fake/default dispatch, and a smoke harness that
 does not deploy or perform external side effects.
+Milestone 26 adds a dashboard-only Vercel preview harness with static output and no workers,
+execution services, schedules, secrets, broker calls, AI/news calls, or alerts.
 
 ## Current Foundation Operations
 
@@ -348,7 +350,20 @@ uv run python scripts/check_dashboard_control_plane_runtime.py
 This builds a fake/local snapshot, validates required dashboard sections, validates safe control
 requests, dispatches through the fake dispatcher, and prints sanitized status only. Real Temporal
 control signals are disabled by default. Managed DB dashboard runtime and Vercel preview deployment
-are refused in this milestone.
+are refused by this dev runtime smoke; Vercel preview uses the separate Milestone 26 harness.
+
+Dashboard preview behavior:
+
+```bash
+npm run build
+uv run python scripts/check_vercel_dashboard_preview.py
+```
+
+The preview check validates that Vercel is dashboard-only, workers and backend packages are
+excluded, only safe public environment values are used, no frontend secrets are referenced, no
+order-entry UI exists, and no browser-side broker, Temporal, AI/news, database, or alert calls are
+present. A Vercel preview may be created only after the explicit preview gates are loaded. Do not
+run `vercel --prod`; the generated preview URL is sufficient and no custom domain is required.
 
 ## Current Validation Operations
 
