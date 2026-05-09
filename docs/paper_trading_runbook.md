@@ -2,10 +2,9 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 23 adds gated Telegram alert delivery boundaries while paper trading
-remains disabled. The repository still does not implement actual paper trading operations, retained
-real Alpaca paper order-lifecycle write evidence, production dashboard deployment, frozen paper
-evidence, Level 4 readiness, or live trading.
+Milestone 24 adds gated Temporal Cloud dev runtime wiring while paper trading remains disabled. The
+repository still does not implement actual paper trading operations, production dashboard
+deployment, frozen paper evidence, Level 4 readiness, or live trading.
 
 ## Purpose And Constraints
 
@@ -35,10 +34,11 @@ dry-run checks, fake/local end-to-end dry-run orchestration, local ledger reposi
 managed repository CRUD validation, safe local/fake Temporal activity tests, and fake broker
 activity tests. It also provides an opt-in read-only Alpaca paper smoke command, a separate gated
 order-lifecycle smoke harness that refuses by default, and a Telegram alert delivery smoke harness
-that refuses by default. It does not connect those contracts to autonomous order-writing paper
-execution, production managed database activity wiring, or actual paper execution orchestration yet.
-Milestone 22 provider/OpenAI smoke tests remain
-opt-in and skipped/refused unless explicit gates and local secrets are present.
+that refuses by default. Milestone 24 adds a Temporal Cloud dev smoke harness that refuses by
+default and uses fake/local activities only when gated. It does not connect those contracts to
+autonomous order-writing paper execution, production managed database activity wiring, production
+schedule activation, or actual paper execution orchestration yet. Milestone 22 provider/OpenAI
+smoke tests remain opt-in and skipped/refused unless explicit gates and local secrets are present.
 
 The safe local dry-run command is:
 
@@ -65,10 +65,11 @@ Milestone 20 read-only smoke status: passed after corrected local paper credenti
 This proves paper account connectivity and normalized read-only mapping only. It is not actual paper
 trading and it does not validate the paper order lifecycle.
 
-Milestone 21B status: the real paper order-lifecycle smoke was run through gated paper broker
-preflight and refused safely before write operations because the Alpaca paper clock was closed. No
-order was submitted, no stop was submitted, no cleanup was needed, and actual paper trading did not
-start. Real paper write-lifecycle evidence remains pending for an open paper-market session.
+Milestone 21B status: the real paper order-lifecycle smoke completed through the gated harness. It
+used the paper endpoint, submitted and acknowledged one tiny smoke entry, verified the protective
+stop after fill, performed cleanup, cancelled smoke-created orders after cleanup, verified final
+target-symbol state clean/flat, and printed sanitized evidence only. It was a controlled smoke, not
+actual paper trading operations, not frozen paper evidence, and not Level 4 readiness.
 
 The Alpaca paper order-lifecycle smoke harness is also opt-in and must not be treated as paper
 trading:
@@ -108,6 +109,10 @@ Required environment variable names only:
 - `TEMPORAL_API_KEY`
 - `TEMPORAL_TLS_CERT`
 - `TEMPORAL_TLS_KEY`
+- `RUN_TEMPORAL_CLOUD_SMOKE`
+- `TEMPORAL_CLOUD_SMOKE_CONFIRM`
+- `TEMPORAL_CLOUD_SMOKE_TASK_QUEUE`
+- `TEMPORAL_CLOUD_SMOKE_WORKFLOW`
 - `ALPACA_API_KEY`
 - `ALPACA_SECRET_KEY`
 - `ALPACA_BASE_URL`
@@ -220,6 +225,8 @@ Complete this checklist before every paper session:
 - Confirm dashboard/frontend code has no broker or AI/news provider secrets.
 - Confirm Telegram alert delivery gates are configured only for an intentional smoke, or record
   that default fake/fail-closed alert behavior is active.
+- Confirm Temporal Cloud dev smoke gates are configured only for an intentional dev-namespace
+  smoke, or record that default local/fake Temporal behavior is active.
 - Confirm operator knows the manual kill-switch and pause-new-risk control paths.
 
 ## Startup Procedure
@@ -228,6 +235,8 @@ This procedure is target-state documentation until real services are wired.
 
 1. Confirm the pre-run safety checklist.
 2. Start or verify Temporal service availability.
+   - Use `uv run python scripts/check_temporal_cloud_runtime.py` for the explicitly gated Temporal
+     Cloud dev smoke only; it does not create schedules or call real broker/AI/news/alert services.
 3. Start workers on required task queues:
    - `market-data-task-queue`
    - `strategy-task-queue`

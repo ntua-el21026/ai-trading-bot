@@ -38,6 +38,7 @@ AI_Trading_Bot/
 │   │   │   ├── retry_policies.py
 │   │   │   ├── signals.py
 │   │   │   ├── temporal_client.py
+│   │   │   ├── temporal_cloud_smoke.py
 │   │   │   ├── types.py
 │   │   │   └── worker.py
 │   │   └── __init__.py
@@ -219,6 +220,7 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_ledger_database.py
 │   ├── check_telegram_alert_delivery.py
+│   ├── check_temporal_cloud_runtime.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
@@ -279,6 +281,7 @@ AI_Trading_Bot/
 │       ├── test_strategy_exits.py
 │       ├── test_strategy_signals.py
 │       ├── test_telegram_alerting.py
+│       ├── test_temporal_cloud_runtime.py
 │       ├── test_temporal_config.py
 │       ├── test_universe.py
 │       └── test_validation_harness.py
@@ -291,4 +294,4 @@ AI_Trading_Bot/
 ├── README.md
 └── uv.lock
 
-Total directories: 44, Total files: 248
+Total directories: 44, Total files: 251

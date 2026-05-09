@@ -10,10 +10,12 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 
 ## Current Status
 
-This repository is at Milestone 23 Telegram alert delivery harness integration with offline default
-tests and fake/local trading defaults. Milestone 21B reached the gated Alpaca paper broker preflight
-and refused safely because the paper market clock was closed; real paper order-lifecycle write
-evidence remains pending for an open paper-market session.
+This repository is at Milestone 24 Temporal Cloud dev runtime wiring with offline default tests,
+fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B completed a
+controlled Alpaca paper order-lifecycle smoke with final target-symbol state clean/flat; Milestone
+22 real provider/OpenAI smokes and Milestone 23 real Telegram smoke have also run through gated
+paths. Actual paper trading operations remain deferred, frozen paper evidence is absent, and Level
+4 is not ready.
 
 Implemented pieces:
 
@@ -28,6 +30,8 @@ Implemented pieces:
 - live/research universe filter scaffolding
 - deterministic backtest models, metrics, and explicit-signal engine skeleton
 - Temporal SDK dependency and typed Temporal client bootstrap
+- Temporal Cloud dev client settings, API-key/TLS connection helper, and default-refusing smoke
+  harness for a harmless `KillSwitchWorkflow` run with fake/local activities only
 - Temporal task queue mapping for the spec-defined queues
 - workflow skeletons and safe Temporal activity contracts under `apps/workers/`
 - signal, query, and retry-policy contracts
@@ -146,12 +150,9 @@ Not implemented yet:
 
 - actual end-to-end paper trading operations with real provider and broker side effects
 - real Alpaca SDK-backed runtime wiring
-- real Alpaca paper order lifecycle smoke-test write evidence; the last 21B attempt refused safely
-  before writes because the Alpaca paper clock was closed
-- real provider/OpenAI smoke evidence if the explicit provider/OpenAI gates have not been run
+- retained Temporal Cloud dev smoke evidence if the explicit Temporal Cloud smoke gates have not
+  been run
 - production dashboard UI/deployment
-- retained real Telegram alert delivery evidence if the explicit Telegram smoke gates have not been
-  run
 - Email/Resend delivery, intentionally deferred as a possible future secondary channel
 - production Temporal query/signal backend integration
 - production worker/schedule activation
@@ -217,6 +218,13 @@ Run Milestone 23 Telegram alerting tests and the default-skipped/explicitly gate
 uv run --group dev pytest tests/unit/test_alerting.py tests/unit/test_telegram_alerting.py
 uv run --group dev pytest tests/integration/test_telegram_alert_delivery_smoke.py
 uv run python scripts/check_telegram_alert_delivery.py
+```
+
+Run Milestone 24 Temporal Cloud runtime tests and the default-refusing smoke:
+
+```bash
+uv run --group dev pytest tests/unit/test_temporal_config.py tests/unit/test_temporal_cloud_runtime.py tests/temporal
+uv run python scripts/check_temporal_cloud_runtime.py
 ```
 
 Run Milestone 16 fake/local paper dry-run orchestration tests:

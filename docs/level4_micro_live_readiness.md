@@ -2,7 +2,7 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Milestone 23 adds a Telegram-only real alert delivery harness while preserving the readiness
+Milestone 24 adds a Temporal Cloud dev runtime smoke harness while preserving the readiness
 boundary. It does not enable live trading, autonomous live execution, live credentials, real Alpaca
 calls in default tests, actual paper trading operations, live orders, production schedules, expanded
 Level 4, or Level 5. Email/Resend remains deferred.
@@ -38,41 +38,39 @@ Current conclusion: **Not ready for Level 4 micro-live**.
 
 Known status:
 
-- Milestones 00-22 are complete as local/offline code, opt-in validation scaffolding, local
+- Milestones 00-24 are complete as local/offline code, opt-in validation scaffolding, local
   Temporal SDK test-server/replay coverage, opt-in Alpaca paper read-only smoke tooling, and a
-  default-refusing gated paper order-lifecycle smoke harness, plus provider/OpenAI/calibration
-  boundaries with offline default tests.
+  default-refusing gated paper order-lifecycle smoke harness, plus provider/OpenAI/calibration,
+  Telegram alerting, and Temporal Cloud dev runtime boundaries with offline default tests.
 - Paper trading operations have not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
   Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist.
 - Paper-only Alpaca adapter, fake broker activity boundaries, passing opt-in read-only paper smoke
-  evidence, and a gated order-lifecycle smoke harness exist. The latest 21B write-smoke attempt
-  reached gated paper preflight and refused before writes because the Alpaca paper clock was closed;
-  retained real paper order lifecycle write evidence is still absent.
+  evidence, and a gated order-lifecycle smoke harness exist. Milestone 21B controlled paper
+  order-lifecycle smoke evidence has passed with final target-symbol state clean/flat. This remains
+  smoke evidence only, not actual paper trading operations or frozen paper evidence.
 - Fake/local paper dry-run orchestration exists and produces local ledger/report/dashboard evidence,
   but it is not actual paper trading evidence.
-- Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
-  integration is deferred.
+- Local Temporal SDK test-server/replay coverage exists; Milestone 24 adds a gated Temporal Cloud
+  dev smoke harness. Production schedule activation and actual paper-operation worker evidence are
+  still deferred.
 - Provider-first Marketaux/Alpha Vantage and OpenAI structured-analysis support exists with opt-in
-  smoke gates; real provider/OpenAI smoke evidence is required if not separately run and retained.
+  smoke gates; real provider/OpenAI smoke evidence has run through gated paths but is not paper
+  trading evidence.
 - Real dashboard deployment is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram delivery
-  harness exist. Retained real Telegram smoke evidence is required if the explicit gates have not
-  been run.
+  harness exist. Real Telegram smoke evidence has run through gated paths, while Email/Resend
+  remains deferred.
 - Live trading remains disabled.
 - Autonomous live execution remains disabled.
 
 Hard blockers:
 
 - No production managed database activity wiring evidence.
-- No production Temporal backend/live worker evidence.
-- No retained real Alpaca paper order lifecycle write evidence or paper execution evidence.
-- No controlled real paper operations evidence.
-- No retained real provider/OpenAI smoke evidence unless separately gated and run.
-- No production Temporal query/signal backend evidence.
-- No retained real Telegram alert delivery evidence unless the explicit smoke has been run and
-  recorded.
+- No actual paper-operation worker evidence or schedule activation evidence.
+- No controlled real paper operations evidence beyond the one-shot smoke.
+- No production Temporal schedule evidence.
 - No frozen paper run evidence.
 - No Level 4 go/no-go report.
 
@@ -182,6 +180,10 @@ Variable names only:
 - `TEMPORAL_ADDRESS`
 - `TEMPORAL_NAMESPACE`
 - `TEMPORAL_API_KEY`
+- `RUN_TEMPORAL_CLOUD_SMOKE`
+- `TEMPORAL_CLOUD_SMOKE_CONFIRM`
+- `TEMPORAL_CLOUD_SMOKE_TASK_QUEUE`
+- `TEMPORAL_CLOUD_SMOKE_WORKFLOW`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
@@ -269,12 +271,11 @@ Required evidence:
 Current status: deterministic reconciliation contracts and fixture tests exist, local ledger
 schema/repository/activity foundations exist, opt-in managed DB CRUD validation is available, and
 local Temporal SDK signal/query tests cover the reconciliation workflow. Read-only paper smoke
-evidence validates account/open-order/position/clock reads through explicit gates. The Milestone 21A
-order-lifecycle harness can produce sanitized smoke evidence only when separately write-gated; by
-default it refuses before broker write calls. The latest 21B attempt refused safely before writes
-because the paper clock was closed. Real broker stream, retained order-lifecycle write evidence,
-REST fallback during active orders, production managed database activity wiring, and Temporal/DB
-consistency evidence are pending.
+evidence validates account/open-order/position/clock reads through explicit gates. The controlled
+Milestone 21B order-lifecycle smoke has produced sanitized write-lifecycle evidence with final
+target-symbol state clean/flat. Real broker stream evidence, REST fallback during active orders,
+production managed database activity wiring, actual paper-operation worker evidence, and
+Temporal/DB consistency evidence are pending.
 
 ## Protective Stop Evidence
 

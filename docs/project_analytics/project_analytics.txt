@@ -1,8 +1,8 @@
 ===== ANALYSIS (With .gitignore) =====
 
 Total directories: 44
-Total files      : 248
-Total lines      : 44,530
+Total files      : 251
+Total lines      : 45,143
 
 By language / type:
   Asset/PDF            Files:   4  Lines: 0
@@ -10,12 +10,12 @@ By language / type:
   GitIgnore            Files:   1  Lines: 85
   License              Files:   1  Lines: 21
   Lockfile             Files:   1  Lines: 557
-  Markdown             Files:  49  Lines: 13,772
-  Other                Files:   1  Lines: 76
-  Python               Files: 178  Lines: 29,147
+  Markdown             Files:  49  Lines: 13,854
+  Other                Files:   1  Lines: 80
+  Python               Files: 181  Lines: 29,671
   SQL                  Files:   1  Lines: 236
   TOML                 Files:   1  Lines: 59
-  Text                 Files:   2  Lines: 316
+  Text                 Files:   2  Lines: 319
   YAML                 Files:   8  Lines: 215
 
 Extensions grouped into Other:

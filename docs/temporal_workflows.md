@@ -2,23 +2,26 @@
 
 The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
 
-Through Milestone 23, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
+Through Milestone 24, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
 contracts using fake Alpaca clients by default, reporting/alerting/dashboard read-model activity
 contracts using local ledger repositories and fake alert adapters by default, fake/local paper
 dry-run orchestration, managed Postgres/Supabase runtime helpers, provider placeholder activity
 boundaries, Milestone 22 AI/news activity boundary names, Telegram alert delivery activity
-boundaries behind explicit gates, signal names, query names,
-dashboard/control-plane signal mapping contracts, local Temporal SDK test-environment coverage, and
-replay coverage for a generated workflow history. It does not implement actual paper trading
-orchestration, default AI/provider external calls, production schedule
-activation, browser-side Temporal calls, real paper orders, or live trading.
+boundaries behind explicit gates, Temporal Cloud dev client/runtime helpers, a default-refusing
+Temporal Cloud smoke harness, signal names, query names, dashboard/control-plane signal mapping
+contracts, local Temporal SDK test-environment coverage, and replay coverage for a generated
+workflow history. It does not implement actual paper trading orchestration, default AI/provider
+external calls, production schedule activation, browser-side Temporal calls, actual paper trading
+operations, or live trading.
 
 ## Configuration
 
 `config/temporal.yaml` defines the namespace, task queue names, schedule names, and default retry
-values from the latest spec. The typed config loader also supports a Temporal service address and
-defaults it to `localhost:7233` for local development.
+values from the latest spec. The typed config loader supports a Temporal service address and
+defaults it to `localhost:7233` for local development. Temporal Cloud dev connections are built only
+by explicit runtime helpers that require `TEMPORAL_ADDRESS`, `TEMPORAL_NAMESPACE`, and
+`TEMPORAL_API_KEY`; the API key is never printed.
 
 Task queues:
 
@@ -126,6 +129,21 @@ Temporal's replayer. These tests do not connect to Temporal Cloud, do not activa
 schedules, do not require managed database credentials, and do not call broker, AI/news, market-data,
 alert, or dashboard services.
 
+Milestone 24 adds Temporal Cloud dev runtime helpers and `scripts/check_temporal_cloud_runtime.py`.
+The smoke refuses by default. A real dev-namespace connection requires:
+
+- `RUN_TEMPORAL_CLOUD_SMOKE=1`
+- `TEMPORAL_CLOUD_SMOKE_CONFIRM=CONNECT_DEV_NAMESPACE_ONLY`
+- `TEMPORAL_ADDRESS`
+- `TEMPORAL_NAMESPACE`
+- `TEMPORAL_API_KEY`
+
+Optional smoke selectors are `TEMPORAL_CLOUD_SMOKE_TASK_QUEUE` and
+`TEMPORAL_CLOUD_SMOKE_WORKFLOW`. The only supported workflow for this smoke is
+`KillSwitchWorkflow`; activity execution uses a smoke-only fake `persist_system_event` activity.
+The smoke creates no schedules, activates no schedules, calls no brokers, calls no AI/news
+providers, sends no alerts, and starts no paper trading operations.
+
 Milestone 06 adds placeholder boundaries for:
 
 - broker reconciliation snapshot retrieval;
@@ -225,6 +243,20 @@ Schedule creation remains dry-run only in the current implementation:
 uv run python scripts/seed_temporal_schedules.py
 ```
 
+## Temporal Cloud Dev Smoke
+
+Default refusal:
+
+```bash
+uv run python scripts/check_temporal_cloud_runtime.py
+```
+
+When the explicit dev smoke gates are loaded in a local child process, the same script connects to
+the configured Temporal Cloud dev namespace, starts a temporary worker with fake/local activity
+behavior, runs a harmless `KillSwitchWorkflow`, checks signal/query behavior when feasible, and
+returns sanitized evidence only. It is not production schedule activation, not actual paper trading,
+not frozen paper evidence, and not Level 4 readiness.
+
 ## Testing
 
 Current tests include import/static contracts, local Temporal SDK test-environment execution, and
@@ -252,6 +284,7 @@ uv run --group dev pytest tests/temporal -vv
 ## Level 4 Readiness Evidence
 
 `docs/level4_micro_live_readiness.md` requires real Temporal query/signal backend evidence before
-Level 4 micro-live. Current workflow tests now include local SDK test-server signal/query coverage
-and replay evidence, but production Temporal backend integration, live worker evidence, and
-production schedule activation remain deferred.
+Level 4 micro-live. Current workflow tests include local SDK test-server signal/query coverage and
+replay evidence, and the Milestone 24 harness can gather dev-namespace Cloud smoke evidence when
+explicitly gated. Production schedule activation, actual paper operations, and Level 4 readiness
+remain deferred.

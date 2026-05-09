@@ -2,10 +2,10 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 23 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 24 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
-provider/API smoke evidence by default, production Temporal query/signal backend integration,
-dashboard deployment, Level 4 live readiness evidence, or live trading. It does
+provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
+readiness evidence, or live trading. It does
 define passive broker/reconciliation, fake-tested paper Alpaca boundaries, opt-in read-only Alpaca
 paper smoke tooling, a default-refusing gated Alpaca paper order-lifecycle smoke harness, AI/news, reporting,
 alerting, dashboard/control-plane, validation/testing contracts, fake/local paper dry-run
@@ -16,7 +16,8 @@ recommendations, Marketaux/Alpha Vantage provider-first news boundaries, OpenAI 
 and disabled web-fallback boundaries, AI feedback/calibration safety downgrades, a local
 database/audit-ledger foundation, and safe Temporal activity boundaries backed by local/fake
 repositories. It also adds a Telegram-only real alert delivery harness behind explicit gates while
-keeping Email/Resend deferred.
+keeping Email/Resend deferred, plus a Temporal Cloud dev smoke harness that refuses by default and
+uses fake/local activities only.
 
 ## Current Foundation Operations
 
@@ -96,7 +97,9 @@ uv run python scripts/check_alpaca_paper_order_lifecycle.py
 Expected default result: sanitized refusal, no order submitted, no cancellation, no protective stop,
 no cleanup exit, and no broker write endpoint called.
 
-A future real paper write smoke requires all explicit gates loaded before the command starts:
+The controlled Milestone 21B real paper write smoke has completed successfully through the gated
+harness with final target-symbol state clean/flat. A repeat real paper write smoke still requires
+all explicit gates loaded before the command starts:
 
 - `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1`
 - `ALPACA_PAPER_ORDER_LIFECYCLE_CONFIRM=SUBMIT_AND_CLEAN_UP_TINY_PAPER_ORDER`
@@ -159,8 +162,8 @@ AI may not:
 - access broker credentials;
 - call broker APIs.
 
-No current operation sends real alerts, deploys the dashboard, activates schedules, starts paper
-trading operations, or completes Level 4 readiness.
+AI/news operations do not send real alerts, deploy the dashboard, activate schedules, start paper
+trading operations, or complete Level 4 readiness.
 
 ## Current Ledger Operations
 
@@ -242,6 +245,27 @@ execute every workflow skeleton with fake/local activities, exercise kill-switch
 and reporting signal-query contracts, and replay a generated kill-switch workflow history. They do
 not connect to Temporal Cloud, do not activate production schedules, do not require managed database
 credentials, and do not call broker, AI/news, market-data, alert, dashboard, or trading services.
+
+## Current Temporal Cloud Dev Runtime Operations
+
+Temporal Cloud runtime wiring is explicitly gated and safe by default:
+
+```bash
+uv run python scripts/check_temporal_cloud_runtime.py
+```
+
+With no gates loaded, the command refuses before connecting to Temporal Cloud. A real dev-namespace
+smoke requires `RUN_TEMPORAL_CLOUD_SMOKE=1`,
+`TEMPORAL_CLOUD_SMOKE_CONFIRM=CONNECT_DEV_NAMESPACE_ONLY`, `TEMPORAL_ADDRESS`,
+`TEMPORAL_NAMESPACE`, and `TEMPORAL_API_KEY`. Optional selectors are
+`TEMPORAL_CLOUD_SMOKE_TASK_QUEUE` and `TEMPORAL_CLOUD_SMOKE_WORKFLOW`; the only supported smoke
+workflow is `KillSwitchWorkflow`.
+
+When gated, the smoke connects to the configured Temporal Cloud dev namespace using API-key/TLS
+client construction, starts temporary workers with a fake smoke-only activity, runs a harmless
+kill-switch workflow, checks signal/query behavior when feasible, prints sanitized evidence only,
+and creates or activates no schedules. It does not call broker APIs, AI/news providers, alert
+adapters, managed databases, dashboard services, or paper trading code.
 
 ## Current Temporal Broker Activity Operations
 
@@ -364,8 +388,7 @@ records. They do not enable live trading or autonomous live execution.
 
 ## Future Operations Scope
 
-Later milestones must implement real worker startup, Temporal schedules, an explicitly gated real
-Alpaca paper order-lifecycle smoke run if not already captured, actual paper trading orchestration,
-real AI/news provider setup, production
-managed database activity wiring, production Temporal query/signal backend integration, dashboard
-deployment, real alert delivery, evidence collection, and Level 4 micro-live readiness gates.
+Later milestones must implement real worker startup for actual paper operations, explicitly gated
+Temporal schedule activation, actual paper trading orchestration, production managed database
+activity wiring, production dashboard deployment, evidence collection, frozen paper acceptance, and
+Level 4 micro-live readiness gates.

@@ -69,6 +69,11 @@ Telegram alert delivery added in Milestone 23 is server-side and operator-facing
 frontend code must not expose Telegram tokens/chat IDs, broker credentials, AI/news provider keys,
 database URLs, or Temporal keys, and must not use Telegram as a command/control trading interface.
 
+Temporal Cloud dev runtime wiring added in Milestone 24 remains server-side only. The
+default-refusing smoke harness connects only when explicit dev gates are present, runs a harmless
+workflow with fake/local activity behavior, and creates no schedules. Dashboard/browser code still
+must not hold Temporal API keys or connect directly to Temporal Cloud.
+
 ## Ledger Read Models
 
 `LedgerDashboardReadModelProvider` builds dashboard snapshots from repository records for:
@@ -99,4 +104,4 @@ micro-live decision: safe read models, no frontend secrets, no browser-side brok
 calls, no order-entry controls, server-side control routing, and operator-tested kill-switch,
 pause-new-risk, force-reconciliation, force-report, acknowledge-incident, and resume-after-review
 paths. Current dashboard/control-plane implementation has local ledger read models and contract
-tests, but it is not deployed and does not provide real Temporal backend evidence.
+tests, but it is not deployed and does not provide production dashboard evidence.

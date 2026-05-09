@@ -30,11 +30,13 @@ def test_temporal_task_queue_mapping_uses_dedicated_execution_queues() -> None:
 
     execution_names = {workflow.__name__ for workflow in mapping["execution-task-queue"]}
     reconciliation_names = {workflow.__name__ for workflow in mapping["reconciliation-task-queue"]}
+    reporting_names = {workflow.__name__ for workflow in mapping["reporting-task-queue"]}
 
     assert "OrderLifecycleWorkflow" in execution_names
     assert "PositionLifecycleWorkflow" in execution_names
     assert "KillSwitchWorkflow" in execution_names
     assert reconciliation_names == {"ReconciliationWorkflow"}
+    assert reporting_names == {"ReportingWorkflow"}
 
 
 def test_temporal_retry_policy_contracts_include_spec_safety_placeholders() -> None:

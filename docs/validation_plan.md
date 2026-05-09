@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-22
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-24
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -11,9 +11,10 @@ order-lifecycle smoke harness. Milestone 22 adds Marketaux/Alpha Vantage provide
 retrieval, OpenAI structured analysis, disabled-by-default OpenAI web fallback, and autonomous AI
 feedback/calibration using offline default tests. Milestone 23 adds Telegram-only alert delivery
 contracts, templates, routing, report/trade summaries, fake-default behavior, and an explicitly
-gated Telegram smoke harness. This does not validate actual paper trading operations, retained real
-paper order-lifecycle write evidence, production dashboard deployment, production Temporal backend
-behavior, live trading, or profitability.
+gated Telegram smoke harness. Milestone 24 adds Temporal Cloud dev runtime helpers and a
+default-refusing Cloud smoke harness for harmless workflow execution with fake/local activities.
+This does not validate actual paper trading operations, production dashboard deployment, production
+schedule activation, live trading, or profitability.
 
 ## Foundation Checks
 
@@ -102,6 +103,9 @@ behavior, live trading, or profitability.
   registration, and replay a generated kill-switch workflow history without Temporal Cloud,
   production schedules, managed database credentials, broker APIs, AI/news providers, alert
   delivery, or broker orders.
+- Temporal Cloud runtime smoke settings, required gate parsing, API-key/TLS connection kwargs,
+  selected task queue handling, sanitized output, no-schedule behavior, and default refusal are
+  fixture-tested without connecting to Temporal Cloud.
 - Paper trading runbook documentation cross-links the frozen paper acceptance gates and operating
   evidence requirements without claiming paper operations have started.
 - Level 4 readiness documentation cross-links acceptance gates, current blockers, config review,
@@ -142,18 +146,19 @@ behavior, live trading, or profitability.
 | Fake/local paper dry-run orchestration | `tests/unit/test_paper_dry_run_orchestration.py`, `tests/unit/test_dry_run_cli.py` |
 | Control plane and dashboard env/read models | `tests/unit/test_control_plane_models.py`, `tests/unit/test_control_plane_api.py`, `tests/unit/test_dashboard_read_models.py`, `tests/unit/test_dashboard_env_security.py` |
 | Temporal workflow and activity contracts | `tests/temporal/test_workflow_contracts.py`, `tests/temporal/test_temporal_sdk_environment.py` |
+| Temporal Cloud dev runtime smoke | `tests/unit/test_temporal_cloud_runtime.py` |
 | Validation harness assumptions | `tests/unit/test_validation_harness.py` |
 | Failure simulations | `tests/unit/test_failure_simulations.py` |
 | Paper dry-run contracts | `tests/unit/test_paper_dry_run.py` |
 
-Remaining gaps are explicit: real Alpaca paper order-lifecycle write evidence remains pending after
-the latest 21B closed-market preflight refusal, production managed Postgres/Supabase activity
-wiring, real provider/OpenAI smoke evidence if gates are absent or not run, retained Telegram alert
-delivery evidence if the explicit Telegram smoke gates are absent or not run, production Temporal
-backend integration, production dashboard deployment, paper trading operations, and Level 4
-micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
-smoke evidence has passed for account, open-order, position, and clock/status reads only.
-Milestone 22 provider/OpenAI/calibration support is not actual paper trading evidence.
+Remaining gaps are explicit: production managed Postgres/Supabase activity wiring, retained
+Temporal Cloud dev smoke evidence if the explicit gates are absent or not run, production dashboard
+deployment, production schedule activation, actual paper trading operations, frozen paper evidence,
+and Level 4 micro-live readiness evidence are not complete. Milestone 20 read-only Alpaca paper
+smoke evidence has passed for account, open-order, position, and clock/status reads only. Milestone
+21B controlled paper order-lifecycle smoke evidence has passed, but it is not actual paper trading
+operations or frozen paper evidence. Milestone 22 provider/OpenAI/calibration support and Milestone
+23 Telegram delivery evidence are also not actual paper trading evidence.
 
 ## Validation Harness Contracts
 
@@ -208,12 +213,11 @@ incident response flow, report expectations, frozen paper acceptance criteria, a
 handoff gates.
 
 Current paper operations evidence is absent. The repository has fake-tested paper broker boundaries,
-fake/local paper dry-run orchestration, local ledger evidence, and a gated paper order-lifecycle
-smoke harness that refuses by default, but still needs a separately approved/gated real Alpaca paper
-order lifecycle smoke run, production managed database activity wiring, production Temporal
-  query/signal backend integration, real AI/news provider integration, real dashboard deployment,
-  retained Telegram alert delivery evidence, and controlled paper runs before these gates can be
-  satisfied.
+fake/local paper dry-run orchestration, local ledger evidence, a successful gated paper
+order-lifecycle smoke, provider/OpenAI smoke evidence, Telegram smoke evidence, and a gated
+Temporal Cloud dev smoke harness. It still needs production managed database activity wiring,
+production Temporal/live-worker evidence, real dashboard deployment, and controlled paper runs
+before frozen paper gates can be satisfied.
 
 Frozen paper acceptance gates before Level 4 micro-live consideration:
 
@@ -249,16 +253,15 @@ Current blockers:
 - Actual paper trading operations have not started.
 - Database/audit-ledger foundation, local/fake Temporal activity persistence, explicit
   Postgres/Supabase runtime helpers, and opt-in managed CRUD validation exist.
-- Local Temporal SDK test-server/replay coverage exists; production Temporal query/signal backend
-  integration is deferred.
+- Local Temporal SDK test-server/replay coverage exists; the Temporal Cloud dev smoke harness exists
+  and refuses by default unless explicit gates are loaded. Production schedule activation and
+  actual paper-operation worker evidence are deferred.
 - Alpaca paper read-only smoke evidence exists for account/open-order/position/clock reads; the
-  paper order-lifecycle smoke harness exists and refuses by default; retained real
-  order-lifecycle write evidence remains pending after the latest closed-market 21B refusal. Real
-  provider/OpenAI smoke evidence is required if the optional gates have not been separately run.
+  controlled paper order-lifecycle smoke has passed through the gated harness. This is smoke
+  evidence only, not actual paper trading operations or frozen paper evidence.
 - Real dashboard deployment is deferred.
 - Alerting contracts, fake adapters, Telegram routing/templates, and a gated Telegram smoke harness
-  exist. Retained real Telegram delivery evidence is required if the smoke has not been separately
-  run.
+  exist. Real Telegram smoke evidence has run through gated paths.
 - Live trading remains disabled.
 
 These blockers must be resolved before a Level 4 go/no-go report can approve micro-live.
