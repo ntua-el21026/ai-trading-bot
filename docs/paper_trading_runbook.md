@@ -90,6 +90,11 @@ path after diagnosing the Milestone 32 `write_smoke_flag_must_be_disabled` NO-GO
 cleared only by running the read-only command with the write-smoke flag explicitly non-truthy for
 that process; `.env` remains untracked and must not be printed.
 
+Milestone 34 adds the explicitly gated first controlled Alpaca paper execution path documented in
+`docs/first_controlled_paper_session_execution.md`. The recorded Milestone 34 run refused before
+broker writes because no operator-selected target symbol or order envelope was supplied. The result
+packet is written to `docs/evidence/first_controlled_paper_session_result.json`.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

@@ -427,3 +427,11 @@ Actual paper trading still has not started.
 Frozen paper validation still has not started.
 
 Level 4 micro-live remains not ready.
+
+## Milestone 34 Execution Boundary
+
+Milestone 34 is documented in `docs/first_controlled_paper_session_execution.md`. It adds the
+explicitly gated first Alpaca paper execution path and a sanitized post-session result packet, but
+the repository run refused before broker writes because no operator-selected target symbol or order
+envelope was supplied. No live trading, autonomous live execution, schedules, leverage, or Level 4
+readiness were enabled.

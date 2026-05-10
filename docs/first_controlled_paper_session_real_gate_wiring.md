@@ -175,3 +175,11 @@ and all spec gates.
 
 Leverage remains out of scope for v0.1 active validation. Gross exposure must remain <= 1.00x
 equity, and margin borrowing must not be intentionally used.
+
+## Milestone 34 Link
+
+Milestone 34 builds on this real-gated boundary in
+`docs/first_controlled_paper_session_execution.md`. The real-paper path now requires a GO launch
+packet, first-session write gates, an operator-selected target symbol, an explicit tiny order
+envelope, clean pre-run reconciliation, a valid `ExecutionIntent`, and a protective stop plan before
+any broker write can occur.

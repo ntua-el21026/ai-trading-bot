@@ -229,3 +229,11 @@ paper evidence and all latest-spec gates.
 
 Leverage remains out of scope. Gross exposure must remain <= 1.00x equity, and margin borrowing
 must not be intentionally used.
+
+## Milestone 34 Link
+
+The Milestone 34 execution boundary is documented in
+`docs/first_controlled_paper_session_execution.md`. It consumes the Milestone 33 GO launch packet
+but still refuses before broker writes unless the operator supplies the separate real-session write
+gates plus a target symbol and order envelope. The recorded Milestone 34 result remained NO-GO for
+missing target and envelope inputs.

@@ -1,24 +1,30 @@
-"""Run the real-gated first controlled paper-session wiring check.
-
-Milestone 30 does not execute the real first controlled paper session. This script defaults to a
-safe refusal and supports fake/stub mode only for local wiring verification.
-"""
+"""Run the gated first controlled paper-session paths."""
 
 from __future__ import annotations
 
 import argparse
 import json
+from typing import cast
 
 from packages.paper import (
+    FIRST_PAPER_SESSION_SCENARIO_IDS,
+    M34_RESULT_EVIDENCE_PATH,
     MILESTONE_30_FAKE_OPERATOR_APPROVAL,
+    MILESTONE_34_FAKE_OPERATOR_APPROVAL,
+    MILESTONE_34_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
+    FirstPaperSessionMode,
+    default_first_paper_session_execution_request,
     default_real_session_gate_config,
+    load_preflight_environment,
+    run_first_controlled_paper_session_execution,
     run_real_first_controlled_paper_session_gate,
+    write_first_controlled_paper_session_result_artifact,
 )
 
 WARNING = (
-    "Milestone 30 real-gate wiring only. Actual paper trading has not started; "
-    "no real broker orders are submitted."
+    "First controlled paper-session command. Real Alpaca paper writes are allowed only in "
+    "Milestone 34 real-paper mode after every explicit gate passes."
 )
 
 
@@ -28,75 +34,201 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("real-gated", "fake"),
+        choices=("real-gated", "fake", "real-paper", "fake-real-paper"),
         default="real-gated",
-        help="Default real-gated mode refuses unless every future real-session gate is present.",
+        help="Default real-gated mode refuses. M34 real-paper requires explicit gates.",
     )
     parser.add_argument(
         "--scenario",
-        choices=REAL_SESSION_SCENARIO_IDS,
+        choices=tuple(
+            dict.fromkeys((*REAL_SESSION_SCENARIO_IDS, *FIRST_PAPER_SESSION_SCENARIO_IDS))
+        ),
         default="happy_path",
-        help="Real-gate or fake/stub scenario ID.",
+        help="Real-gate, M34 real-paper, or fake/stub scenario ID.",
     )
     parser.add_argument(
         "--operator-approval",
         default=None,
         help=(
             "Operator approval marker. For fake/stub success use "
-            f"{MILESTONE_30_FAKE_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_30_FAKE_OPERATOR_APPROVAL}; for M34 fake-real-paper use "
+            f"{MILESTONE_34_FAKE_OPERATOR_APPROVAL}; for M34 real-paper use "
+            f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
+    )
+    parser.add_argument("--target-symbol", default=None)
+    parser.add_argument("--max-qty", type=int, default=None)
+    parser.add_argument("--max-notional", type=float, default=None)
+    parser.add_argument("--confirm-paper-endpoint", action="store_true")
+    parser.add_argument("--confirm-real-paper-writes", action="store_true")
+    parser.add_argument("--confirm-no-live-trading", action="store_true")
+    parser.add_argument("--confirm-no-autonomous-live", action="store_true")
+    parser.add_argument("--confirm-no-schedules", action="store_true")
+    parser.add_argument("--confirm-no-leverage", action="store_true")
+    parser.add_argument("--confirm-first-session-only", action="store_true")
+    parser.add_argument("--confirm-protective-stop-required", action="store_true")
+    parser.add_argument("--confirm-cleanup-policy", action="store_true")
+    parser.add_argument(
+        "--result-output",
+        default=None,
+        help="Optional sanitized M34 result packet path. Real-paper defaults to docs/evidence.",
     )
     args = parser.parse_args(argv)
 
     print(WARNING)
+    if args.mode in {"real-paper", "fake-real-paper"}:
+        execution_mode = cast(FirstPaperSessionMode, args.mode)
+        execution_request = default_first_paper_session_execution_request(
+            args.scenario,
+            mode=execution_mode,
+            operator_approval_marker=args.operator_approval,
+            target_symbol=None if args.target_symbol is None else args.target_symbol.upper(),
+            max_quantity=args.max_qty,
+            max_notional_usd=args.max_notional,
+            confirm_paper_endpoint=(
+                True if execution_mode == "fake-real-paper" else args.confirm_paper_endpoint
+            ),
+            confirm_real_paper_writes=(
+                True if execution_mode == "fake-real-paper" else args.confirm_real_paper_writes
+            ),
+            confirm_no_live_trading=(
+                True if execution_mode == "fake-real-paper" else args.confirm_no_live_trading
+            ),
+            confirm_no_autonomous_live=(
+                True if execution_mode == "fake-real-paper" else args.confirm_no_autonomous_live
+            ),
+            confirm_no_schedules=(
+                True if execution_mode == "fake-real-paper" else args.confirm_no_schedules
+            ),
+            confirm_no_leverage=(
+                True if execution_mode == "fake-real-paper" else args.confirm_no_leverage
+            ),
+            confirm_first_session_only=(
+                True if execution_mode == "fake-real-paper" else args.confirm_first_session_only
+            ),
+            confirm_protective_stop_required=(
+                True
+                if execution_mode == "fake-real-paper"
+                else args.confirm_protective_stop_required
+            ),
+            confirm_cleanup_policy=(
+                True if execution_mode == "fake-real-paper" else args.confirm_cleanup_policy
+            ),
+        )
+        execution_result = run_first_controlled_paper_session_execution(
+            execution_request,
+            environ=(
+                load_preflight_environment()
+                if execution_mode == "real-paper"
+                else {}
+            ),
+        )
+        result_path = args.result_output
+        if result_path is None and execution_mode == "real-paper":
+            result_path = M34_RESULT_EVIDENCE_PATH
+        written_path = None
+        if result_path:
+            written_path = str(
+                write_first_controlled_paper_session_result_artifact(
+                    execution_result,
+                    result_path,
+                )
+            )
+        packet = execution_result.result_packet
+        summary = {
+            "scenario_id": execution_result.scenario_id,
+            "mode": execution_result.mode,
+            "status": execution_result.status,
+            "success": execution_result.success,
+            "refused": execution_result.refused,
+            "unsafe": execution_result.unsafe,
+            "blockers": execution_result.blockers,
+            "target_symbol": packet.target_symbol,
+            "max_qty": packet.order_envelope.max_quantity,
+            "max_notional": packet.order_envelope.max_notional_usd,
+            "entry_order_status": packet.entry_order_status,
+            "fill_status": packet.fill_status,
+            "filled_quantity": packet.filled_quantity,
+            "protective_stop_verification_result": (
+                packet.protective_stop_verification_result
+            ),
+            "cleanup_actions": packet.cleanup_actions,
+            "post_run_reconciliation_result": packet.post_run_reconciliation_result,
+            "actual_paper_trading_started": execution_result.actual_paper_trading_started,
+            "real_broker_orders_submitted": execution_result.real_broker_orders_submitted,
+            "real_broker_writes_attempted": execution_result.real_broker_writes_attempted,
+            "real_read_only_alpaca_calls_performed": (
+                execution_result.real_read_only_alpaca_calls_performed
+            ),
+            "provider_ai_telegram_vercel_temporal_calls": (
+                execution_result.provider_ai_telegram_vercel_temporal_calls
+            ),
+            "schedules_activated": execution_result.schedules_activated,
+            "live_trading_enabled": execution_result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                execution_result.autonomous_live_execution_enabled
+            ),
+            "leverage_enabled": execution_result.leverage_enabled,
+            "ai_broker_write_authority": execution_result.ai_broker_write_authority,
+            "level4_ready": execution_result.level4_ready,
+            "post_session_go_no_go": execution_result.post_session_go_no_go,
+            "result_packet_id": packet.result_packet_id,
+            "result_packet_path": written_path,
+            "note": execution_result.note,
+        }
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if execution_result.success else 1
+
     gate_config = default_real_session_gate_config(
         args.scenario,
         mode=args.mode,
         operator_approval_marker=args.operator_approval,
     )
-    result = run_real_first_controlled_paper_session_gate(gate_config)
+    gate_result = run_real_first_controlled_paper_session_gate(gate_config)
     summary = {
-        "scenario_id": result.scenario_id,
-        "mode": result.mode,
-        "success": result.success,
-        "refused": result.refused,
-        "unsafe": result.unsafe,
-        "ready_for_future_real_execution": result.ready_for_future_real_execution,
-        "actual_paper_trading_started": result.actual_paper_trading_started,
-        "real_broker_orders_submitted": result.real_broker_orders_submitted,
-        "real_broker_writes_attempted": result.real_broker_writes_attempted,
-        "external_calls_attempted": result.external_calls_attempted,
-        "schedules_activated": result.schedules_activated,
-        "live_trading_enabled": result.live_trading_enabled,
-        "autonomous_live_execution_enabled": result.autonomous_live_execution_enabled,
-        "level4_ready": result.level4_ready,
-        "leverage_enabled": result.leverage_enabled,
-        "ai_broker_write_authority": result.ai_broker_write_authority,
-        "broker_adapter_mode": result.real_gate_evidence.broker_adapter_mode,
-        "broker_endpoint_mode": result.real_gate_evidence.broker_endpoint_mode,
-        "real_write_gates_evaluated": result.real_gate_evidence.real_write_gates_evaluated,
-        "real_write_gates_passed": result.real_gate_evidence.real_write_gates_passed,
-        "preflight_evidence_id": result.real_gate_evidence.preflight_evidence_id,
-        "refusal_reasons": result.refusal_reasons,
+        "scenario_id": gate_result.scenario_id,
+        "mode": gate_result.mode,
+        "success": gate_result.success,
+        "refused": gate_result.refused,
+        "unsafe": gate_result.unsafe,
+        "ready_for_future_real_execution": gate_result.ready_for_future_real_execution,
+        "actual_paper_trading_started": gate_result.actual_paper_trading_started,
+        "real_broker_orders_submitted": gate_result.real_broker_orders_submitted,
+        "real_broker_writes_attempted": gate_result.real_broker_writes_attempted,
+        "external_calls_attempted": gate_result.external_calls_attempted,
+        "schedules_activated": gate_result.schedules_activated,
+        "live_trading_enabled": gate_result.live_trading_enabled,
+        "autonomous_live_execution_enabled": gate_result.autonomous_live_execution_enabled,
+        "level4_ready": gate_result.level4_ready,
+        "leverage_enabled": gate_result.leverage_enabled,
+        "ai_broker_write_authority": gate_result.ai_broker_write_authority,
+        "broker_adapter_mode": gate_result.real_gate_evidence.broker_adapter_mode,
+        "broker_endpoint_mode": gate_result.real_gate_evidence.broker_endpoint_mode,
+        "real_write_gates_evaluated": (
+            gate_result.real_gate_evidence.real_write_gates_evaluated
+        ),
+        "real_write_gates_passed": gate_result.real_gate_evidence.real_write_gates_passed,
+        "preflight_evidence_id": gate_result.real_gate_evidence.preflight_evidence_id,
+        "refusal_reasons": gate_result.refusal_reasons,
         "incident_ids": (
             ()
-            if result.first_session_evidence is None
-            else result.first_session_evidence.incident_ids
+            if gate_result.first_session_evidence is None
+            else gate_result.first_session_evidence.incident_ids
         ),
         "evidence_package_id": (
             None
-            if result.first_session_evidence is None
-            else result.first_session_evidence.evidence_package_id
+            if gate_result.first_session_evidence is None
+            else gate_result.first_session_evidence.evidence_package_id
         ),
         "report_id": (
             None
-            if result.first_session_evidence is None
-            else result.first_session_evidence.report_id
+            if gate_result.first_session_evidence is None
+            else gate_result.first_session_evidence.report_id
         ),
-        "note": result.note,
+        "note": gate_result.note,
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
-    return 0 if result.success else 1
+    return 0 if gate_result.success else 1
 
 
 if __name__ == "__main__":

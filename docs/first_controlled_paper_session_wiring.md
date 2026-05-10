@@ -158,3 +158,10 @@ and all spec gates.
 Leverage remains out of scope for v0.1 active validation. Gross exposure must remain `<= 1.00x`
 equity, margin borrowing must not be intentionally used, and active leverage would require a future
 spec change plus a separate validation track.
+
+## Milestone 34 Link
+
+The Milestone 34 execution boundary is documented in
+`docs/first_controlled_paper_session_execution.md`. It preserves the fake/local rehearsal path and
+adds explicit real-paper gates, but the recorded Milestone 34 run remained NO-GO because target
+symbol and envelope inputs were not provided by the operator.
