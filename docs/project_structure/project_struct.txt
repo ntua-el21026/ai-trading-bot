@@ -114,11 +114,14 @@ AI_Trading_Bot/
 │   ├── database_audit_ledger.md
 │   ├── database_runtime.md
 │   ├── execution_policy.md
+│   ├── first_controlled_paper_session_real_gate_wiring.md
+│   ├── first_controlled_paper_session_wiring.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
 │   ├── paper_dry_run_orchestration.md
 │   ├── paper_trading_runbook.md
 │   ├── post_milestone_11_audit.md
+│   ├── pre_paper_operations_gap_audit.md
 │   ├── reporting.md
 │   ├── risk_policy.md
 │   ├── temporal_workflows.md
@@ -188,9 +191,11 @@ AI_Trading_Bot/
 │   ├── paper/
 │   │   ├── __init__.py
 │   │   ├── dry_run.py
+│   │   ├── first_session.py
 │   │   ├── fixtures.py
 │   │   ├── models.py
-│   │   └── readiness.py
+│   │   ├── readiness.py
+│   │   └── real_gate.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -225,11 +230,13 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_order_lifecycle.py
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_dashboard_control_plane_runtime.py
+│   ├── check_first_controlled_paper_session.py
 │   ├── check_ledger_database.py
 │   ├── check_paper_operations_readiness.py
 │   ├── check_telegram_alert_delivery.py
 │   ├── check_temporal_cloud_runtime.py
 │   ├── check_vercel_dashboard_preview.py
+│   ├── run_first_controlled_paper_session.py
 │   ├── run_paper_dry_run.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
@@ -270,6 +277,8 @@ AI_Trading_Bot/
 │       ├── test_execution_intent.py
 │       ├── test_failure_simulations.py
 │       ├── test_features.py
+│       ├── test_first_controlled_paper_session.py
+│       ├── test_first_controlled_paper_session_real_gate.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
 │       ├── test_ledger_activities.py
@@ -310,4 +319,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 45, Total files: 266
+Total directories: 45, Total files: 275

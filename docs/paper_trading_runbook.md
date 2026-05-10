@@ -65,6 +65,17 @@ It aggregates readiness evidence only. It does not start paper trading, activate
 or cancel broker orders, run strategy-generated paper trading, call AI/news providers, send real
 alerts, or deploy anything.
 
+Milestone 28 locks the pre-paper operations gap audit and future first controlled paper session
+protocol in `docs/pre_paper_operations_gap_audit.md`.
+
+Milestone 29 adds the fake/local first controlled paper-session wiring harness documented in
+`docs/first_controlled_paper_session_wiring.md`. It is an offline rehearsal path only; it does not
+submit paper orders or start actual paper trading.
+
+Milestone 30 adds the real-gated first-session wiring boundary documented in
+`docs/first_controlled_paper_session_real_gate_wiring.md`. It refuses by default and still does
+not submit paper orders or run the actual controlled paper session.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash
