@@ -114,6 +114,7 @@ AI_Trading_Bot/
 │   ├── database_audit_ledger.md
 │   ├── database_runtime.md
 │   ├── execution_policy.md
+│   ├── first_controlled_paper_session_preflight.md
 │   ├── first_controlled_paper_session_real_gate_wiring.md
 │   ├── first_controlled_paper_session_wiring.md
 │   ├── level4_micro_live_readiness.md
@@ -194,6 +195,7 @@ AI_Trading_Bot/
 │   │   ├── first_session.py
 │   │   ├── fixtures.py
 │   │   ├── models.py
+│   │   ├── preflight.py
 │   │   ├── readiness.py
 │   │   └── real_gate.py
 │   ├── reconciliation/
@@ -231,6 +233,7 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_dashboard_control_plane_runtime.py
 │   ├── check_first_controlled_paper_session.py
+│   ├── check_first_controlled_paper_session_preflight.py
 │   ├── check_ledger_database.py
 │   ├── check_paper_operations_readiness.py
 │   ├── check_telegram_alert_delivery.py
@@ -278,6 +281,7 @@ AI_Trading_Bot/
 │       ├── test_failure_simulations.py
 │       ├── test_features.py
 │       ├── test_first_controlled_paper_session.py
+│       ├── test_first_controlled_paper_session_preflight.py
 │       ├── test_first_controlled_paper_session_real_gate.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
@@ -319,4 +323,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 45, Total files: 275
+Total directories: 45, Total files: 279

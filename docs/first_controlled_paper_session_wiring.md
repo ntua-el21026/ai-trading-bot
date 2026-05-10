@@ -30,6 +30,10 @@ Milestone 30, documented in `docs/first_controlled_paper_session_real_gate_wirin
 this fake/local rehearsal with a real-session gate boundary. It remains no-real-session and
 no-real-broker-write only.
 
+Milestone 31, documented in `docs/first_controlled_paper_session_preflight.md`, adds a read-only
+preflight and launch authorization packet. It still does not authorize broker writes or actual
+paper session execution.
+
 The harness proves the shape of the future session:
 
 1. Session context and safety snapshot are built with secret values redacted and not inspected.

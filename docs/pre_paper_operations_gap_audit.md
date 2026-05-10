@@ -30,6 +30,10 @@ Milestone 30 wires the real first-session gate boundary described in
 `docs/first_controlled_paper_session_real_gate_wiring.md`. That path still refuses by default,
 submits no real broker orders, and does not run the actual controlled paper session.
 
+Milestone 31 adds the read-only preflight and launch authorization packet documented in
+`docs/first_controlled_paper_session_preflight.md`. It is still no-real-session and
+no-broker-write only.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

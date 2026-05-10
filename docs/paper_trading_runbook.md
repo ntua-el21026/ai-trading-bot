@@ -76,6 +76,11 @@ Milestone 30 adds the real-gated first-session wiring boundary documented in
 `docs/first_controlled_paper_session_real_gate_wiring.md`. It refuses by default and still does
 not submit paper orders or run the actual controlled paper session.
 
+Milestone 31 adds the read-only first-session preflight and launch authorization packet documented
+in `docs/first_controlled_paper_session_preflight.md`. It may run only fake/stub checks by default
+or explicitly gated Alpaca paper read-only checks; it performs no broker writes and does not start
+the actual session.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

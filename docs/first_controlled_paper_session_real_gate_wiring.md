@@ -8,6 +8,10 @@ This document extends the Milestone 28 protocol in
 `docs/pre_paper_operations_gap_audit.md` and the Milestone 29 fake/local harness in
 `docs/first_controlled_paper_session_wiring.md`.
 
+Milestone 31 adds the read-only preflight and launch authorization packet in
+`docs/first_controlled_paper_session_preflight.md`. It keeps the real-gated execution path
+deferred and performs no broker writes.
+
 ## What Is Wired
 
 - A typed real-session gate configuration and preflight evidence model in `packages/paper/real_gate.py`.
