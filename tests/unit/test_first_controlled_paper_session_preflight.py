@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -10,10 +11,14 @@ from packages.paper import (
     MILESTONE_30_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
+    MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
     FirstSessionPreflightRequest,
     FirstSessionPreflightResult,
+    ReadOnlyPreflightBrokerClient,
     default_first_session_preflight_request,
+    load_preflight_environment,
     run_first_controlled_paper_session_preflight,
+    write_launch_packet_artifact,
 )
 from scripts.check_first_controlled_paper_session import main as m29_script_main
 from scripts.check_first_controlled_paper_session_preflight import main as m31_script_main
@@ -50,6 +55,12 @@ def _real_readonly_request(confirm: bool = True) -> FirstSessionPreflightRequest
         confirm_no_autonomous_live=confirm,
         confirm_no_schedules=confirm,
         confirm_no_leverage=confirm,
+    )
+
+
+def _real_readonly_request_m32(confirm: bool = True) -> FirstSessionPreflightRequest:
+    return _real_readonly_request(confirm=confirm).model_copy(
+        update={"operator_approval_marker": MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL}
     )
 
 
@@ -165,6 +176,30 @@ def test_real_readonly_path_uses_fake_client_reads_and_never_calls_write_methods
     assert result.packet.positions_summary.total_positions == 0
 
 
+def test_m32_real_readonly_marker_is_accepted_for_stubbed_success() -> None:
+    client = _FakeReadOnlyClient()
+    result = run_first_controlled_paper_session_preflight(
+        _real_readonly_request_m32(),
+        environ=_safe_readonly_env(),
+        client_factory=lambda _credentials: client,
+        real_external_calls_performed=False,
+    )
+
+    assert result.success is True
+    assert result.packet.operator_approval_marker == MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL
+    assert client.write_calls == ()
+
+
+def test_readonly_wrapper_exposes_no_write_methods() -> None:
+    wrapper = ReadOnlyPreflightBrokerClient(_FakeReadOnlyClient())
+
+    assert wrapper.get_account()["id"] == "paper-account"
+    assert not hasattr(wrapper, "submit_order")
+    assert not hasattr(wrapper, "cancel_order")
+    assert not hasattr(wrapper, "replace_order")
+    assert not hasattr(wrapper, "close_position")
+
+
 def test_open_orders_and_positions_are_summarized_without_secrets() -> None:
     client = _FakeReadOnlyClient(
         open_orders=(_order_payload("MSFT"),),
@@ -184,6 +219,34 @@ def test_open_orders_and_positions_are_summarized_without_secrets() -> None:
     assert "paper-key" not in serialized
     assert "paper-secret" not in serialized
     assert "DATABASE_URL=" not in serialized
+
+
+def test_safe_env_loading_uses_dotenv_without_exposing_secret_values(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "\n".join(
+            [
+                "ALPACA_API_KEY=paper-key-from-env-file",
+                "ALPACA_SECRET_KEY='paper-secret-from-env-file'",
+                f"ALPACA_BASE_URL={ALPACA_PAPER_BASE_URL}",
+                "RUN_ALPACA_PAPER_SMOKE=1",
+                "ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    loaded = load_preflight_environment(repo_root=tmp_path, base_environ={})
+    result = run_first_controlled_paper_session_preflight(
+        _real_readonly_request_m32(),
+        environ=loaded,
+        client_factory=lambda _credentials: _FakeReadOnlyClient(),
+        real_external_calls_performed=False,
+    )
+    serialized = result.packet.model_dump_json()
+
+    assert result.success is True
+    assert "paper-key-from-env-file" not in serialized
+    assert "paper-secret-from-env-file" not in serialized
 
 
 def test_dirty_target_symbol_open_orders_and_position_are_no_go() -> None:
@@ -210,6 +273,14 @@ def test_existing_position_is_no_go_unless_explicitly_allowed() -> None:
     assert "existing_position_blocks_first_session" in result.blockers
 
 
+def test_missing_target_symbol_is_no_go_for_actual_launch() -> None:
+    result = _run_fake("missing_target_symbol")
+
+    assert result.success is False
+    assert "target_symbol_not_selected" in result.blockers
+    assert "target_symbol_not_allowed" in result.blockers
+
+
 def test_no_leverage_assertion_fails_when_gross_exposure_exceeds_one_x() -> None:
     result = _run_fake("leverage_rejected")
 
@@ -233,6 +304,29 @@ def test_missing_evidence_persistence_decision_is_no_go() -> None:
     assert result.success is False
     assert "evidence_persistence_decision_required" in result.blockers
     assert result.packet.evidence_persistence_decision.mode == "missing"
+
+
+def test_write_smoke_and_execution_flags_refuse_before_broker_calls() -> None:
+    client = _FakeReadOnlyClient()
+    env = _safe_readonly_env() | {
+        "RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE": "1",
+        "RUN_FIRST_CONTROLLED_PAPER_SESSION": "1",
+    }
+    result = run_first_controlled_paper_session_preflight(
+        _real_readonly_request_m32(),
+        environ=env,
+        client_factory=lambda _credentials: client,
+        real_external_calls_performed=False,
+    )
+
+    assert result.success is False
+    assert "write_smoke_flag_must_be_disabled" in result.blockers
+    assert (
+        "first_session_execution_flag_must_be_disabled:RUN_FIRST_CONTROLLED_PAPER_SESSION"
+        in result.blockers
+    )
+    assert client.read_calls == ()
+    assert client.write_calls == ()
 
 
 def test_launch_authorization_packet_contains_required_fields() -> None:
@@ -269,6 +363,24 @@ def test_launch_authorization_packet_contains_required_fields() -> None:
     assert packet.blockers == ()
     assert packet.actual_paper_trading_started is False
     assert packet.real_broker_writes_attempted is False
+    assert packet.read_only_broker_calls_performed is False
+    assert packet.real_read_only_alpaca_calls_performed is False
+    assert packet.provider_ai_telegram_vercel_temporal_calls_performed is False
+
+
+def test_launch_packet_artifact_is_sanitized(tmp_path: Path) -> None:
+    result = _run_fake()
+    packet_path = write_launch_packet_artifact(
+        result,
+        tmp_path / "first_controlled_paper_session_launch_packet.json",
+    )
+    artifact = packet_path.read_text(encoding="utf-8")
+
+    assert '"milestone": "32"' in artifact
+    assert '"actual_paper_trading_started": false' in artifact
+    assert '"real_broker_writes_attempted": false' in artifact
+    assert "DATABASE_URL=" not in artifact
+    assert "paper-secret" not in artifact
 
 
 def test_go_no_go_decision_is_deterministic() -> None:
@@ -333,6 +445,19 @@ def test_milestone_31_script_fake_success_and_refusals(
         == 1
     )
     assert '"target_symbol_clean": false' in capsys.readouterr().out
+
+    assert (
+        m31_script_main(
+            [
+                "--mode",
+                "real-read-only",
+                "--operator-approval",
+                MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
+            ],
+        )
+        == 1
+    )
+    assert '"read_only_broker_calls_performed": false' in capsys.readouterr().out
 
 
 def test_existing_milestone_29_and_30_scripts_still_work(

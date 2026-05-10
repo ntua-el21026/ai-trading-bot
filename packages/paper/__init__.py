@@ -35,6 +35,7 @@ from packages.paper.models import (
 from packages.paper.preflight import (
     MILESTONE_31_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
+    MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
     PREFLIGHT_SCENARIO_IDS,
     AccountSnapshotSummary,
     AlertModeDecision,
@@ -54,9 +55,12 @@ from packages.paper.preflight import (
     PreflightMode,
     PreflightScenarioId,
     ReadOnlyBrokerPreflightResult,
+    ReadOnlyPreflightBrokerClient,
     TargetSymbolCleanlinessResult,
     default_first_session_preflight_request,
+    load_preflight_environment,
     run_first_controlled_paper_session_preflight,
+    write_launch_packet_artifact,
 )
 from packages.paper.readiness import (
     PaperOperationsReadinessEvidence,
@@ -118,6 +122,7 @@ __all__ = [
     "LaunchAuthorizationPacket",
     "MILESTONE_31_FAKE_OPERATOR_APPROVAL",
     "MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL",
+    "MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL",
     "MILESTONE_30_FAKE_OPERATOR_APPROVAL",
     "MILESTONE_30_REAL_OPERATOR_APPROVAL",
     "ManagedEvidencePersistenceDecision",
@@ -133,6 +138,7 @@ __all__ = [
     "REAL_SESSION_SCENARIO_IDS",
     "ReadinessCheck",
     "ReadOnlyBrokerPreflightResult",
+    "ReadOnlyPreflightBrokerClient",
     "RealSessionGateConfig",
     "RealSessionGateEvaluation",
     "RealSessionGateEvidence",
@@ -147,9 +153,11 @@ __all__ = [
     "default_real_session_gate_config",
     "default_dry_run_input",
     "evaluate_paper_operations_readiness",
+    "load_preflight_environment",
     "run_first_controlled_paper_session_check",
     "run_first_controlled_paper_session_preflight",
     "run_real_first_controlled_paper_session_gate",
     "run_paper_dry_run",
     "scenario_by_id",
+    "write_launch_packet_artifact",
 ]

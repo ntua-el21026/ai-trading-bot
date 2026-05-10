@@ -12,6 +12,9 @@ Milestone 31 adds the read-only preflight and launch authorization packet in
 `docs/first_controlled_paper_session_preflight.md`. It keeps the real-gated execution path
 deferred and performs no broker writes.
 
+Milestone 32 completes or fails closed the real-read-only preflight/signoff path and can generate a
+sanitized launch packet artifact. The real-gated execution path remains deferred.
+
 ## What Is Wired
 
 - A typed real-session gate configuration and preflight evidence model in `packages/paper/real_gate.py`.

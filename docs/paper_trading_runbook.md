@@ -81,6 +81,10 @@ in `docs/first_controlled_paper_session_preflight.md`. It may run only fake/stub
 or explicitly gated Alpaca paper read-only checks; it performs no broker writes and does not start
 the actual session.
 
+Milestone 32 extends that preflight path with `MILESTONE_32_READ_ONLY_PREFLIGHT`, safe `.env` gate
+loading for real-read-only mode, and sanitized launch packet artifact generation. It still performs
+only account, clock, open-order, and position reads when all read-only gates pass.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash
@@ -156,6 +160,8 @@ Required environment variable names only:
 - `ALPACA_PAPER_ORDER_SMOKE_MAX_QTY`
 - `ALPACA_PAPER_ORDER_SMOKE_MAX_NOTIONAL_USD`
 - `ALPACA_PAPER_ORDER_SMOKE_TIMEOUT_SECONDS`
+- `RUN_FIRST_CONTROLLED_PAPER_SESSION`
+- `RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION`
 - `AI_PROVIDER`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`

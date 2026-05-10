@@ -8,13 +8,16 @@ import json
 from packages.paper import (
     MILESTONE_31_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
+    MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
     PREFLIGHT_SCENARIO_IDS,
     default_first_session_preflight_request,
+    load_preflight_environment,
     run_first_controlled_paper_session_preflight,
+    write_launch_packet_artifact,
 )
 
 WARNING = (
-    "Milestone 31 read-only preflight only. Actual paper trading has not started; "
+    "Milestone 31/32 read-only preflight only. Actual paper trading has not started; "
     "no broker writes are performed."
 )
 
@@ -41,8 +44,14 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Operator marker. Fake success uses "
             f"{MILESTONE_31_FAKE_OPERATOR_APPROVAL}; read-only uses "
-            f"{MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL} or "
+            f"{MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
+    )
+    parser.add_argument(
+        "--packet-output",
+        default=None,
+        help="Optional sanitized launch packet JSON output path. Do not pass a secrets path.",
     )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
@@ -72,7 +81,13 @@ def main(argv: list[str] | None = None) -> int:
         confirm_no_schedules=True if args.mode == "fake" else args.confirm_no_schedules,
         confirm_no_leverage=True if args.mode == "fake" else args.confirm_no_leverage,
     )
-    result = run_first_controlled_paper_session_preflight(request)
+    result = run_first_controlled_paper_session_preflight(
+        request,
+        environ=load_preflight_environment() if args.mode == "real-read-only" else {},
+    )
+    packet_path = None
+    if args.packet_output:
+        packet_path = str(write_launch_packet_artifact(result, args.packet_output))
     packet = result.packet
     summary = {
         "scenario_id": result.scenario_id,
@@ -82,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
         "go_no_go_decision": result.go_no_go_decision,
         "blockers": result.blockers,
         "authorization_packet_id": packet.authorization_packet_id,
+        "authorization_packet_path": packet_path,
         "actual_paper_trading_started": result.actual_paper_trading_started,
         "real_broker_orders_submitted": result.real_broker_orders_submitted,
         "real_broker_writes_attempted": result.real_broker_writes_attempted,

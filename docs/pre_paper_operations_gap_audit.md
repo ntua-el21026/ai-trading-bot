@@ -34,6 +34,9 @@ Milestone 31 adds the read-only preflight and launch authorization packet docume
 `docs/first_controlled_paper_session_preflight.md`. It is still no-real-session and
 no-broker-write only.
 
+Milestone 32 extends that same preflight document with real-read-only completion/signoff behavior
+and a sanitized launch packet artifact. It still cannot submit, cancel, replace, or flatten orders.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

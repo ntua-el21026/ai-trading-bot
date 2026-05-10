@@ -5,6 +5,10 @@ controlled Alpaca paper session. It does not run the real session, submit orders
 replace orders, flatten positions, activate schedules, deploy services, enable live trading,
 enable autonomous live execution, or add leverage.
 
+Milestone 32 completes the operator-reviewed real-read-only preflight path and final launch packet
+signoff behavior. The outcome may be GO if all read-only checks and launch gates pass, or NO-GO
+with precise blockers. It remains no-real-session and no-broker-write only.
+
 This document extends:
 
 - `docs/pre_paper_operations_gap_audit.md`
@@ -36,9 +40,10 @@ No broker write method is reachable from the preflight path.
 requires the fake operator marker `MILESTONE_31_FAKE_PREFLIGHT` for a passing fake preflight.
 
 `real-read-only` mode may call Alpaca paper read-only endpoints only after all explicit gates pass.
-It requires:
+It safely loads process environment plus local `.env` and `.env.local` values without printing raw
+values. It requires:
 
-- operator marker `MILESTONE_31_READ_ONLY_PREFLIGHT`;
+- operator marker `MILESTONE_31_READ_ONLY_PREFLIGHT` or `MILESTONE_32_READ_ONLY_PREFLIGHT`;
 - `--confirm-paper-endpoint`;
 - `--confirm-no-broker-writes`;
 - `--confirm-no-live-trading`;
@@ -46,6 +51,8 @@ It requires:
 - `--confirm-no-schedules`;
 - `--confirm-no-leverage`;
 - existing Alpaca paper read-only smoke environment gates, including the exact paper endpoint.
+- no write-smoke flag such as `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1`;
+- no first-session execution flag such as `RUN_FIRST_CONTROLLED_PAPER_SESSION=1`.
 
 If any gate fails, the command refuses before broker calls.
 
@@ -83,17 +90,21 @@ Real read-only preflight, only when local paper credentials and explicit gates a
 ```bash
 uv run python scripts/check_first_controlled_paper_session_preflight.py \
   --mode real-read-only \
-  --operator-approval MILESTONE_31_READ_ONLY_PREFLIGHT \
+  --operator-approval MILESTONE_32_READ_ONLY_PREFLIGHT \
   --confirm-paper-endpoint \
   --confirm-no-broker-writes \
   --confirm-no-live-trading \
   --confirm-no-autonomous-live \
   --confirm-no-schedules \
-  --confirm-no-leverage
+  --confirm-no-leverage \
+  --packet-output docs/evidence/first_controlled_paper_session_launch_packet.json
 ```
 
 That real-read-only path may read only account, clock, open orders, and positions. It must not
 submit, cancel, replace, or flatten orders.
+
+If the local `.env` gates or credentials are absent, the command returns NO-GO before broker calls
+and still writes a sanitized packet when `--packet-output` is supplied.
 
 ## Launch Authorization Packet
 
@@ -136,6 +147,14 @@ The packet contains:
 Secret values are not inspected or printed. The packet records sensitive variable names only as
 redacted markers.
 
+The recommended final packet artifact path is:
+
+```text
+docs/evidence/first_controlled_paper_session_launch_packet.json
+```
+
+The artifact is sanitized JSON containing the packet plus result safety flags.
+
 ## Cleanup And Evidence Decisions
 
 The default cleanup policy is verify-only. Future cleanup/flatten may be allowed only for
@@ -169,10 +188,16 @@ Before the actual first controlled paper session can run:
 
 Schedules, unattended operation, frozen validation, and Level 4 remain out of scope.
 
+## Milestone 32 Result Boundary
+
+Milestone 32 can only complete read-only preflight. It does not authorize actual paper session
+execution by itself. A GO packet means the operator may proceed to a separate explicit launch
+milestone. A NO-GO packet lists blockers that must be cleared before launch.
+
 ## Level 4 And Leverage Exclusion
 
-Milestone 31 does not make the system Level 4 ready. Level 4 still requires frozen paper evidence
-and all latest-spec gates.
+Milestones 31 and 32 do not make the system Level 4 ready. Level 4 still requires frozen paper
+evidence and all latest-spec gates.
 
 Leverage remains out of scope. Gross exposure must remain <= 1.00x equity, and margin borrowing
 must not be intentionally used.

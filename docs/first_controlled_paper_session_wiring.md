@@ -34,6 +34,9 @@ Milestone 31, documented in `docs/first_controlled_paper_session_preflight.md`, 
 preflight and launch authorization packet. It still does not authorize broker writes or actual
 paper session execution.
 
+Milestone 32 uses the same preflight path for real-read-only completion/signoff and sanitized
+packet generation. It still remains outside the broker-write execution path.
+
 The harness proves the shape of the future session:
 
 1. Session context and safety snapshot are built with secret values redacted and not inspected.

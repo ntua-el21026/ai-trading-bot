@@ -6,6 +6,7 @@ import os
 import subprocess
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Literal, Protocol, Self, cast
 from uuid import NAMESPACE_URL, uuid5
 
@@ -31,6 +32,7 @@ from packages.paper.real_gate import REAL_SESSION_MAX_NOTIONAL_USD, REAL_SESSION
 
 MILESTONE_31_FAKE_OPERATOR_APPROVAL = "MILESTONE_31_FAKE_PREFLIGHT"
 MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL = "MILESTONE_31_READ_ONLY_PREFLIGHT"
+MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL = "MILESTONE_32_READ_ONLY_PREFLIGHT"
 PREFLIGHT_PACKET_STARTED_AT = datetime(2026, 5, 9, 14, 0, tzinfo=UTC)
 
 PreflightMode = Literal["fake", "real-read-only"]
@@ -42,6 +44,7 @@ PreflightScenarioId = Literal[
     "dirty_target_symbol",
     "open_orders_present",
     "open_position_present",
+    "missing_target_symbol",
     "leverage_rejected",
     "missing_cleanup_policy",
     "missing_evidence_persistence",
@@ -57,6 +60,7 @@ PREFLIGHT_SCENARIO_IDS: tuple[PreflightScenarioId, ...] = (
     "dirty_target_symbol",
     "open_orders_present",
     "open_position_present",
+    "missing_target_symbol",
     "leverage_rejected",
     "missing_cleanup_policy",
     "missing_evidence_persistence",
@@ -66,7 +70,15 @@ DOC_REFERENCES: tuple[str, ...] = (
     "docs/pre_paper_operations_gap_audit.md",
     "docs/first_controlled_paper_session_wiring.md",
     "docs/first_controlled_paper_session_real_gate_wiring.md",
+    "docs/first_controlled_paper_session_preflight.md",
     "docs/paper_trading_runbook.md",
+)
+
+PREFLIGHT_DOTENV_FILES: tuple[str, ...] = (".env", ".env.local")
+WRITE_SMOKE_FLAG_ENV_VAR = "RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE"
+FIRST_SESSION_EXECUTION_FLAG_ENV_VARS: tuple[str, ...] = (
+    "RUN_FIRST_CONTROLLED_PAPER_SESSION",
+    "RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION",
 )
 
 
@@ -85,6 +97,25 @@ class ReadOnlyBrokerClient(Protocol):
 
 
 ReadOnlyClientFactory = Callable[[AlpacaPaperCredentials], ReadOnlyBrokerClient]
+
+
+class ReadOnlyPreflightBrokerClient:
+    """Narrow preflight wrapper that exposes only read-only broker methods."""
+
+    def __init__(self, client: ReadOnlyBrokerClient) -> None:
+        self._client = client
+
+    def get_account(self) -> Mapping[str, Any]:
+        return self._client.get_account()
+
+    def get_clock(self) -> Mapping[str, Any]:
+        return self._client.get_clock()
+
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        return self._client.list_open_orders()
+
+    def list_positions(self) -> Sequence[Mapping[str, Any]]:
+        return self._client.list_positions()
 
 
 class PreflightModel(BaseModel):
@@ -232,7 +263,7 @@ class FirstSessionPreflightRequest(PreflightModel):
 
     @model_validator(mode="after")
     def validate_request(self) -> Self:
-        if self.target_symbol != self.target_symbol.upper():
+        if self.target_symbol and self.target_symbol != self.target_symbol.upper():
             raise ValueError("target_symbol must be uppercase")
         if any(symbol != symbol.upper() for symbol in self.target_symbol_allowlist):
             raise ValueError("target_symbol_allowlist symbols must be uppercase")
@@ -295,6 +326,9 @@ class LaunchAuthorizationPacket(PreflightModel):
     real_broker_writes_attempted: bool = False
     real_broker_orders_submitted: bool = False
     broker_write_methods_called: bool = False
+    read_only_broker_calls_performed: bool = False
+    real_read_only_alpaca_calls_performed: bool = False
+    provider_ai_telegram_vercel_temporal_calls_performed: bool = False
     schedules_activated: bool = False
     live_trading_enabled: bool = False
     autonomous_live_execution_enabled: bool = False
@@ -334,7 +368,7 @@ class FirstSessionPreflightResult(PreflightModel):
     ai_broker_write_authority: bool = False
     level4_ready: bool = False
     note: str = (
-        "Milestone 31 read-only preflight and launch authorization only. Actual paper trading "
+        "Milestone 31/32 read-only preflight and launch authorization only. Actual paper trading "
         "has not started and no broker writes were attempted."
     )
 
@@ -401,6 +435,63 @@ def default_first_session_preflight_request(
         ),
     )
     return _scenario_request(request, scenario)
+
+
+def load_preflight_environment(
+    *,
+    repo_root: Path | str | None = None,
+    base_environ: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Load process env plus local .env files without logging secret values."""
+
+    root = Path.cwd() if repo_root is None else Path(repo_root)
+    merged: dict[str, str] = {}
+    for file_name in PREFLIGHT_DOTENV_FILES:
+        env_path = root / file_name
+        if not env_path.is_file():
+            continue
+        merged.update(_parse_env_file(env_path))
+    merged.update(os.environ if base_environ is None else base_environ)
+    return merged
+
+
+def write_launch_packet_artifact(
+    result: FirstSessionPreflightResult,
+    output_path: Path | str,
+) -> Path:
+    """Persist a sanitized launch packet artifact."""
+
+    import json
+
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "milestone": "32",
+        "result": {
+            "success": result.success,
+            "refused": result.refused,
+            "go_no_go_decision": result.go_no_go_decision,
+            "blockers": result.blockers,
+            "actual_paper_trading_started": result.actual_paper_trading_started,
+            "real_broker_orders_submitted": result.real_broker_orders_submitted,
+            "real_broker_writes_attempted": result.real_broker_writes_attempted,
+            "broker_write_methods_called": result.broker_write_methods_called,
+            "read_only_broker_calls_performed": result.read_only_broker_calls_performed,
+            "real_read_only_alpaca_calls_performed": result.real_read_only_alpaca_calls_performed,
+            "provider_ai_telegram_vercel_temporal_calls_performed": (
+                result.provider_ai_telegram_vercel_temporal_calls_performed
+            ),
+            "schedules_activated": result.schedules_activated,
+            "live_trading_enabled": result.live_trading_enabled,
+            "autonomous_live_execution_enabled": result.autonomous_live_execution_enabled,
+            "leverage_enabled": result.leverage_enabled,
+            "ai_broker_write_authority": result.ai_broker_write_authority,
+            "level4_ready": result.level4_ready,
+        },
+        "launch_packet": result.packet.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def run_first_controlled_paper_session_preflight(
@@ -491,6 +582,8 @@ def _scenario_request(
         updates["allow_existing_open_orders"] = False
     elif scenario == "open_position_present":
         updates["allow_existing_position"] = False
+    elif scenario == "missing_target_symbol":
+        updates["target_symbol"] = ""
     elif scenario == "leverage_rejected":
         updates["current_gross_exposure"] = 1.01
     elif scenario == "missing_cleanup_policy":
@@ -513,7 +606,10 @@ def _scenario_request(
 def _operator_approval_valid(request: FirstSessionPreflightRequest) -> bool:
     if request.mode == "fake":
         return request.operator_approval_marker == MILESTONE_31_FAKE_OPERATOR_APPROVAL
-    return request.operator_approval_marker == MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL
+    return request.operator_approval_marker in {
+        MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
+        MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
+    }
 
 
 def _pre_broker_blockers(
@@ -550,6 +646,11 @@ def _pre_broker_blockers(
         blockers.append("autonomous_live_execution_enabled")
     if app_config.risk_level_4_micro_live.allow_margin:
         blockers.append("leverage_enabled")
+    if environ.get(WRITE_SMOKE_FLAG_ENV_VAR, "").strip() == "1":
+        blockers.append("write_smoke_flag_must_be_disabled")
+    for env_name in FIRST_SESSION_EXECUTION_FLAG_ENV_VARS:
+        if environ.get(env_name, "").strip() == "1":
+            blockers.append(f"first_session_execution_flag_must_be_disabled:{env_name}")
     if request.mode == "real-read-only" and not blockers:
         blockers.extend(
             f"alpaca_readonly_gate:{gate}"
@@ -614,7 +715,7 @@ def _real_read_only_broker_preflight(
             environ=environ,
             app_config=app_config,
         )
-        client = client_factory(credentials)
+        client = ReadOnlyPreflightBrokerClient(client_factory(credentials))
         account = map_alpaca_account(client.get_account(), environment="paper")
         clock = map_alpaca_clock(client.get_clock())
         open_orders = tuple(map_alpaca_order(payload) for payload in client.list_open_orders())
@@ -755,6 +856,8 @@ def _post_read_blockers(
     app_config: AppConfig,
 ) -> tuple[str, ...]:
     blockers: list[str] = []
+    if not request.target_symbol:
+        blockers.append("target_symbol_not_selected")
     if not broker_preflight.endpoint_validation.paper_endpoint_proven:
         blockers.append("paper_endpoint_not_proven")
     if not broker_preflight.endpoint_validation.live_endpoint_rejected:
@@ -893,6 +996,9 @@ def _build_packet(
         required_first_session_gates_checklist=checks,
         go_no_go_decision=decision,
         blockers=blockers,
+        read_only_broker_calls_performed=preflight.read_only_broker_calls_performed,
+        real_read_only_alpaca_calls_performed=preflight.real_read_only_alpaca_calls_performed,
+        provider_ai_telegram_vercel_temporal_calls_performed=False,
         live_trading_enabled=False,
         autonomous_live_execution_enabled=False,
         leverage_enabled=False,
@@ -1072,3 +1178,29 @@ def _git_commit_or_unavailable() -> str:
 
 def _unique(values: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(values))
+
+
+def _parse_env_file(path: Path) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return parsed
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        name, value = line.split("=", 1)
+        key = name.strip()
+        if not key:
+            continue
+        parsed[key] = _parse_env_value(value.strip())
+    return parsed
+
+
+def _parse_env_value(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value.split(" #", 1)[0].strip()
