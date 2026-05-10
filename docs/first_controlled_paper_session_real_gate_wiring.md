@@ -15,6 +15,10 @@ deferred and performs no broker writes.
 Milestone 32 completes or fails closed the real-read-only preflight/signoff path and can generate a
 sanitized launch packet artifact. The real-gated execution path remains deferred.
 
+Milestone 33 retries the real-read-only preflight after clearing the M32 write-smoke blocker for
+the read-only process only. The real-gated execution path remains deferred and no broker writes are
+authorized.
+
 ## What Is Wired
 
 - A typed real-session gate configuration and preflight evidence model in `packages/paper/real_gate.py`.

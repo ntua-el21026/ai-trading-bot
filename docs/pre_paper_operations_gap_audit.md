@@ -37,6 +37,10 @@ no-broker-write only.
 Milestone 32 extends that same preflight document with real-read-only completion/signoff behavior
 and a sanitized launch packet artifact. It still cannot submit, cancel, replace, or flatten orders.
 
+Milestone 33 retries the operator-reviewed real-read-only preflight after isolating the M32
+write-smoke blocker to a local `.env` safety flag. The retry remains read-only, no-session,
+no-broker-write, and no-schedule only.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

@@ -33,6 +33,7 @@ from packages.paper.real_gate import REAL_SESSION_MAX_NOTIONAL_USD, REAL_SESSION
 MILESTONE_31_FAKE_OPERATOR_APPROVAL = "MILESTONE_31_FAKE_PREFLIGHT"
 MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL = "MILESTONE_31_READ_ONLY_PREFLIGHT"
 MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL = "MILESTONE_32_READ_ONLY_PREFLIGHT"
+MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL = "MILESTONE_33_READ_ONLY_PREFLIGHT"
 PREFLIGHT_PACKET_STARTED_AT = datetime(2026, 5, 9, 14, 0, tzinfo=UTC)
 
 PreflightMode = Literal["fake", "real-read-only"]
@@ -368,8 +369,8 @@ class FirstSessionPreflightResult(PreflightModel):
     ai_broker_write_authority: bool = False
     level4_ready: bool = False
     note: str = (
-        "Milestone 31/32 read-only preflight and launch authorization only. Actual paper trading "
-        "has not started and no broker writes were attempted."
+            "Milestone 31/32/33 read-only preflight and launch authorization only. "
+            "Actual paper trading has not started and no broker writes were attempted."
     )
 
     @model_validator(mode="after")
@@ -466,7 +467,7 @@ def write_launch_packet_artifact(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "milestone": "32",
+            "milestone": "33",
         "result": {
             "success": result.success,
             "refused": result.refused,
@@ -609,6 +610,7 @@ def _operator_approval_valid(request: FirstSessionPreflightRequest) -> bool:
     return request.operator_approval_marker in {
         MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
         MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
+        MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL,
     }
 
 

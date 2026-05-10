@@ -85,6 +85,11 @@ Milestone 32 extends that preflight path with `MILESTONE_32_READ_ONLY_PREFLIGHT`
 loading for real-read-only mode, and sanitized launch packet artifact generation. It still performs
 only account, clock, open-order, and position reads when all read-only gates pass.
 
+Milestone 33 adds `MILESTONE_33_READ_ONLY_PREFLIGHT` and retries the real-read-only launch packet
+path after diagnosing the Milestone 32 `write_smoke_flag_must_be_disabled` NO-GO. The blocker is
+cleared only by running the read-only command with the write-smoke flag explicitly non-truthy for
+that process; `.env` remains untracked and must not be printed.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

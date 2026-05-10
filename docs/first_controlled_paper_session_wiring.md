@@ -37,6 +37,9 @@ paper session execution.
 Milestone 32 uses the same preflight path for real-read-only completion/signoff and sanitized
 packet generation. It still remains outside the broker-write execution path.
 
+Milestone 33 retries that read-only preflight after safely clearing the M32 write-smoke blocker for
+the retry process only. It remains outside the broker-write execution path.
+
 The harness proves the shape of the future session:
 
 1. Session context and safety snapshot are built with secret values redacted and not inspected.

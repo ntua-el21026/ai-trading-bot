@@ -9,6 +9,7 @@ from packages.paper import (
     MILESTONE_31_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
     MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
+    MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL,
     PREFLIGHT_SCENARIO_IDS,
     default_first_session_preflight_request,
     load_preflight_environment,
@@ -17,7 +18,7 @@ from packages.paper import (
 )
 
 WARNING = (
-    "Milestone 31/32 read-only preflight only. Actual paper trading has not started; "
+    "Milestone 31/32/33 read-only preflight only. Actual paper trading has not started; "
     "no broker writes are performed."
 )
 
@@ -45,7 +46,8 @@ def main(argv: list[str] | None = None) -> int:
             "Operator marker. Fake success uses "
             f"{MILESTONE_31_FAKE_OPERATOR_APPROVAL}; read-only uses "
             f"{MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL} or "
-            f"{MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL} or "
+            f"{MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument(

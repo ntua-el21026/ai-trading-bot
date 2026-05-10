@@ -12,6 +12,7 @@ from packages.paper import (
     MILESTONE_31_FAKE_OPERATOR_APPROVAL,
     MILESTONE_31_READ_ONLY_OPERATOR_APPROVAL,
     MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL,
+    MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL,
     FirstSessionPreflightRequest,
     FirstSessionPreflightResult,
     ReadOnlyPreflightBrokerClient,
@@ -61,6 +62,12 @@ def _real_readonly_request(confirm: bool = True) -> FirstSessionPreflightRequest
 def _real_readonly_request_m32(confirm: bool = True) -> FirstSessionPreflightRequest:
     return _real_readonly_request(confirm=confirm).model_copy(
         update={"operator_approval_marker": MILESTONE_32_READ_ONLY_OPERATOR_APPROVAL}
+    )
+
+
+def _real_readonly_request_m33(confirm: bool = True) -> FirstSessionPreflightRequest:
+    return _real_readonly_request(confirm=confirm).model_copy(
+        update={"operator_approval_marker": MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL}
     )
 
 
@@ -190,6 +197,21 @@ def test_m32_real_readonly_marker_is_accepted_for_stubbed_success() -> None:
     assert client.write_calls == ()
 
 
+def test_m33_real_readonly_marker_is_accepted_for_stubbed_success() -> None:
+    client = _FakeReadOnlyClient()
+    result = run_first_controlled_paper_session_preflight(
+        _real_readonly_request_m33(),
+        environ=_safe_readonly_env(),
+        client_factory=lambda _credentials: client,
+        real_external_calls_performed=False,
+    )
+
+    assert result.success is True
+    assert result.packet.operator_approval_marker == MILESTONE_33_READ_ONLY_OPERATOR_APPROVAL
+    assert client.read_calls == ("get_account", "get_clock", "list_open_orders", "list_positions")
+    assert client.write_calls == ()
+
+
 def test_readonly_wrapper_exposes_no_write_methods() -> None:
     wrapper = ReadOnlyPreflightBrokerClient(_FakeReadOnlyClient())
 
@@ -247,6 +269,40 @@ def test_safe_env_loading_uses_dotenv_without_exposing_secret_values(tmp_path: P
     assert result.success is True
     assert "paper-key-from-env-file" not in serialized
     assert "paper-secret-from-env-file" not in serialized
+
+
+def test_safe_env_loading_allows_process_override_to_clear_write_smoke_flag(
+    tmp_path: Path,
+) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "\n".join(
+            [
+                "ALPACA_API_KEY=paper-key-from-env-file",
+                "ALPACA_SECRET_KEY=paper-secret-from-env-file",
+                f"ALPACA_BASE_URL={ALPACA_PAPER_BASE_URL}",
+                "RUN_ALPACA_PAPER_SMOKE=1",
+                "ALPACA_PAPER_SMOKE_CONFIRM=READ_ONLY_PAPER_ACCOUNT",
+                "RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    loaded = load_preflight_environment(
+        repo_root=tmp_path,
+        base_environ={"RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE": ""},
+    )
+    result = run_first_controlled_paper_session_preflight(
+        _real_readonly_request_m33(),
+        environ=loaded,
+        client_factory=lambda _credentials: _FakeReadOnlyClient(),
+        real_external_calls_performed=False,
+    )
+
+    assert result.success is True
+    assert "write_smoke_flag_must_be_disabled" not in result.blockers
+    assert result.read_only_broker_calls_performed is True
+    assert result.real_broker_writes_attempted is False
 
 
 def test_dirty_target_symbol_open_orders_and_position_are_no_go() -> None:
@@ -376,7 +432,7 @@ def test_launch_packet_artifact_is_sanitized(tmp_path: Path) -> None:
     )
     artifact = packet_path.read_text(encoding="utf-8")
 
-    assert '"milestone": "32"' in artifact
+    assert '"milestone": "33"' in artifact
     assert '"actual_paper_trading_started": false' in artifact
     assert '"real_broker_writes_attempted": false' in artifact
     assert "DATABASE_URL=" not in artifact

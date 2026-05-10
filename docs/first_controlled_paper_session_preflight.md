@@ -9,6 +9,12 @@ Milestone 32 completes the operator-reviewed real-read-only preflight path and f
 signoff behavior. The outcome may be GO if all read-only checks and launch gates pass, or NO-GO
 with precise blockers. It remains no-real-session and no-broker-write only.
 
+Milestone 33 retries the real-read-only preflight after diagnosing the Milestone 32 NO-GO blocker
+`write_smoke_flag_must_be_disabled`. That blocker was caused by a local `.env` write-smoke flag
+for `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE`, not by the read-only preflight code path. Milestone
+33 does not edit `.env`; it clears the blocker only for the retry process by explicitly overriding
+the write-smoke flag to a non-truthy value while preserving refusal when the flag is `1`.
+
 This document extends:
 
 - `docs/pre_paper_operations_gap_audit.md`
@@ -43,7 +49,8 @@ requires the fake operator marker `MILESTONE_31_FAKE_PREFLIGHT` for a passing fa
 It safely loads process environment plus local `.env` and `.env.local` values without printing raw
 values. It requires:
 
-- operator marker `MILESTONE_31_READ_ONLY_PREFLIGHT` or `MILESTONE_32_READ_ONLY_PREFLIGHT`;
+- operator marker `MILESTONE_31_READ_ONLY_PREFLIGHT`, `MILESTONE_32_READ_ONLY_PREFLIGHT`, or
+  `MILESTONE_33_READ_ONLY_PREFLIGHT`;
 - `--confirm-paper-endpoint`;
 - `--confirm-no-broker-writes`;
 - `--confirm-no-live-trading`;
@@ -85,12 +92,15 @@ uv run python scripts/check_first_controlled_paper_session_preflight.py \
   --operator-approval MILESTONE_31_FAKE_PREFLIGHT
 ```
 
-Real read-only preflight, only when local paper credentials and explicit gates are already present:
+Milestone 33 real read-only preflight retry, only when local paper credentials and explicit gates
+are already present. The leading environment override disables only the write-smoke flag for this
+read-only process and does not edit `.env`:
 
 ```bash
+RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE= \
 uv run python scripts/check_first_controlled_paper_session_preflight.py \
   --mode real-read-only \
-  --operator-approval MILESTONE_32_READ_ONLY_PREFLIGHT \
+  --operator-approval MILESTONE_33_READ_ONLY_PREFLIGHT \
   --confirm-paper-endpoint \
   --confirm-no-broker-writes \
   --confirm-no-live-trading \
@@ -105,6 +115,9 @@ submit, cancel, replace, or flatten orders.
 
 If the local `.env` gates or credentials are absent, the command returns NO-GO before broker calls
 and still writes a sanitized packet when `--packet-output` is supplied.
+
+If `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1` remains active after process overrides are applied,
+the preflight must return NO-GO before broker calls with `write_smoke_flag_must_be_disabled`.
 
 ## Launch Authorization Packet
 
@@ -188,16 +201,31 @@ Before the actual first controlled paper session can run:
 
 Schedules, unattended operation, frozen validation, and Level 4 remain out of scope.
 
-## Milestone 32 Result Boundary
+## Milestone 32/33 Result Boundary
 
-Milestone 32 can only complete read-only preflight. It does not authorize actual paper session
-execution by itself. A GO packet means the operator may proceed to a separate explicit launch
-milestone. A NO-GO packet lists blockers that must be cleared before launch.
+Milestones 32 and 33 can only complete read-only preflight. They do not authorize actual paper
+session execution by themselves. A GO packet means the operator may proceed to a separate explicit
+launch milestone. A NO-GO packet lists blockers that must be cleared before launch.
+
+Milestone 33 approval of the launch packet, if achieved, remains launch authorization only. It does
+not submit, cancel, replace, flatten, or place protective stops.
+
+## Milestone 33 Result
+
+Milestone 33 diagnosed the Milestone 32 NO-GO as a local `.env` write-smoke flag:
+`RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=1`. The retry did not edit `.env`; it cleared that blocker
+only for the read-only process with `RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE=`.
+
+The gated real-read-only retry completed account, clock/status, open-order, and position reads
+against the Alpaca paper endpoint and regenerated
+`docs/evidence/first_controlled_paper_session_launch_packet.json` as GO. The sanitized summary
+reported no open orders, no positions, no broker writes, no actual paper trading, no schedules, and
+no Level 4 readiness claim.
 
 ## Level 4 And Leverage Exclusion
 
-Milestones 31 and 32 do not make the system Level 4 ready. Level 4 still requires frozen paper
-evidence and all latest-spec gates.
+Milestones 31, 32, and 33 do not make the system Level 4 ready. Level 4 still requires frozen
+paper evidence and all latest-spec gates.
 
 Leverage remains out of scope. Gross exposure must remain <= 1.00x equity, and margin borrowing
 must not be intentionally used.
