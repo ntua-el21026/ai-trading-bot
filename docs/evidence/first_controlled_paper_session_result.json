@@ -1,74 +1,97 @@
 {
-  "milestone": "35B",
+  "milestone": "35C",
   "result": {
-    "actual_paper_trading_started": false,
+    "actual_paper_trading_started": true,
     "ai_broker_write_authority": false,
     "autonomous_live_execution_enabled": false,
     "blockers": [
-      "market_clock_not_open"
+      "execution_crashed_before_protective_stop_submission_fill_payload_missing_client_order_id",
+      "safety_stop_submitted_and_verified_after_incident"
     ],
     "level4_ready": false,
     "leverage_enabled": false,
     "live_trading_enabled": false,
     "post_session_go_no_go": "no_go",
-    "real_broker_orders_submitted": false,
-    "real_broker_writes_attempted": false,
+    "real_broker_orders_submitted": true,
+    "real_broker_writes_attempted": true,
     "real_read_only_alpaca_calls_performed": true,
-    "refused": true,
+    "refused": false,
     "schedules_activated": false,
-    "status": "refused",
+    "status": "incident",
     "success": false,
-    "unsafe": false
+    "unsafe": true
   },
   "session_result": {
-    "actual_paper_trading_started": false,
+    "actual_paper_trading_started": true,
     "ai_news_neutral_fallback_marker": "neutral_fake_ai_news_no_broker_authority",
     "autonomous_live_execution_enabled": false,
-    "broker_order_id": null,
-    "broker_writes": [],
+    "broker_order_id": "00000000-0000-4000-8000-900000000006",
+    "broker_writes": [
+      {
+        "attempted": true,
+        "broker_order_id": "00000000-0000-4000-8000-900000000006",
+        "client_order_id": "first-session-AAPL-20000101T000000Z-00000001",
+        "fake_only": false,
+        "operation": "submit_entry_order",
+        "status": "filled"
+      },
+      {
+        "attempted": true,
+        "broker_order_id": "00000000-0000-4000-8000-900000000008",
+        "client_order_id": "first-session-AAPL-safety-stop-20000101T000000Z-00000003-stop",
+        "fake_only": false,
+        "operation": "submit_protective_stop",
+        "status": "new_verified"
+      }
+    ],
     "candidate_id": "candidate-AAPL-m34",
-    "cleanup_actions": [],
+    "cleanup_actions": [
+      "safety_stop_submitted_after_execution_error"
+    ],
     "cleanup_flatten_policy": "verify_only",
-    "client_order_id": null,
-    "commit_hash": "2c96f5a",
+    "client_order_id": "first-session-AAPL-20000101T000000Z-00000001",
+    "commit_hash": "463c95d",
     "dashboard_read_model_summary": "local_packet_available",
     "decision_id": "5be88310-82ad-5a1a-9f4c-ba404e8f8119",
-    "entry_order_status": null,
+    "entry_order_status": "filled",
     "estimated_entry_notional_usd": 330.0,
-    "execution_intent_id": null,
+    "execution_intent_id": "intent-first-session-AAPL-20000101T000000Z-00000001",
     "fake_alert_summary": "fake_alert_summary_only",
-    "fill_id": null,
-    "fill_status": "not_reached",
-    "filled_quantity": 0.0,
+    "fill_id": "20260511093725917::76579824-2944-4757-9143-cea85ea30dda",
+    "fill_status": "filled",
+    "filled_quantity": 1.0,
     "first_session_absolute_max_notional_usd": 500.0,
     "first_session_max_quantity": 1,
-    "incidents": [],
+    "incidents": [
+      "execution_crashed_before_protective_stop_submission_fill_payload_missing_client_order_id",
+      "safety_stop_submitted_and_verified_after_incident"
+    ],
     "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md",
     "launch_packet_reference": "docs/evidence/first_controlled_paper_session_launch_packet.json",
     "level4_ready": false,
     "leverage_enabled": false,
     "live_endpoint_rejection_proof": "live_endpoint_not_used",
     "live_trading_enabled": false,
-    "operator_approval_marker": "MILESTONE_35B_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION",
+    "operator_approval_marker": "MILESTONE_35C_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION",
     "order_envelope": {
       "entry_order_type": "limit",
       "limit_price": 330.0,
       "max_notional_usd": 350.0,
       "max_quantity": 1,
       "stop_loss_percent": 0.5,
-      "stop_loss_price": null,
+      "stop_loss_price": 165.0,
       "time_in_force": "day"
     },
     "order_envelope_rejection_reasons": [],
     "order_envelope_validation_result": "passed",
     "paper_endpoint_proof": "paper_endpoint_confirmed",
-    "post_run_open_orders_summary": "clean",
-    "post_run_positions_summary": "clean",
+    "post_run_open_orders_summary": "protective_stop_open",
+    "post_run_positions_summary": "protected_position_open",
     "post_run_reconciliation_result": "not_clean_or_not_reached",
     "post_session_recommendation": "do_not_repeat_until_blockers_cleared",
     "pre_run_broker_state": {
       "account_reachable": true,
-      "clock_is_open": false,
+      "clock_is_open": true,
       "clock_reachable": true,
       "open_order_count": 0,
       "open_orders_status": "clean",
@@ -79,20 +102,20 @@
       "target_symbol_position_quantity": 0.0
     },
     "pre_run_reconciliation_result": "clean",
-    "protective_stop_order_id": null,
+    "protective_stop_order_id": "00000000-0000-4000-8000-900000000008",
     "protective_stop_plan": {
-      "plan_id": null,
+      "plan_id": "first-session-AAPL-stop-plan",
       "required": true,
-      "status": "not_reached",
+      "status": "available",
       "stop_loss_percent": 0.5,
-      "stop_loss_price": null
+      "stop_loss_price": 165.0
     },
-    "protective_stop_verification_result": "not_reached",
+    "protective_stop_verification_result": "verified",
     "provider_ai_telegram_vercel_temporal_calls": false,
-    "real_broker_orders_submitted": false,
-    "real_broker_writes_attempted": false,
+    "real_broker_orders_submitted": true,
+    "real_broker_writes_attempted": true,
     "report_summary": "local_result_packet_generated",
-    "result_packet_id": "7f46e605-a625-532e-a5cd-6b0b3c4f49bf",
+    "result_packet_id": "675857af-577f-5cad-94fb-bed56f91f08d",
     "risk_check_id": "risk-check-AAPL-m34",
     "schedules_activated": false,
     "secrets_redacted": {
@@ -112,7 +135,7 @@
     "spec_version": "Autonomous_AI_Trading_Bot_SPEC_v0.3.md",
     "symbol_allowlist_decision": "approved",
     "target_symbol": "AAPL",
-    "timestamp": "2026-05-11T13:00:52.352577Z"
+    "timestamp": "2026-05-11T13:37:22Z"
   },
   "_publication_redaction": {
     "schema_version": 1,

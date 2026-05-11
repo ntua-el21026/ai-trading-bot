@@ -247,3 +247,8 @@ Milestone 35B reran the real-read-only preflight for operator-selected `AAPL` wi
 safety overrides. The packet remained GO for read-only launch prerequisites, but the refreshed
 clock showed the regular session closed, so the write-capable execution command was not run and the
 session remained NO-GO before broker writes.
+
+Milestone 35C reran the real-read-only preflight during an open market session. It returned GO for
+the AAPL launch prerequisites before the real-paper command was attempted. Post-execution read-only
+state is no longer clean because the session created an AAPL paper position protected by an open
+stop; repeated controlled sessions must wait for post-session audit.

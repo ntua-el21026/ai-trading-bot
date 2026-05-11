@@ -41,6 +41,9 @@ MILESTONE_35_REAL_OPERATOR_APPROVAL = (
 MILESTONE_35B_REAL_OPERATOR_APPROVAL = (
     "MILESTONE_35B_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION"
 )
+MILESTONE_35C_REAL_OPERATOR_APPROVAL = (
+    "MILESTONE_35C_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION"
+)
 MILESTONE_34_FAKE_OPERATOR_APPROVAL = "MILESTONE_34_FAKE_REAL_PAPER"
 M34_RESULT_EVIDENCE_PATH = "docs/evidence/first_controlled_paper_session_result.json"
 M34_LAUNCH_PACKET_PATH = "docs/evidence/first_controlled_paper_session_launch_packet.json"
@@ -104,6 +107,7 @@ REAL_PAPER_OPERATOR_APPROVAL_MARKERS = (
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35C_REAL_OPERATOR_APPROVAL,
 )
 _ORDER_ENVELOPE_BLOCKER_CODES = frozenset(
     {
@@ -514,6 +518,8 @@ def write_first_controlled_paper_session_result_artifact(
 
 
 def _result_artifact_milestone(result: FirstPaperSessionExecutionResult) -> str:
+    if result.result_packet.operator_approval_marker == MILESTONE_35C_REAL_OPERATOR_APPROVAL:
+        return "35C"
     if result.result_packet.operator_approval_marker == MILESTONE_35B_REAL_OPERATOR_APPROVAL:
         return "35B"
     return "34"
@@ -620,7 +626,8 @@ def _pre_broker_blockers(
     ):
         if not bool(getattr(request, field_name)):
             blockers.append(reason)
-    blockers.extend(_launch_packet_blockers(request.launch_packet_path))
+    if request.mode == "real-paper":
+        blockers.extend(_launch_packet_blockers(request.launch_packet_path))
     if not request.target_symbol:
         blockers.append("target_symbol_required")
     else:
@@ -870,7 +877,7 @@ def _run_adapter_execution(
     entry_status = entry_order.status
     filled_quantity = entry_order.filled_quantity
     fill_status = _fill_status(entry_order)
-    fill_id = _fill_id(adapter, entry_order.client_order_id)
+    fill_id = _fill_id(adapter, entry_order)
 
     if filled_quantity <= 0:
         if entry_order.is_open:
@@ -1141,9 +1148,11 @@ def _fill_status(order: BrokerOrder) -> str:
     return "filled"
 
 
-def _fill_id(adapter: AlpacaPaperAdapter, client_order_id: str) -> str | None:
+def _fill_id(adapter: AlpacaPaperAdapter, order: BrokerOrder) -> str | None:
     fills = tuple(
-        fill for fill in adapter.recent_fills() if fill.client_order_id == client_order_id
+        fill
+        for fill in adapter.recent_fills()
+        if fill.client_order_id in {order.client_order_id, order.broker_order_id}
     )
     return None if not fills else fills[-1].broker_fill_id
 

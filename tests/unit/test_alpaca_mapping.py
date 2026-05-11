@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from packages.broker.alpaca import map_alpaca_trade_update
+from packages.broker.alpaca import map_alpaca_fill, map_alpaca_trade_update
 from packages.data.payloads import hash_payload
 
 
@@ -63,3 +63,21 @@ def test_alpaca_trade_update_maps_canceled_spelling_to_cancelled_event() -> None
 
     assert event.event_type == "cancelled"
     assert event.broker_order.status == "cancelled"
+
+
+def test_alpaca_fill_activity_without_client_order_id_falls_back_to_order_id() -> None:
+    payload = {
+        "id": "fill-1",
+        "order_id": "broker-order-1",
+        "symbol": "AAPL",
+        "side": "buy",
+        "qty": "1",
+        "price": "290.94",
+        "transaction_time": "2026-05-11T13:37:25.917227Z",
+    }
+
+    fill = map_alpaca_fill(payload)
+
+    assert fill.broker_order_id == "broker-order-1"
+    assert fill.client_order_id == "broker-order-1"
+    assert fill.broker_fill_id == "fill-1"

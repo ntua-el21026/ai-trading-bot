@@ -682,9 +682,10 @@ def map_alpaca_fill(
     raw_payload_hash: str | None = None,
 ) -> BrokerFill:
     filled_at = _datetime(payload.get("filled_at") or payload.get("transaction_time"))
+    client_order_id = payload.get("client_order_id") or payload.get("order_id")
     return BrokerFill(
         broker_order_id=str(payload["order_id"]),
-        client_order_id=str(payload["client_order_id"]),
+        client_order_id=str(client_order_id),
         symbol=str(payload["symbol"]).upper(),
         side=_side(payload.get("side")),
         quantity=_required_float(payload.get("qty") or payload.get("quantity"), "quantity"),

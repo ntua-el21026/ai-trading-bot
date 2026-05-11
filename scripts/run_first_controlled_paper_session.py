@@ -15,6 +15,7 @@ from packages.paper import (
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
     audit_first_session_symbol_universe,
@@ -65,7 +66,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{MILESTONE_34_FAKE_OPERATOR_APPROVAL}; for M34 real-paper use "
             f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}; for M35 real-paper use "
             f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}; for M35B real-paper use "
-            f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}; for M35C real-paper use "
+            f"{MILESTONE_35C_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)

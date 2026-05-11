@@ -15,7 +15,11 @@
     },
     "authorization_packet_id": "8bb67f84-31df-5b5c-bbfa-95f18d3d9145",
     "autonomous_live_execution_enabled": false,
-    "blockers": [],
+    "blockers": [
+      "target_symbol_not_clean",
+      "existing_open_orders_block_first_session",
+      "existing_position_blocks_first_session"
+    ],
     "broker_endpoint_mode": "paper",
     "broker_write_methods_called": false,
     "cleanup_policy_decision": {
@@ -27,14 +31,14 @@
       "policy_id": "first-session-cleanup-verify-only"
     },
     "clock_session_summary": {
-      "is_open": false,
+      "is_open": true,
       "next_close": "2026-05-11T16:00:00-04:00",
-      "next_open": "2026-05-11T09:30:00-04:00",
+      "next_open": "2026-05-12T09:30:00-04:00",
       "reachable": true,
       "status_summary": "clock_readable",
-      "timestamp": "2026-05-11T08:45:26.499029-04:00"
+      "timestamp": "2026-05-11T10:38:44.231415-04:00"
     },
-    "commit_hash": "2c96f5a",
+    "commit_hash": "463c95d",
     "dashboard_report_visibility_decision": {
       "dashboard_read_model_expected_after_session": true,
       "deployment_required": false,
@@ -54,7 +58,7 @@
       "mode": "managed_db_future_plus_local_packet",
       "post_session_managed_db_audit_required": true
     },
-    "go_no_go_decision": "go",
+    "go_no_go_decision": "no_go",
     "kill_switch_expected_state": "RUNNING",
     "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md",
     "level4_ready": false,
@@ -76,12 +80,14 @@
     "no_live_assertion": true,
     "no_schedule_assertion": true,
     "open_orders_summary": {
-      "has_blocking_open_orders": false,
+      "has_blocking_open_orders": true,
       "reachable": true,
-      "status_summary": "clean",
-      "symbols": [],
-      "target_symbol_open_orders": 0,
-      "total_open_orders": 0
+      "status_summary": "blocking_open_orders_present",
+      "symbols": [
+        "AAPL"
+      ],
+      "target_symbol_open_orders": 1,
+      "total_open_orders": 1
     },
     "operator_approval_marker": "MILESTONE_33_READ_ONLY_PREFLIGHT",
     "paper_endpoint_proof": {
@@ -93,12 +99,14 @@
       "represented_base_url": "https://paper-api.alpaca.markets"
     },
     "positions_summary": {
-      "has_blocking_position": false,
+      "has_blocking_position": true,
       "reachable": true,
-      "status_summary": "clean",
-      "symbols": [],
-      "target_symbol_quantity": 0.0,
-      "total_positions": 0
+      "status_summary": "blocking_position_present",
+      "symbols": [
+        "AAPL"
+      ],
+      "target_symbol_quantity": 1.0,
+      "total_positions": 1
     },
     "preflight_mode": "real-read-only",
     "prior_incident_review_marker": "prior_incidents_reviewed_clear",
@@ -150,8 +158,8 @@
       },
       {
         "name": "target_symbol_clean",
-        "passed": true,
-        "reason_code": "target_symbol_clean_passed"
+        "passed": false,
+        "reason_code": "target_symbol_not_clean"
       },
       {
         "name": "cleanup_policy",
@@ -165,8 +173,8 @@
       },
       {
         "name": "go_no_go",
-        "passed": true,
-        "reason_code": "go_no_go_passed"
+        "passed": false,
+        "reason_code": "no_go_blockers_present"
       }
     ],
     "schedules_activated": false,
@@ -192,11 +200,11 @@
     ],
     "target_symbol_cleanliness": {
       "allowed": true,
-      "clean": true,
+      "clean": false,
       "explicitly_allowed_existing_state": false,
-      "open_order_count": 0,
-      "position_quantity": 0.0,
-      "reason_code": "clean",
+      "open_order_count": 1,
+      "position_quantity": 1.0,
+      "reason_code": "target_symbol_not_clean",
       "target_symbol": "AAPL"
     },
     "timestamp": "2026-05-09T14:00:00Z"
@@ -206,9 +214,13 @@
     "actual_paper_trading_started": false,
     "ai_broker_write_authority": false,
     "autonomous_live_execution_enabled": false,
-    "blockers": [],
+    "blockers": [
+      "target_symbol_not_clean",
+      "existing_open_orders_block_first_session",
+      "existing_position_blocks_first_session"
+    ],
     "broker_write_methods_called": false,
-    "go_no_go_decision": "go",
+    "go_no_go_decision": "no_go",
     "level4_ready": false,
     "leverage_enabled": false,
     "live_trading_enabled": false,
@@ -217,9 +229,9 @@
     "real_broker_orders_submitted": false,
     "real_broker_writes_attempted": false,
     "real_read_only_alpaca_calls_performed": true,
-    "refused": false,
+    "refused": true,
     "schedules_activated": false,
-    "success": true
+    "success": false
   },
   "_publication_redaction": {
     "schema_version": 1,

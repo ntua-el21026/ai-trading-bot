@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from packages.paper import (
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     FirstPaperSessionExecutionRequest,
     FirstPaperSessionExecutionResult,
     audit_first_session_symbol_universe,
@@ -28,6 +30,33 @@ def _fake_request(scenario_id: str = "happy_path") -> FirstPaperSessionExecution
         mode="fake-real-paper",
         operator_approval_marker=MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     )
+
+
+def _write_go_launch_packet(path: Path) -> Path:
+    path.write_text(
+        json.dumps(
+            {
+                "milestone": "33",
+                "result": {
+                    "go_no_go_decision": "go",
+                    "blockers": [],
+                    "read_only_broker_calls_performed": True,
+                    "real_broker_writes_attempted": False,
+                    "actual_paper_trading_started": False,
+                    "schedules_activated": False,
+                    "leverage_enabled": False,
+                    "level4_ready": False,
+                },
+                "launch_packet": {
+                    "broker_endpoint_mode": "paper",
+                    "open_orders_summary": {"total_open_orders": 0},
+                    "positions_summary": {"total_positions": 0},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 def _real_request(
@@ -254,9 +283,14 @@ def test_symbol_universe_audit_accepts_configured_symbols_offline() -> None:
     assert audit.real_broker_writes_attempted is False
 
 
-def test_real_paper_valid_local_envelope_reaches_credential_gate_without_writes() -> None:
+def test_real_paper_valid_local_envelope_reaches_credential_gate_without_writes(
+    tmp_path: Path,
+) -> None:
+    request = _real_request(max_notional_usd=350.0, limit_price=330.0).model_copy(
+        update={"launch_packet_path": str(_write_go_launch_packet(tmp_path / "go.json"))}
+    )
     result = run_first_controlled_paper_session_execution(
-        _real_request(max_notional_usd=350.0, limit_price=330.0),
+        request,
         environ={},
     )
 
@@ -279,6 +313,16 @@ def test_m35_operator_marker_is_accepted_by_local_gate_model() -> None:
 def test_m35b_operator_marker_is_accepted_by_local_gate_model() -> None:
     result = run_first_controlled_paper_session_execution(
         _real_request(operator_approval_marker=MILESTONE_35B_REAL_OPERATOR_APPROVAL),
+        environ={},
+    )
+
+    assert "operator_approval_missing" not in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m35c_operator_marker_is_accepted_by_local_gate_model() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _real_request(operator_approval_marker=MILESTONE_35C_REAL_OPERATOR_APPROVAL),
         environ={},
     )
 

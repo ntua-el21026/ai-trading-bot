@@ -45,6 +45,11 @@ Milestone 35B attempted the operator-selected AAPL first-session launch only thr
 read-only gates. It remained NO-GO because the refreshed Alpaca clock reported the regular session
 closed. No write-capable real-paper command was run, and no broker writes occurred.
 
+Milestone 35C retried during an open market session. One AAPL paper entry order was submitted and
+filled, then a fill-mapping defect interrupted the normal stop path. A recovery protective stop was
+submitted and verified. The run is a safety incident and repeated controlled paper sessions are
+blocked pending post-session audit.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

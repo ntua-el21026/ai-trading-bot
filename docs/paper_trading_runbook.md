@@ -113,6 +113,13 @@ cleanly, but the refreshed clock showed the market/session closed, so the write-
 real-paper command was not run. The result packet records `market_clock_not_open`, no broker
 writes, no actual paper trading, no schedules, no leverage, and no Level 4 readiness.
 
+Milestone 35C retried the same AAPL envelope after a refreshed read-only preflight reported the
+market open and AAPL clean. One Alpaca paper entry order was submitted and filled for one share.
+The process then hit a fill-mapping defect before the normal stop path completed. A recovery
+protective stop was submitted for the filled AAPL quantity and verified by read-back. This is a
+safety incident and blocks repeated controlled paper sessions until the post-session audit accepts
+the incident handling and result packet.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

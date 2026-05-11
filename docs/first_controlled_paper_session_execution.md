@@ -218,6 +218,11 @@ endpoint is proven, AAPL is clean, the market/session is acceptable, reconciliat
 ExecutionIntent is valid, and the protective-stop plan is present. If any gate fails, it must refuse
 before broker writes or stop in a documented safe incident state.
 
+Milestone 35C retries the same AAPL envelope during an acceptable regular market session with
+`MILESTONE_35C_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION`. It must first rerun the
+real-read-only preflight with process-local safety overrides and may run the write-capable
+real-paper command only if that refreshed packet is GO and the market/session is open.
+
 ## Evidence
 
 Milestone 34 writes a sanitized result packet to:
@@ -290,6 +295,42 @@ The real-paper write-capable execution command was not run because the refreshed
 reported the regular session closed. The local sanitized result packet records `market_clock_not_open`
 as the M35B NO-GO blocker. No entry order, cancel, replacement, flatten, or protective stop was
 submitted.
+
+## Milestone 35C Result
+
+Milestone 35C retried the same operator-selected AAPL envelope during an open Alpaca paper market
+session:
+
+- target symbol: `AAPL`;
+- max quantity: `1`;
+- max notional: `350`;
+- limit price: `330`;
+- estimated notional: `330`.
+
+The refreshed real-read-only preflight returned GO before execution: paper endpoint proven, account
+and clock readable, AAPL open orders clean, AAPL positions clean, no broker writes attempted, no
+actual paper trading started, no schedules, no leverage, and no Level 4 readiness claim.
+
+The real-paper command submitted one AAPL paper entry order. The order filled for one share, then
+the execution process hit an implementation defect while mapping an Alpaca fill activity payload
+that omitted `client_order_id`. This happened after the entry fill and before the normal protective
+stop submission path completed.
+
+The run was treated as a safety incident. A recovery protective stop was submitted for the filled
+AAPL quantity through the paper endpoint and verified by read-back. The result packet records:
+
+- actual paper trading started;
+- real broker writes attempted;
+- entry status `filled`;
+- fill status `filled`;
+- filled quantity `1`;
+- protective stop verification `verified`;
+- post-run state `protective_stop_open` and `protected_position_open`;
+- post-session recommendation `do_not_repeat_until_blockers_cleared`.
+
+The fill-mapping defect was fixed so future fill activity payloads that omit `client_order_id` fall
+back to `order_id` and do not crash the evidence path. Repeated controlled paper sessions remain
+blocked until the M35C incident and result packet are audited.
 
 ## Post-Session Policy
 
