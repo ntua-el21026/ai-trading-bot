@@ -581,6 +581,24 @@ Current operational decision:
 
 Frozen paper validation has not started. Level 4 remains not ready.
 
+## Milestone 35E Protected Hold Confirmation
+
+Milestone 35E records the operator decision `HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`.
+Verification is read-only only and did not submit, cancel, replace, or flatten broker orders.
+
+The M35E verification confirmed the protected hold state:
+
+- AAPL paper position remains open for the first-session filled quantity;
+- the AAPL protective stop remains open and verified;
+- the stop quantity matches the protected AAPL position quantity;
+- no unexpected open orders exist outside the expected protective stop;
+- no unexpected positions exist outside the expected AAPL position.
+
+The current decision is to continue holding until the next review. If the stop is later missing or
+unverifiable, request a separately approved stop-repair or manual broker-review milestone. If an
+unexpected position or order appears, request manual broker review. Repeated controlled paper
+sessions remain blocked until the incident is closed by a later approved decision.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

@@ -10,10 +10,14 @@ from packages.broker.fakes import DEFAULT_AS_OF, FakeAlpacaClient
 from packages.core.config import load_app_config
 from packages.paper import (
     M34_RESULT_EVIDENCE_PATH,
+    M35D_POST_SESSION_AUDIT_EVIDENCE_PATH,
     PostSessionAuditRequest,
     audit_m35c_result_packet,
+    audit_m35d_post_session_audit_packet,
     default_first_paper_session_execution_request,
+    run_first_controlled_paper_session_hold_decision,
     run_first_controlled_paper_session_post_session_audit,
+    write_hold_decision_artifact,
     write_post_session_audit_artifact,
 )
 from packages.paper.execution import (
@@ -58,6 +62,88 @@ def test_fake_post_session_audit_recommends_hold_and_blocks_repetition() -> None
     )
     assert result.broker_writes_performed_in_this_milestone is False
     assert result.packet.repeated_session_go_no_go == "no_go"
+
+
+def test_m35d_post_session_audit_packet_parser_validates_hold_recommendation() -> None:
+    audit = audit_m35d_post_session_audit_packet(M35D_POST_SESSION_AUDIT_EVIDENCE_PATH)
+
+    assert audit.parseable is True
+    assert audit.milestone == "35D"
+    assert audit.audit_completed is True
+    assert audit.recommendation == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+    assert audit.repeated_session_go_no_go == "no_go"
+    assert audit.broker_writes_performed_in_m35d is False
+    assert audit.protected_position_verified is True
+    assert audit.blockers == ()
+
+
+def test_hold_decision_packet_records_operator_decision_and_blocks_repetition() -> None:
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(mode="fake", scenario_id="protected_position")
+    )
+
+    assert result.hold_confirmed is True
+    assert result.go_no_go == "no_go"
+    assert result.operator_decision == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+    assert result.packet.operator_decision == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+    assert result.packet.cleanup_hold_recommendation == "CONTINUE_HOLD_UNTIL_NEXT_REVIEW"
+    assert result.packet.repeated_session_go_no_go == "no_go"
+    assert result.packet.frozen_validation_started is False
+    assert result.packet.cleanup_performed is False
+    assert result.packet.flatten_performed is False
+    assert result.packet.cancel_performed is False
+    assert result.packet.broker_writes_performed_in_this_milestone is False
+    assert "repeated_sessions_blocked_until_later_audit_decision" in result.blockers
+
+
+def test_hold_decision_missing_stop_is_no_go_and_requests_stop_repair() -> None:
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(mode="fake", scenario_id="missing_stop")
+    )
+
+    assert result.hold_confirmed is False
+    assert result.go_no_go == "no_go"
+    assert result.packet.cleanup_hold_recommendation == "REQUEST_OPERATOR_APPROVED_STOP_REPAIR"
+    assert "aapl_protective_stop_not_verified" in result.blockers
+    assert result.packet.broker_writes_performed_in_this_milestone is False
+
+
+def test_hold_decision_unexpected_position_is_no_go() -> None:
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(mode="fake", scenario_id="unexpected_position")
+    )
+
+    assert result.hold_confirmed is False
+    assert result.packet.cleanup_hold_recommendation == "MANUAL_BROKER_REVIEW_REQUIRED"
+    assert "unexpected_positions_present" in result.blockers
+    assert result.packet.broker_writes_performed_in_this_milestone is False
+
+
+def test_hold_decision_unexpected_order_is_no_go() -> None:
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(mode="fake", scenario_id="unexpected_order")
+    )
+
+    assert result.hold_confirmed is False
+    assert result.packet.cleanup_hold_recommendation == "MANUAL_BROKER_REVIEW_REQUIRED"
+    assert "unexpected_open_orders_present" in result.blockers
+    assert result.packet.broker_writes_performed_in_this_milestone is False
+
+
+def test_hold_decision_packet_excludes_secret_values(tmp_path: Path) -> None:
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(mode="fake", scenario_id="protected_position")
+    )
+    path = write_hold_decision_artifact(result, tmp_path / "hold.json")
+    payload = path.read_text(encoding="utf-8")
+
+    assert "paper-secret" not in payload
+    assert "paper-key" not in payload
+    assert "postgres://" not in payload
+    assert "sk-" not in payload
+    hold_payload = json.loads(payload)["hold_decision"]
+    assert hold_payload["operator_decision"] == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+    assert hold_payload["broker_writes_performed_in_this_milestone"] is False
 
 
 def test_fake_post_session_audit_missing_stop_requests_stop_repair() -> None:
@@ -124,6 +210,44 @@ def test_real_read_only_post_audit_stub_never_calls_write_methods() -> None:
     assert result.packet.current_broker_state.protective_stop_verified is True
 
 
+def test_real_read_only_hold_decision_stub_never_calls_write_methods() -> None:
+    client = _ReadOnlyGuardClient()
+
+    def factory(*_args: Any, **_kwargs: Any) -> _ReadOnlyGuardClient:
+        return client
+
+    result = run_first_controlled_paper_session_hold_decision(
+        PostSessionAuditRequest(
+            mode="real-read-only",
+            scenario_id="protected_position",
+            confirm_paper_endpoint=True,
+            confirm_no_broker_writes=True,
+            confirm_no_live_trading=True,
+            confirm_no_autonomous_live=True,
+            confirm_no_schedules=True,
+            confirm_no_leverage=True,
+        ),
+        environ={
+            "ALPACA_API_KEY": "placeholder-key",
+            "ALPACA_SECRET_KEY": "placeholder-secret",
+            "ALPACA_BASE_URL": ALPACA_PAPER_BASE_URL,
+            "RUN_ALPACA_PAPER_SMOKE": "1",
+            "ALPACA_PAPER_SMOKE_CONFIRM": "READ_ONLY_PAPER_ACCOUNT",
+        },
+        client_factory=factory,
+    )
+
+    assert result.hold_confirmed is True
+    assert result.go_no_go == "no_go"
+    assert result.real_read_only_calls_performed is True
+    assert result.broker_writes_performed_in_this_milestone is False
+    assert client.submit_order_calls == 0
+    assert client.cancel_order_calls == 0
+    assert result.packet.cleanup_hold_recommendation == "CONTINUE_HOLD_UNTIL_NEXT_REVIEW"
+    assert result.packet.current_broker_state.protective_stop_verified is True
+    assert result.packet.frozen_validation_started is False
+
+
 def test_execution_path_continues_to_stop_when_fill_metadata_is_malformed() -> None:
     app_config = load_app_config()
     request = default_first_paper_session_execution_request(
@@ -183,16 +307,16 @@ class _ReadOnlyGuardClient:
         self.submit_order_calls = 0
         self.cancel_order_calls = 0
         self._orders = {
-            "entry-order": _order_payload(
-                broker_order_id="entry-order",
+            "00000000-0000-4000-8000-900000000006": _order_payload(
+                broker_order_id="00000000-0000-4000-8000-900000000006",
                 client_order_id="first-session-AAPL-20000101T000000Z-00000001",
                 order_type="limit",
                 status="filled",
                 side="buy",
                 filled_qty="1",
             ),
-            "stop-order": _order_payload(
-                broker_order_id="stop-order",
+            "00000000-0000-4000-8000-900000000008": _order_payload(
+                broker_order_id="00000000-0000-4000-8000-900000000008",
                 client_order_id="first-session-AAPL-safety-stop-20000101T000000Z-00000003-stop",
                 order_type="stop",
                 status="new",
@@ -212,7 +336,7 @@ class _ReadOnlyGuardClient:
         }
 
     def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
-        return (self._orders["stop-order"],)
+        return (self._orders["00000000-0000-4000-8000-900000000008"],)
 
     def get_order_by_id(self, broker_order_id: str) -> Mapping[str, Any] | None:
         return self._orders.get(broker_order_id)

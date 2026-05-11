@@ -36,6 +36,9 @@ from packages.paper.first_session import FIRST_SESSION_SPEC_VERSION, SENSITIVE_E
 M35D_POST_SESSION_AUDIT_EVIDENCE_PATH = (
     "docs/evidence/first_controlled_paper_session_post_session_audit.json"
 )
+M35E_HOLD_DECISION_EVIDENCE_PATH = (
+    "docs/evidence/first_controlled_paper_session_hold_decision.json"
+)
 
 PostSessionAuditMode = Literal["fake", "real-read-only"]
 PostSessionAuditScenarioId = Literal[
@@ -51,6 +54,13 @@ CleanupHoldRecommendation = Literal[
     "REQUEST_OPERATOR_APPROVED_STOP_REPAIR",
     "MANUAL_BROKER_REVIEW_REQUIRED",
     "NO_CLEANUP_REQUIRED",
+]
+OperatorHoldDecision = Literal["HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"]
+HoldDecisionRecommendation = Literal[
+    "CONTINUE_HOLD_UNTIL_NEXT_REVIEW",
+    "REQUEST_OPERATOR_APPROVED_STOP_REPAIR",
+    "REQUEST_OPERATOR_APPROVED_RISK_REDUCING_FLATTEN",
+    "MANUAL_BROKER_REVIEW_REQUIRED",
 ]
 
 
@@ -83,6 +93,18 @@ class M35CResultPacketAudit(M35DAuditModel):
     recovery_stop_verified: bool
     no_cancel_replace_flatten_recorded: bool
     post_session_no_go: bool
+    blockers: tuple[str, ...]
+
+
+class M35DPostSessionAuditPacketAudit(M35DAuditModel):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    audit_completed: bool
+    recommendation: str | None
+    repeated_session_go_no_go: str | None
+    broker_writes_performed_in_m35d: bool
+    protected_position_verified: bool
     blockers: tuple[str, ...]
 
 
@@ -161,6 +183,62 @@ class PostSessionAuditResult(M35DAuditModel):
     ai_broker_write_authority: bool = False
 
 
+class HoldDecisionPacket(M35DAuditModel):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str
+    spec_version: str
+    commit_hash: str
+    m35c_result_packet_reference: str
+    m35d_post_session_audit_packet_reference: str
+    operator_decision: OperatorHoldDecision
+    m35c_result_audit: M35CResultPacketAudit
+    m35d_post_session_audit: M35DPostSessionAuditPacketAudit
+    current_broker_state: PostSessionBrokerStateSummary
+    aapl_position_status: str
+    aapl_protective_stop_status: str
+    open_orders_summary: str
+    positions_summary: str
+    reconciliation_summary: str
+    repeated_session_go_no_go: Literal["no_go"]
+    cleanup_performed: bool = False
+    flatten_performed: bool = False
+    cancel_performed: bool = False
+    broker_writes_performed_in_this_milestone: bool = False
+    real_read_only_calls_performed: bool
+    frozen_validation_started: bool = False
+    level4_ready: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    schedules_activated: bool = False
+    provider_ai_telegram_vercel_temporal_calls: bool = False
+    hold_confirmed: bool
+    cleanup_hold_recommendation: HoldDecisionRecommendation
+    blockers: tuple[str, ...]
+    secrets_redacted: dict[str, str] = Field(
+        default_factory=lambda: {name: "<redacted-not-inspected>" for name in SENSITIVE_ENV_NAMES}
+    )
+
+
+class HoldDecisionResult(M35DAuditModel):
+    mode: PostSessionAuditMode
+    scenario_id: PostSessionAuditScenarioId
+    operator_decision: OperatorHoldDecision
+    hold_confirmed: bool
+    go_no_go: Literal["no_go"]
+    blockers: tuple[str, ...]
+    packet: HoldDecisionPacket
+    packet_path: str | None = None
+    broker_writes_performed_in_this_milestone: bool = False
+    real_read_only_calls_performed: bool
+    schedules_activated: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    ai_broker_write_authority: bool = False
+
+
 class PostSessionAuditRequest(M35DAuditModel):
     mode: PostSessionAuditMode = "fake"
     scenario_id: PostSessionAuditScenarioId = "protected_position"
@@ -172,6 +250,81 @@ class PostSessionAuditRequest(M35DAuditModel):
     confirm_no_autonomous_live: bool = False
     confirm_no_schedules: bool = False
     confirm_no_leverage: bool = False
+
+
+def run_first_controlled_paper_session_hold_decision(
+    request: PostSessionAuditRequest | None = None,
+    *,
+    operator_decision: OperatorHoldDecision = "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW",
+    post_session_audit_packet_path: str = M35D_POST_SESSION_AUDIT_EVIDENCE_PATH,
+    environ: Mapping[str, str] | None = None,
+    app_config: AppConfig | None = None,
+    client_factory: PostSessionAuditClientFactory = (
+        build_alpaca_paper_order_lifecycle_http_client
+    ),
+    now: datetime | None = None,
+) -> HoldDecisionResult:
+    active_request = request or PostSessionAuditRequest()
+    decision_time = now or datetime.now(UTC)
+    audit_result = run_first_controlled_paper_session_post_session_audit(
+        active_request,
+        environ=environ,
+        app_config=app_config,
+        client_factory=client_factory,
+        now=decision_time,
+    )
+    m35d_audit = audit_m35d_post_session_audit_packet(post_session_audit_packet_path)
+    broker_state = audit_result.packet.current_broker_state
+    hold_confirmed = _hold_confirmed(broker_state, m35d_audit)
+    recommendation = _hold_decision_recommendation(broker_state)
+    blockers = _unique(
+        (
+            *audit_result.blockers,
+            *audit_result.packet.m35c_result_audit.blockers,
+            *m35d_audit.blockers,
+            *_hold_state_blockers(broker_state),
+            "repeated_sessions_blocked_until_later_audit_decision",
+        )
+    )
+    packet = HoldDecisionPacket(
+        packet_id=str(
+            uuid5(
+                NAMESPACE_URL,
+                f"m35e-hold-decision:{active_request.mode}:"
+                f"{active_request.scenario_id}:{decision_time.isoformat()}",
+            )
+        ),
+        timestamp=decision_time,
+        latest_spec_path=f"docs/app/{FIRST_SESSION_SPEC_VERSION}",
+        spec_version=FIRST_SESSION_SPEC_VERSION,
+        commit_hash=_git_commit_or_unavailable(),
+        m35c_result_packet_reference=active_request.result_packet_path,
+        m35d_post_session_audit_packet_reference=post_session_audit_packet_path,
+        operator_decision=operator_decision,
+        m35c_result_audit=audit_result.packet.m35c_result_audit,
+        m35d_post_session_audit=m35d_audit,
+        current_broker_state=broker_state,
+        aapl_position_status=_position_status(broker_state),
+        aapl_protective_stop_status=_protective_stop_status(broker_state),
+        open_orders_summary=_open_orders_summary(broker_state),
+        positions_summary=_positions_summary(broker_state),
+        reconciliation_summary=broker_state.reconciliation_summary,
+        repeated_session_go_no_go="no_go",
+        real_read_only_calls_performed=audit_result.real_read_only_calls_performed,
+        hold_confirmed=hold_confirmed,
+        cleanup_hold_recommendation=recommendation,
+        blockers=blockers,
+    )
+    return HoldDecisionResult(
+        mode=active_request.mode,
+        scenario_id=active_request.scenario_id,
+        operator_decision=operator_decision,
+        hold_confirmed=hold_confirmed,
+        go_no_go="no_go",
+        blockers=blockers,
+        packet=packet,
+        real_read_only_calls_performed=audit_result.real_read_only_calls_performed,
+    )
 
 
 def run_first_controlled_paper_session_post_session_audit(
@@ -358,6 +511,76 @@ def audit_m35c_result_packet(
     )
 
 
+def audit_m35d_post_session_audit_packet(
+    audit_packet_path: str | Path,
+) -> M35DPostSessionAuditPacketAudit:
+    path = Path(audit_packet_path)
+    if not path.is_file():
+        return M35DPostSessionAuditPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            audit_completed=False,
+            recommendation=None,
+            repeated_session_go_no_go=None,
+            broker_writes_performed_in_m35d=False,
+            protected_position_verified=False,
+            blockers=("m35d_post_session_audit_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        packet = PostSessionAuditPacket.model_validate(payload["post_session_audit"])
+    except (OSError, KeyError, TypeError, ValueError):
+        return M35DPostSessionAuditPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            audit_completed=False,
+            recommendation=None,
+            repeated_session_go_no_go=None,
+            broker_writes_performed_in_m35d=False,
+            protected_position_verified=False,
+            blockers=("m35d_post_session_audit_packet_unparseable",),
+        )
+    result = payload.get("result", {})
+    broker_state = packet.current_broker_state
+    protected_verified = (
+        broker_state.target_symbol == "AAPL"
+        and broker_state.target_position_open
+        and broker_state.protective_stop_verified
+        and broker_state.protective_stop_matches_position_quantity
+        and broker_state.unexpected_open_orders_count == 0
+        and broker_state.unexpected_positions_count == 0
+    )
+    checks = {
+        "m35d_audit_milestone_is_35d": payload.get("milestone") == "35D",
+        "m35d_audit_completed": result.get("audit_completed") is True,
+        "m35d_recommendation_is_hold": (
+            packet.cleanup_hold_decision_recommendation
+            == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+        ),
+        "m35d_repeated_sessions_no_go": packet.repeated_session_go_no_go == "no_go",
+        "m35d_broker_writes_false": (
+            result.get("broker_writes_performed_in_this_milestone") is False
+        ),
+        "m35d_protected_position_verified": protected_verified,
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M35DPostSessionAuditPacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=str(payload.get("milestone")),
+        audit_completed=bool(result.get("audit_completed")),
+        recommendation=packet.cleanup_hold_decision_recommendation,
+        repeated_session_go_no_go=packet.repeated_session_go_no_go,
+        broker_writes_performed_in_m35d=bool(
+            result.get("broker_writes_performed_in_this_milestone")
+        ),
+        protected_position_verified=protected_verified,
+        blockers=blockers,
+    )
+
+
 def write_post_session_audit_artifact(
     result: PostSessionAuditResult,
     output_path: str | Path,
@@ -381,6 +604,38 @@ def write_post_session_audit_artifact(
             "ai_broker_write_authority": result.ai_broker_write_authority,
         },
         "post_session_audit": result.packet.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def write_hold_decision_artifact(
+    result: HoldDecisionResult,
+    output_path: str | Path,
+) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "milestone": "35E",
+        "result": {
+            "operator_decision": result.operator_decision,
+            "hold_confirmed": result.hold_confirmed,
+            "go_no_go": result.go_no_go,
+            "blockers": result.blockers,
+            "cleanup_performed": result.packet.cleanup_performed,
+            "flatten_performed": result.packet.flatten_performed,
+            "cancel_performed": result.packet.cancel_performed,
+            "broker_writes_performed_in_this_milestone": (
+                result.broker_writes_performed_in_this_milestone
+            ),
+            "real_read_only_calls_performed": result.real_read_only_calls_performed,
+            "schedules_activated": result.schedules_activated,
+            "live_trading_enabled": result.live_trading_enabled,
+            "autonomous_live_execution_enabled": result.autonomous_live_execution_enabled,
+            "leverage_enabled": result.leverage_enabled,
+            "ai_broker_write_authority": result.ai_broker_write_authority,
+        },
+        "hold_decision": result.packet.model_dump(mode="json"),
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
@@ -789,6 +1044,87 @@ def _cleanup_recommendation(
     if broker_summary.target_position_open:
         return "REQUEST_OPERATOR_APPROVED_STOP_REPAIR"
     return "NO_CLEANUP_REQUIRED"
+
+
+def _hold_confirmed(
+    broker_summary: PostSessionBrokerStateSummary,
+    m35d_audit: M35DPostSessionAuditPacketAudit,
+) -> bool:
+    return (
+        m35d_audit.parseable
+        and m35d_audit.audit_completed
+        and m35d_audit.recommendation == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+        and m35d_audit.repeated_session_go_no_go == "no_go"
+        and not m35d_audit.broker_writes_performed_in_m35d
+        and broker_summary.target_symbol == "AAPL"
+        and broker_summary.target_position_open
+        and broker_summary.protective_stop_verified
+        and broker_summary.protective_stop_matches_position_quantity
+        and broker_summary.unexpected_open_orders_count == 0
+        and broker_summary.unexpected_positions_count == 0
+    )
+
+
+def _hold_state_blockers(
+    broker_summary: PostSessionBrokerStateSummary,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if not broker_summary.target_position_open:
+        blockers.append("aapl_position_not_open")
+    if not broker_summary.protective_stop_verified:
+        blockers.append("aapl_protective_stop_not_verified")
+    if (
+        broker_summary.target_position_open
+        and not broker_summary.protective_stop_matches_position_quantity
+    ):
+        blockers.append("aapl_protective_stop_quantity_mismatch")
+    if broker_summary.unexpected_open_orders_count:
+        blockers.append("unexpected_open_orders_present")
+    if broker_summary.unexpected_positions_count:
+        blockers.append("unexpected_positions_present")
+    return tuple(blockers)
+
+
+def _hold_decision_recommendation(
+    broker_summary: PostSessionBrokerStateSummary,
+) -> HoldDecisionRecommendation:
+    if broker_summary.unexpected_open_orders_count or broker_summary.unexpected_positions_count:
+        return "MANUAL_BROKER_REVIEW_REQUIRED"
+    if broker_summary.target_position_open and broker_summary.protective_stop_verified:
+        if broker_summary.protective_stop_matches_position_quantity:
+            return "CONTINUE_HOLD_UNTIL_NEXT_REVIEW"
+        return "REQUEST_OPERATOR_APPROVED_STOP_REPAIR"
+    if broker_summary.target_position_open:
+        return "REQUEST_OPERATOR_APPROVED_STOP_REPAIR"
+    return "MANUAL_BROKER_REVIEW_REQUIRED"
+
+
+def _position_status(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.target_position_open:
+        return "open"
+    return "not_open"
+
+
+def _protective_stop_status(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.protective_stop_verified:
+        return "open_verified"
+    return "missing_or_unverified"
+
+
+def _open_orders_summary(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.unexpected_open_orders_count:
+        return "unexpected_open_orders_present"
+    if broker_summary.protective_stop_verified:
+        return "expected_protective_stop_only"
+    return "no_verified_protective_stop"
+
+
+def _positions_summary(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.unexpected_positions_count:
+        return "unexpected_positions_present"
+    if broker_summary.target_position_open:
+        return "expected_aapl_position_only"
+    return "no_target_position"
 
 
 def _git_commit_or_unavailable() -> str:

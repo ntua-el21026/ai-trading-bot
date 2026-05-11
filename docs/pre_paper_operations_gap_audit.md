@@ -56,6 +56,10 @@ metadata handling path, recommended `HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`,
 controlled paper sessions NO-GO. No broker writes, cleanup, flatten, schedule activation, live
 trading, autonomous live execution, or leverage changes occurred in M35D.
 
+Milestone 35E records the operator decision to hold the protected AAPL paper position until the
+next review. It verified the position and stop through read-only broker calls only, performed no
+broker writes or cleanup actions, and kept repeated controlled paper sessions blocked.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:
@@ -437,7 +441,8 @@ No blocking spec contradiction was found during this audit. The repository remai
 `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md` and remains ready to proceed to a future
 implementation/wiring milestone for the first controlled paper session.
 
-Actual paper trading still has not started.
+At Milestone 28, actual paper trading had not started. Current M35C evidence records that actual
+paper trading has now started through one controlled AAPL paper entry and verified protective stop.
 
 Frozen paper validation still has not started.
 
@@ -455,3 +460,8 @@ Milestone 35A updates that execution boundary to correct the first-session symbo
 The path no longer uses a universal `25.0` USD notional cap or derives limit price from max
 notional for real-paper mode. A future real execution requires explicit target symbol, max quantity,
 max notional, and limit price, with local validation before broker access.
+
+Milestone 35E records the operator decision to hold the protected AAPL paper position until the
+next review. The verification path is read-only only, confirms the expected open position and
+protective stop when broker state permits, performs no cleanup/flatten/cancel/replace actions, and
+keeps repeated controlled paper sessions blocked.

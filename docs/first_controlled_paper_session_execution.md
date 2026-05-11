@@ -367,6 +367,32 @@ The sanitized M35D audit packet is:
 docs/evidence/first_controlled_paper_session_post_session_audit.json
 ```
 
+## Milestone 35E Hold Decision
+
+Milestone 35E records the operator decision
+`HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`. It is read-only only: no new session, entry order,
+stop order, cancel, replace, flatten, schedule activation, live trading, autonomous live execution,
+or leverage is allowed.
+
+The M35E read-only hold verification confirmed the protected hold state:
+
+- AAPL paper position remains open for the filled first-session quantity;
+- the expected AAPL protective stop remains open and verified;
+- stop quantity matches the protected AAPL position quantity;
+- open orders contain no unexpected orders outside the expected protective stop;
+- positions contain no unexpected positions outside the expected AAPL paper position;
+- reconciliation is consistent with `protected_position_reconciled_for_hold`.
+
+The recorded recommendation is `CONTINUE_HOLD_UNTIL_NEXT_REVIEW`. Cleanup, flatten, cancel, and
+stop replacement were not performed in Milestone 35E. Repeated controlled paper sessions remain
+NO-GO, frozen validation has not started, and Level 4 remains not ready.
+
+The sanitized M35E hold decision packet is:
+
+```text
+docs/evidence/first_controlled_paper_session_hold_decision.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any
