@@ -73,6 +73,12 @@ rejection is classified as `LIKELY_EXISTING_STOP_BLOCKED_SELL`, meaning the exis
 likely reserved the held sellable quantity and blocked the separate cleanup sell. No broker writes
 occurred in M36. Repeated controlled paper sessions remain blocked.
 
+Milestone 37 invoked the operator-approved corrected AAPL cleanup command, but the Alpaca paper
+clock was not open after read-only state verification. The command performed no broker writes: it
+did not cancel the protective stop, submit the cleanup sell, or perform emergency re-protection.
+AAPL remains open for quantity `1` with the expected verified protective stop, and repeated
+controlled paper sessions remain blocked.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:
@@ -482,3 +488,8 @@ keeps repeated controlled paper sessions blocked.
 Milestone 35F attempted risk-reducing cleanup and incident closure. The cleanup sell was rejected
 by Alpaca paper before a broker order ID was created, final state remained protected hold, and M36
 must remain a protected-position monitoring or separately approved cleanup milestone.
+
+Milestone 37 attempted the corrected cleanup only up to the safe market/session gate. Because the
+Alpaca paper clock was not open, no stop cancellation, cleanup sell, emergency re-protection, or
+other broker write occurred. The protected AAPL hold remains in place pending a corrected cleanup
+retry during an allowed session or manual broker review.

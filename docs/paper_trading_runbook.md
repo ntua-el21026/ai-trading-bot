@@ -656,6 +656,29 @@ Current M36 decision:
 - next recommended milestone is an operator-approved corrected cleanup milestone or manual broker
   review if broker state changes or becomes ambiguous.
 
+## Milestone 37 Corrected Cleanup Attempt
+
+Milestone 37 invoked the operator-approved corrected AAPL cleanup command with paper-only gates and
+process-local overrides for unrelated smoke/control flags. The command verified the AAPL position
+and expected protective stop, then refused before any cleanup write because the Alpaca paper clock
+was not open.
+
+M37 result:
+
+- AAPL paper position remains open for quantity `1`;
+- the expected AAPL protective stop remains open and verified for quantity `1`;
+- stop cancellation was not attempted;
+- cleanup sell was not attempted;
+- emergency re-protection was not needed;
+- broker writes performed in M37: `false`;
+- repeated controlled paper sessions remain blocked;
+- frozen paper validation has not started;
+- Level 4 remains not ready.
+
+The next recommended milestone is a corrected cleanup retry during an allowed market/session window
+or manual broker review if broker state changes before then. Do not start another controlled paper
+session until the AAPL state is resolved and incident closure is accepted.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

@@ -478,6 +478,42 @@ The sanitized M36 monitoring packet is:
 docs/evidence/protected_position_monitoring_m36.json
 ```
 
+## Milestone 37 Corrected Cleanup Attempt
+
+Milestone 37 was explicitly approved for corrected AAPL cleanup with operator marker
+`OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE` and cleanup approval marker
+`MILESTONE_37_CORRECTED_AAPL_CLEANUP`. It did not start a new session, submit a new entry, submit
+a buy, trade another symbol, use a live endpoint, activate schedules, call providers, or enable
+live/autonomous execution or leverage.
+
+The M37 command first verified the current Alpaca paper state:
+
+- AAPL paper position remains open for quantity `1`;
+- the expected AAPL protective stop remains open and verified for quantity `1`;
+- open orders consist of the expected protective stop;
+- positions consist of the expected AAPL position;
+- reconciliation remains `protected_position_reconciled_for_hold`.
+
+The corrected cleanup write sequence did not run because the Alpaca paper clock was not open. M37
+therefore did not cancel the protective stop, did not submit the cleanup sell, and did not perform
+emergency re-protection. Broker writes performed in M37: `false`.
+
+Final M37 state:
+
+- AAPL remains open for quantity `1`;
+- the expected protective stop remains open and verified;
+- incident closure status is `protected_hold_continues`;
+- repeated controlled paper sessions remain NO-GO;
+- next recommendation is `M38_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN`;
+- frozen validation has not started;
+- Level 4 remains not ready.
+
+The sanitized M37 corrected cleanup packet is:
+
+```text
+docs/evidence/corrected_cleanup_m37.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any

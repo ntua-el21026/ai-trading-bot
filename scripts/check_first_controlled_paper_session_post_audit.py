@@ -12,8 +12,12 @@ from packages.paper import (
     M35E_HOLD_DECISION_EVIDENCE_PATH,
     M35F_INCIDENT_CLOSURE_EVIDENCE_PATH,
     M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
+    M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
+    MILESTONE_37_CORRECTED_CLEANUP_APPROVAL,
+    CorrectedCleanupRequest,
     IncidentClosureRequest,
+    OperatorCorrectedCleanupDecision,
     OperatorHoldDecision,
     OperatorIncidentClosureDecision,
     PostSessionAuditMode,
@@ -21,10 +25,12 @@ from packages.paper import (
     PostSessionAuditScenarioId,
     ProtectedPositionMonitoringRequest,
     load_preflight_environment,
+    run_corrected_aapl_cleanup,
     run_first_controlled_paper_session_hold_decision,
     run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
     run_protected_position_monitoring,
+    write_corrected_cleanup_artifact,
     write_hold_decision_artifact,
     write_incident_closure_artifact,
     write_post_session_audit_artifact,
@@ -41,10 +47,20 @@ M36_WARNING = (
     "broker-state verification and cleanup rejection analysis; it submits, cancels, replaces, "
     "and flattens nothing."
 )
+M37_WARNING = (
+    "Milestone 37 corrected AAPL cleanup only. This command refuses live endpoints, starts no "
+    "new session, submits no buys or entries, and may write only paper AAPL risk-reducing "
+    "cleanup or emergency re-protection when every explicit gate passes."
+)
 _M36_MODES = {
     "protected-position-monitor",
     "cleanup-rejection-analysis",
     "monitoring",
+}
+_M37_MODES = {
+    "corrected-cleanup",
+    "corrected-incident-closure",
+    "cleanup-after-stop-cancel",
 }
 
 
@@ -62,12 +78,16 @@ def main(argv: list[str] | None = None) -> int:
             "protected-position-monitor",
             "cleanup-rejection-analysis",
             "monitoring",
+            "corrected-cleanup",
+            "corrected-incident-closure",
+            "cleanup-after-stop-cancel",
         ),
         default="fake",
         help=(
             "Fake mode uses local broker fixtures. Real-read-only and hold-decision "
             "modes perform gated Alpaca reads. Incident-closure performs gated M35F "
-            "risk-reducing cleanup. M36 monitoring modes are read-only only."
+            "risk-reducing cleanup. M36 monitoring modes are read-only only. M37 "
+            "corrected cleanup modes require explicit corrected-cleanup approval."
         ),
     )
     parser.add_argument(
@@ -94,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=(
             "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW",
             "OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE",
+            "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE",
         ),
         default=None,
         help="Optional M35E/M35F operator decision to record.",
@@ -101,7 +122,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--cleanup-approval",
         default=None,
-        help=f"M35F cleanup approval marker, expected {MILESTONE_35F_CLEANUP_APPROVAL}.",
+        help=(
+            "Cleanup approval marker. M35F expects "
+            f"{MILESTONE_35F_CLEANUP_APPROVAL}; M37 expects "
+            f"{MILESTONE_37_CORRECTED_CLEANUP_APPROVAL}."
+        ),
     )
     parser.add_argument(
         "--cleanup-qty",
@@ -132,10 +157,18 @@ def main(argv: list[str] | None = None) -> int:
         default=M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
         help="Sanitized M36 protected-position monitoring packet path.",
     )
+    parser.add_argument(
+        "--corrected-cleanup-output",
+        default=M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
+        help="Sanitized M37 corrected cleanup packet path.",
+    )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
     parser.add_argument("--confirm-risk-reducing-only", action="store_true")
+    parser.add_argument("--confirm-cancel-session-stop-before-sell", action="store_true")
+    parser.add_argument("--confirm-emergency-reprotect-if-sell-fails", action="store_true")
     parser.add_argument("--confirm-no-new-entry", action="store_true")
+    parser.add_argument("--confirm-no-buy-orders", action="store_true")
     parser.add_argument("--confirm-no-live-trading", action="store_true")
     parser.add_argument("--confirm-no-autonomous-live", action="store_true")
     parser.add_argument("--confirm-no-schedules", action="store_true")
@@ -143,7 +176,93 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     mode = args.mode
-    print(M36_WARNING if mode in _M36_MODES else WARNING)
+    print(M37_WARNING if mode in _M37_MODES else (M36_WARNING if mode in _M36_MODES else WARNING))
+    if mode in _M37_MODES:
+        corrected_request = CorrectedCleanupRequest(
+            mode="real-read-only",
+            scenario_id=cast(PostSessionAuditScenarioId, args.scenario),
+            result_packet_path=args.result_packet,
+            post_session_audit_packet_path=args.post_session_audit_packet,
+            hold_decision_packet_path=args.hold_decision_output,
+            incident_closure_packet_path=args.incident_closure_output,
+            monitoring_packet_path=args.monitoring_output,
+            target_symbol=args.target_symbol.upper(),
+            operator_decision=cast(
+                OperatorCorrectedCleanupDecision | None,
+                args.operator_decision,
+            ),
+            cleanup_approval_marker=args.cleanup_approval,
+            confirm_paper_endpoint=args.confirm_paper_endpoint,
+            confirm_risk_reducing_only=args.confirm_risk_reducing_only,
+            confirm_cancel_session_stop_before_sell=(
+                args.confirm_cancel_session_stop_before_sell
+            ),
+            confirm_emergency_reprotect_if_sell_fails=(
+                args.confirm_emergency_reprotect_if_sell_fails
+            ),
+            confirm_no_new_entry=args.confirm_no_new_entry,
+            confirm_no_buy_orders=args.confirm_no_buy_orders,
+            confirm_no_live_trading=args.confirm_no_live_trading,
+            confirm_no_autonomous_live=args.confirm_no_autonomous_live,
+            confirm_no_schedules=args.confirm_no_schedules,
+            confirm_no_leverage=args.confirm_no_leverage,
+        )
+        corrected_result = run_corrected_aapl_cleanup(
+            corrected_request,
+            environ=load_preflight_environment(),
+        )
+        written_path = write_corrected_cleanup_artifact(
+            corrected_result,
+            args.corrected_cleanup_output,
+        )
+        corrected_packet = corrected_result.packet
+        pre = corrected_packet.pre_cleanup_broker_state
+        final = corrected_packet.final_broker_state
+        summary = {
+            "mode": mode,
+            "scenario_id": corrected_result.scenario_id,
+            "incident_closed": corrected_result.incident_closed,
+            "go_no_go": corrected_result.go_no_go,
+            "blockers": corrected_result.blockers,
+            "pre_cleanup_target_position_quantity": pre.target_position_quantity,
+            "pre_cleanup_protective_stop_verified": pre.protective_stop_verified,
+            "cleanup_strategy_selected": corrected_packet.cleanup_strategy_selected,
+            "stop_cancellation_action_result": (
+                corrected_packet.stop_cancellation_action_result
+            ),
+            "sell_action_result": corrected_packet.sell_action_result,
+            "emergency_reprotection_action_result": (
+                corrected_packet.emergency_reprotection_action_result
+            ),
+            "broker_writes_performed_in_m37": (
+                corrected_result.broker_writes_performed_in_m37
+            ),
+            "broker_write_operations": [
+                write.operation
+                for write in corrected_packet.broker_writes
+                if write.attempted
+            ],
+            "final_target_position_quantity": final.target_position_quantity,
+            "final_open_orders_total": final.open_orders_total,
+            "final_positions_total": final.positions_total,
+            "final_reconciliation_summary": final.reconciliation_summary,
+            "incident_closure_status": corrected_packet.incident_closure_status,
+            "next_milestone_recommendation": (
+                corrected_packet.next_milestone_recommendation
+            ),
+            "real_read_only_calls_performed": corrected_result.real_read_only_calls_performed,
+            "live_trading_enabled": corrected_result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                corrected_result.autonomous_live_execution_enabled
+            ),
+            "schedules_activated": corrected_result.schedules_activated,
+            "leverage_enabled": corrected_result.leverage_enabled,
+            "ai_broker_write_authority": corrected_result.ai_broker_write_authority,
+            "corrected_cleanup_packet_path": str(written_path),
+            "note": M37_WARNING,
+        }
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if corrected_result.incident_closed else 1
     if mode in _M36_MODES:
         monitoring_request = ProtectedPositionMonitoringRequest(
             mode="real-read-only",
@@ -169,8 +288,8 @@ def main(argv: list[str] | None = None) -> int:
             monitoring_result,
             args.monitoring_output,
         )
-        packet = monitoring_result.packet
-        broker_state = packet.current_broker_state
+        monitoring_packet = monitoring_result.packet
+        broker_state = monitoring_packet.current_broker_state
         summary = {
             "mode": mode,
             "scenario_id": monitoring_result.scenario_id,
@@ -178,24 +297,26 @@ def main(argv: list[str] | None = None) -> int:
             "go_no_go": monitoring_result.go_no_go,
             "blockers": monitoring_result.blockers,
             "target_symbol": broker_state.target_symbol,
-            "aapl_position_status": packet.aapl_position_status,
-            "aapl_protective_stop_status": packet.aapl_protective_stop_status,
+            "aapl_position_status": monitoring_packet.aapl_position_status,
+            "aapl_protective_stop_status": monitoring_packet.aapl_protective_stop_status,
             "target_position_quantity": broker_state.target_position_quantity,
             "protective_stop_quantity": broker_state.protective_stop_quantity,
             "protective_stop_order_status": broker_state.protective_stop_order_status,
-            "open_orders_summary": packet.open_orders_summary,
-            "positions_summary": packet.positions_summary,
-            "final_reconciliation_summary": packet.final_reconciliation_summary,
+            "open_orders_summary": monitoring_packet.open_orders_summary,
+            "positions_summary": monitoring_packet.positions_summary,
+            "final_reconciliation_summary": monitoring_packet.final_reconciliation_summary,
             "broker_state_safe_to_continue_holding": (
-                packet.broker_state_safe_to_continue_holding
+                monitoring_packet.broker_state_safe_to_continue_holding
             ),
             "cleanup_rejection_classification": (
-                packet.cleanup_rejection_classification
+                monitoring_packet.cleanup_rejection_classification
             ),
             "cleanup_rejection_evidence_sufficient": (
-                packet.cleanup_rejection_evidence_sufficient
+                monitoring_packet.cleanup_rejection_evidence_sufficient
             ),
-            "next_milestone_recommendation": packet.next_milestone_recommendation,
+            "next_milestone_recommendation": (
+                monitoring_packet.next_milestone_recommendation
+            ),
             "broker_writes_performed_in_m36": (
                 monitoring_result.broker_writes_performed_in_m36
             ),
@@ -213,8 +334,8 @@ def main(argv: list[str] | None = None) -> int:
             "note": M36_WARNING,
         }
         print(json.dumps(summary, indent=2, sort_keys=True))
-        safe_or_flat = packet.broker_state_safe_to_continue_holding or (
-            packet.aapl_position_status == "flat" and broker_state.account_reachable
+        safe_or_flat = monitoring_packet.broker_state_safe_to_continue_holding or (
+            monitoring_packet.aapl_position_status == "flat" and broker_state.account_reachable
         )
         return 0 if monitoring_result.monitoring_completed and safe_or_flat else 1
     audit_mode = "real-read-only" if mode == "hold-decision" else mode
