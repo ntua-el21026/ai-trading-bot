@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
@@ -33,6 +35,9 @@ from packages.paper.first_session import FIRST_SESSION_SPEC_VERSION, SENSITIVE_E
 from packages.paper.preflight import load_preflight_environment
 
 MILESTONE_34_REAL_OPERATOR_APPROVAL = "MILESTONE_34_FIRST_CONTROLLED_PAPER_SESSION"
+MILESTONE_35_REAL_OPERATOR_APPROVAL = (
+    "MILESTONE_35_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION"
+)
 MILESTONE_34_FAKE_OPERATOR_APPROVAL = "MILESTONE_34_FAKE_REAL_PAPER"
 M34_RESULT_EVIDENCE_PATH = "docs/evidence/first_controlled_paper_session_result.json"
 M34_LAUNCH_PACKET_PATH = "docs/evidence/first_controlled_paper_session_launch_packet.json"
@@ -41,8 +46,19 @@ M34_STRATEGY_VERSION = "first_controlled_paper_session_v0_3"
 M34_RISK_CONFIG_VERSION = "first_controlled_paper_session_cap_v0_3"
 M34_CLIENT_ORDER_PREFIX = "first-session"
 ETF_SYMBOLS = frozenset({"SPY", "QQQ", "DIA", "IWM", "XLK", "XLF", "XLE", "XLV"})
+LEVERAGED_OR_INVERSE_ETF_SYMBOLS = frozenset(
+    {"TQQQ", "SQQQ", "UPRO", "SPXU", "SOXL", "SOXS", "UVXY", "SVXY"}
+)
+SYMBOL_FORMAT = re.compile(r"^[A-Z][A-Z0-9.]{0,9}$")
 
 FirstPaperSessionMode = Literal["real-paper", "fake-real-paper"]
+FirstPaperSessionCliMode = Literal[
+    "real-gated",
+    "fake",
+    "real-paper",
+    "fake-real-paper",
+    "audit-symbol-universe",
+]
 FirstPaperSessionScenarioId = Literal[
     "happy_path",
     "partial_fill",
@@ -81,6 +97,22 @@ FIRST_PAPER_SESSION_SCENARIO_IDS: tuple[FirstPaperSessionScenarioId, ...] = (
     "missing_idempotency_key",
     "missing_protective_stop_plan",
 )
+REAL_PAPER_OPERATOR_APPROVAL_MARKERS = (
+    MILESTONE_34_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35_REAL_OPERATOR_APPROVAL,
+)
+_ORDER_ENVELOPE_BLOCKER_CODES = frozenset(
+    {
+        "max_qty_required",
+        "max_qty_exceeds_first_session_max",
+        "max_notional_required",
+        "max_notional_exceeds_first_session_ceiling",
+        "limit_price_required",
+        "entry_order_type_must_be_limit",
+        "time_in_force_must_be_day",
+        "estimated_notional_exceeds_max_notional",
+    }
+)
 
 
 class FirstPaperSessionClientFactory(Protocol):
@@ -104,6 +136,19 @@ class OrderEnvelope(M34Model):
     limit_price: float | None = Field(default=None, gt=0)
     stop_loss_percent: float = Field(default=0.5, gt=0, lt=1)
     stop_loss_price: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_finite_prices(self) -> Self:
+        for field_name in (
+            "max_notional_usd",
+            "limit_price",
+            "stop_loss_percent",
+            "stop_loss_price",
+        ):
+            value = getattr(self, field_name)
+            if value is not None and not math.isfinite(float(value)):
+                raise ValueError(f"{field_name} must be finite")
+        return self
 
 
 class BrokerStateSummary(M34Model):
@@ -136,6 +181,33 @@ class BrokerWriteRecord(M34Model):
     fake_only: bool = False
 
 
+class FirstSessionSymbolAuditRecord(M34Model):
+    symbol: str
+    symbol_format_valid: bool
+    in_allowed_universe: bool
+    asset_class: Literal["equity", "etf"]
+    supported_asset_class: bool
+    leveraged_or_inverse_marker: bool
+    accepted_by_first_session_envelope_logic: bool
+    reason_codes: tuple[str, ...]
+
+
+class FirstSessionSymbolUniverseAuditResult(M34Model):
+    allowed_symbols: tuple[str, ...]
+    first_session_max_quantity: int
+    first_session_absolute_max_notional_usd: float
+    records: tuple[FirstSessionSymbolAuditRecord, ...]
+    success: bool
+    actual_paper_trading_started: bool = False
+    real_broker_writes_attempted: bool = False
+    external_calls_attempted: bool = False
+    schedules_activated: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    level4_ready: bool = False
+
+
 class FirstPaperSessionResultPacket(M34Model):
     result_packet_id: str
     timestamp: datetime
@@ -146,6 +218,12 @@ class FirstPaperSessionResultPacket(M34Model):
     launch_packet_reference: str
     target_symbol: str | None
     order_envelope: OrderEnvelope
+    estimated_entry_notional_usd: float | None
+    first_session_max_quantity: int
+    first_session_absolute_max_notional_usd: float
+    symbol_allowlist_decision: str
+    order_envelope_validation_result: str
+    order_envelope_rejection_reasons: tuple[str, ...]
     paper_endpoint_proof: str
     live_endpoint_rejection_proof: str
     pre_run_broker_state: BrokerStateSummary
@@ -275,6 +353,7 @@ def default_first_paper_session_execution_request(
     target_symbol: str | None = None,
     max_quantity: int | None = None,
     max_notional_usd: float | None = None,
+    limit_price: float | None = None,
     confirm_paper_endpoint: bool | None = None,
     confirm_real_paper_writes: bool | None = None,
     confirm_no_live_trading: bool | None = None,
@@ -290,14 +369,18 @@ def default_first_paper_session_execution_request(
     default_target = "AAPL" if mode == "fake-real-paper" else None
     default_quantity = 1 if mode == "fake-real-paper" else None
     default_notional = 25.0 if mode == "fake-real-paper" else None
+    default_limit_price = 25.0 if mode == "fake-real-paper" else None
     request = FirstPaperSessionExecutionRequest(
         mode=mode,
         scenario_id=scenario,
         operator_approval_marker=operator_approval_marker,
         target_symbol=target_symbol or default_target,
         order_envelope=OrderEnvelope(
-            max_quantity=max_quantity or default_quantity,
-            max_notional_usd=max_notional_usd or default_notional,
+            max_quantity=default_quantity if max_quantity is None else max_quantity,
+            max_notional_usd=(
+                default_notional if max_notional_usd is None else max_notional_usd
+            ),
+            limit_price=default_limit_price if limit_price is None else limit_price,
         ),
         confirm_paper_endpoint=(
             default_confirm if confirm_paper_endpoint is None else confirm_paper_endpoint
@@ -426,6 +509,56 @@ def write_first_controlled_paper_session_result_artifact(
     return path
 
 
+def audit_first_session_symbol_universe(
+    app_config: AppConfig | None = None,
+) -> FirstSessionSymbolUniverseAuditResult:
+    active_config = app_config or load_app_config()
+    records: list[FirstSessionSymbolAuditRecord] = []
+    for symbol in active_config.live_universe.symbols:
+        reason_codes: list[str] = []
+        asset_class: Literal["equity", "etf"] = "etf" if symbol in ETF_SYMBOLS else "equity"
+        symbol_format_valid = SYMBOL_FORMAT.fullmatch(symbol) is not None
+        if not symbol_format_valid:
+            reason_codes.append("symbol_format_invalid")
+        if symbol in LEVERAGED_OR_INVERSE_ETF_SYMBOLS:
+            reason_codes.append("leveraged_or_inverse_etf_forbidden")
+        if asset_class == "etf" and not active_config.live_universe.allow_etfs:
+            reason_codes.append("etfs_disabled")
+        if asset_class == "equity" and not active_config.live_universe.allow_common_stocks:
+            reason_codes.append("common_stocks_disabled")
+        if active_config.execution.first_session_max_qty != 1:
+            reason_codes.append("first_session_max_qty_not_one")
+        if active_config.execution.first_session_absolute_max_notional_usd > 500.0:
+            reason_codes.append("first_session_notional_ceiling_too_high")
+        records.append(
+            FirstSessionSymbolAuditRecord(
+                symbol=symbol,
+                symbol_format_valid=symbol_format_valid,
+                in_allowed_universe=symbol in active_config.live_universe.symbols,
+                asset_class=asset_class,
+                supported_asset_class=(
+                    (asset_class == "etf" and active_config.live_universe.allow_etfs)
+                    or (
+                        asset_class == "equity"
+                        and active_config.live_universe.allow_common_stocks
+                    )
+                ),
+                leveraged_or_inverse_marker=symbol in LEVERAGED_OR_INVERSE_ETF_SYMBOLS,
+                accepted_by_first_session_envelope_logic=not reason_codes,
+                reason_codes=tuple(reason_codes),
+            )
+        )
+    return FirstSessionSymbolUniverseAuditResult(
+        allowed_symbols=active_config.live_universe.symbols,
+        first_session_max_quantity=active_config.execution.first_session_max_qty,
+        first_session_absolute_max_notional_usd=(
+            active_config.execution.first_session_absolute_max_notional_usd
+        ),
+        records=tuple(records),
+        success=all(record.accepted_by_first_session_envelope_logic for record in records),
+    )
+
+
 def _validate_scenario_id(scenario_id: str) -> FirstPaperSessionScenarioId:
     if scenario_id not in FIRST_PAPER_SESSION_SCENARIO_IDS:
         allowed = ", ".join(FIRST_PAPER_SESSION_SCENARIO_IDS)
@@ -459,7 +592,7 @@ def _pre_broker_blockers(
     if request.mode == "fake-real-paper":
         if request.operator_approval_marker != MILESTONE_34_FAKE_OPERATOR_APPROVAL:
             blockers.append("operator_approval_missing")
-    elif request.operator_approval_marker != MILESTONE_34_REAL_OPERATOR_APPROVAL:
+    elif request.operator_approval_marker not in REAL_PAPER_OPERATOR_APPROVAL_MARKERS:
         blockers.append("operator_approval_missing")
     if request.mode == "real-paper" and not request.confirm_real_paper_writes:
         blockers.append("confirm_real_paper_writes_required")
@@ -480,20 +613,19 @@ def _pre_broker_blockers(
     blockers.extend(_launch_packet_blockers(request.launch_packet_path))
     if not request.target_symbol:
         blockers.append("target_symbol_required")
-    elif request.target_symbol not in app_config.live_universe.symbols:
-        blockers.append("target_symbol_not_approved")
-    if request.order_envelope.max_quantity is None:
-        blockers.append("max_qty_required")
-    elif request.order_envelope.max_quantity != 1:
-        blockers.append("max_qty_must_be_one")
-    if request.order_envelope.max_notional_usd is None:
-        blockers.append("max_notional_required")
-    elif request.order_envelope.max_notional_usd > 25.0:
-        blockers.append("max_notional_exceeds_first_session_cap")
-    if request.order_envelope.entry_order_type != "limit":
-        blockers.append("entry_order_type_must_be_limit")
-    if request.order_envelope.time_in_force != "day":
-        blockers.append("time_in_force_must_be_day")
+    else:
+        if request.target_symbol not in app_config.live_universe.symbols:
+            blockers.append("target_symbol_not_approved")
+        if request.target_symbol in LEVERAGED_OR_INVERSE_ETF_SYMBOLS:
+            blockers.append("leveraged_or_inverse_etf_forbidden")
+        if request.target_symbol in ETF_SYMBOLS and not app_config.live_universe.allow_etfs:
+            blockers.append("etfs_disabled")
+        if (
+            request.target_symbol not in ETF_SYMBOLS
+            and not app_config.live_universe.allow_common_stocks
+        ):
+            blockers.append("common_stocks_disabled")
+    blockers.extend(_order_envelope_blockers(request, app_config))
     if request.current_gross_exposure > 1.0:
         blockers.append("gross_exposure_exceeds_1x")
     if app_config.system.live_trading_enabled or app_config.execution.allow_live_orders:
@@ -527,6 +659,38 @@ def _pre_broker_blockers(
     if request.scenario_id == "unsupported_asset_rejected":
         blockers.append("unsupported_asset_class")
     return _unique(tuple(blockers))
+
+
+def _order_envelope_blockers(
+    request: FirstPaperSessionExecutionRequest,
+    app_config: AppConfig,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    envelope = request.order_envelope
+    max_quantity = app_config.execution.first_session_max_qty
+    max_notional_ceiling = app_config.execution.first_session_absolute_max_notional_usd
+    if envelope.max_quantity is None:
+        blockers.append("max_qty_required")
+    elif envelope.max_quantity > max_quantity:
+        blockers.append("max_qty_exceeds_first_session_max")
+    if envelope.max_notional_usd is None:
+        blockers.append("max_notional_required")
+    elif envelope.max_notional_usd > max_notional_ceiling:
+        blockers.append("max_notional_exceeds_first_session_ceiling")
+    if envelope.limit_price is None:
+        blockers.append("limit_price_required")
+    if envelope.entry_order_type != "limit":
+        blockers.append("entry_order_type_must_be_limit")
+    if envelope.time_in_force != "day":
+        blockers.append("time_in_force_must_be_day")
+    estimated_notional = _estimated_entry_notional(envelope)
+    if (
+        estimated_notional is not None
+        and envelope.max_notional_usd is not None
+        and estimated_notional > envelope.max_notional_usd
+    ):
+        blockers.append("estimated_notional_exceeds_max_notional")
+    return tuple(blockers)
 
 
 def _launch_packet_blockers(path: str) -> tuple[str, ...]:
@@ -878,17 +1042,20 @@ def _settings_from_request(
     )
 
 
+def _estimated_entry_notional(envelope: OrderEnvelope) -> float | None:
+    if envelope.max_quantity is None or envelope.limit_price is None:
+        return None
+    return round(float(envelope.max_quantity) * envelope.limit_price, 6)
+
+
 def _build_execution_intent(
     request: FirstPaperSessionExecutionRequest,
     app_config: AppConfig,
 ) -> ExecutionIntent:
     assert request.target_symbol is not None
     assert request.order_envelope.max_quantity is not None
-    assert request.order_envelope.max_notional_usd is not None
-    limit_price = request.order_envelope.limit_price or round(
-        request.order_envelope.max_notional_usd / request.order_envelope.max_quantity,
-        2,
-    )
+    assert request.order_envelope.limit_price is not None
+    limit_price = request.order_envelope.limit_price
     stop_price = request.order_envelope.stop_loss_price or max(
         0.01,
         round(limit_price * (1.0 - request.order_envelope.stop_loss_percent), 2),
@@ -1138,6 +1305,10 @@ def _packet(
     endpoint_proof = (
         "paper_endpoint_confirmed" if request.confirm_paper_endpoint else "not_confirmed"
     )
+    envelope_reasons = tuple(
+        blocker for blocker in blockers if blocker in _ORDER_ENVELOPE_BLOCKER_CODES
+    )
+    estimated_notional = _estimated_entry_notional(request.order_envelope)
     return FirstPaperSessionResultPacket(
         result_packet_id=str(uuid5(NAMESPACE_URL, packet_key)),
         timestamp=request.started_at,
@@ -1148,6 +1319,14 @@ def _packet(
         launch_packet_reference=request.launch_packet_path,
         target_symbol=target,
         order_envelope=request.order_envelope,
+        estimated_entry_notional_usd=estimated_notional,
+        first_session_max_quantity=app_config.execution.first_session_max_qty,
+        first_session_absolute_max_notional_usd=(
+            app_config.execution.first_session_absolute_max_notional_usd
+        ),
+        symbol_allowlist_decision=_symbol_allowlist_decision(target, app_config),
+        order_envelope_validation_result="failed" if envelope_reasons else "passed",
+        order_envelope_rejection_reasons=envelope_reasons,
         paper_endpoint_proof=endpoint_proof,
         live_endpoint_rejection_proof="live_endpoint_not_used",
         pre_run_broker_state=pre_state,
@@ -1209,6 +1388,20 @@ def _post_summaries(
     if stop_verification == "verified":
         return "protective_stop_open", "protected_position_open"
     return "missing_verified_protective_stop", "position_requires_incident_review"
+
+
+def _symbol_allowlist_decision(target: str | None, app_config: AppConfig) -> str:
+    if target is None:
+        return "missing_target_symbol"
+    if target not in app_config.live_universe.symbols:
+        return "target_symbol_not_approved"
+    if target in LEVERAGED_OR_INVERSE_ETF_SYMBOLS:
+        return "leveraged_or_inverse_etf_forbidden"
+    if target in ETF_SYMBOLS and not app_config.live_universe.allow_etfs:
+        return "etfs_disabled"
+    if target not in ETF_SYMBOLS and not app_config.live_universe.allow_common_stocks:
+        return "common_stocks_disabled"
+    return "approved"
 
 
 def _fake_client_for_scenario(request: FirstPaperSessionExecutionRequest) -> FakeAlpacaClient:

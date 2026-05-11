@@ -95,6 +95,17 @@ Milestone 34 adds the explicitly gated first controlled Alpaca paper execution p
 broker writes because no operator-selected target symbol or order envelope was supplied. The result
 packet is written to `docs/evidence/first_controlled_paper_session_result.json`.
 
+Milestone 35A corrects the pre-execution symbol/envelope model before real execution. The first
+session now requires an explicit limit price, validates `quantity * limit_price <= max_notional`,
+enforces `first_session_max_qty=1`, and enforces a config-backed
+`first_session_absolute_max_notional_usd=500.0`. The local universe audit command is:
+
+```bash
+uv run python scripts/run_first_controlled_paper_session.py --mode audit-symbol-universe
+```
+
+It performs no external calls and no broker writes.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

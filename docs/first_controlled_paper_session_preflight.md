@@ -237,3 +237,8 @@ The Milestone 34 execution boundary is documented in
 but still refuses before broker writes unless the operator supplies the separate real-session write
 gates plus a target symbol and order envelope. The recorded Milestone 34 result remained NO-GO for
 missing target and envelope inputs.
+
+Milestone 35A extends the pre-execution command model so a future launch packet can be generated
+for an operator-selected target symbol, and the execution command can validate explicit max
+quantity, max notional, and limit price locally. The preflight remains read-only and no-broker-write
+only.

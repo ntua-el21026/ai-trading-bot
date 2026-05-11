@@ -95,6 +95,8 @@ class ExecutionConfig(StrictModel):
     entry_window_end_et: str
     unfilled_entry_cancel_time_et: str
     max_acceptable_slippage_bps: int = Field(ge=0)
+    first_session_max_qty: int = Field(gt=0)
+    first_session_absolute_max_notional_usd: float = Field(gt=0)
     pause_on_order_submit_failure: bool
     pause_on_stop_failure: bool
     notify_on_every_order: bool
@@ -109,6 +111,10 @@ class ExecutionConfig(StrictModel):
             raise ValueError("live orders cannot be allowed without broker reconciliation")
         if self.allow_live_orders and not self.require_protective_stop:
             raise ValueError("live orders cannot be allowed without protective stops")
+        if self.first_session_max_qty != 1:
+            raise ValueError("first controlled paper session max quantity must remain 1")
+        if self.first_session_absolute_max_notional_usd > 500.0:
+            raise ValueError("first controlled paper session notional ceiling exceeds 500 USD")
         return self
 
 

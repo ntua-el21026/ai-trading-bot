@@ -11,6 +11,8 @@ execution:
   entry_window_end_et: "10:30"
   unfilled_entry_cancel_time_et: "11:00"
   max_acceptable_slippage_bps: 25
+  first_session_max_qty: 1
+  first_session_absolute_max_notional_usd: 500.0
   pause_on_order_submit_failure: true
   pause_on_stop_failure: true
   notify_on_every_order: true

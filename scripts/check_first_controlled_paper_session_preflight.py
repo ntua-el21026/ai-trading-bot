@@ -55,6 +55,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Optional sanitized launch packet JSON output path. Do not pass a secrets path.",
     )
+    parser.add_argument("--target-symbol", default=None)
+    parser.add_argument(
+        "--target-symbol-allowlist",
+        default=None,
+        help="Optional comma-separated target allowlist for the launch packet.",
+    )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
     parser.add_argument("--confirm-no-live-trading", action="store_true")
@@ -68,6 +74,16 @@ def main(argv: list[str] | None = None) -> int:
         args.scenario,
         mode=args.mode,
         operator_approval_marker=args.operator_approval,
+        target_symbol=None if args.target_symbol is None else args.target_symbol.upper(),
+        target_symbol_allowlist=(
+            None
+            if args.target_symbol_allowlist is None
+            else tuple(
+                symbol.strip().upper()
+                for symbol in args.target_symbol_allowlist.split(",")
+                if symbol.strip()
+            )
+        ),
         confirm_paper_endpoint=(
             True if args.mode == "fake" else args.confirm_paper_endpoint
         ),
@@ -122,6 +138,8 @@ def main(argv: list[str] | None = None) -> int:
         "clock_session_summary": packet.clock_session_summary.status_summary,
         "open_orders_summary": packet.open_orders_summary.status_summary,
         "positions_summary": packet.positions_summary.status_summary,
+        "target_symbol": packet.target_symbol_cleanliness.target_symbol,
+        "target_symbol_allowlist": packet.target_symbol_allowlist,
         "target_symbol_clean": packet.target_symbol_cleanliness.clean,
         "cleanup_policy_mode": packet.cleanup_policy_decision.mode,
         "evidence_persistence_mode": packet.evidence_persistence_decision.mode,

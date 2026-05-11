@@ -17,6 +17,8 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.execution.require_passed_risk_check is True
     assert config.execution.require_broker_reconciliation_before_order is True
     assert config.execution.require_protective_stop is True
+    assert config.execution.first_session_max_qty == 1
+    assert config.execution.first_session_absolute_max_notional_usd == 500.0
     assert config.risk_level_4_micro_live.allow_margin is False
     assert config.risk_level_4_micro_live.allow_shorting is False
     assert config.risk_level_4_micro_live.allow_options is False

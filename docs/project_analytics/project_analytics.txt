@@ -2,7 +2,7 @@
 
 Total directories: 46
 Total files      : 284
-Total lines      : 55,757
+Total lines      : 56,369
 
 By language / type:
   Asset/PDF            Files:   4  Lines: 0
@@ -10,17 +10,17 @@ By language / type:
   GitAttributes        Files:   1  Lines: 46
   GitIgnore            Files:   1  Lines: 87
   HTML                 Files:   1  Lines: 93
-  JSON                 Files:   5  Lines: 379
+  JSON                 Files:   5  Lines: 390
   JavaScript           Files:   1  Lines: 34
   License              Files:   1  Lines: 21
   Lockfile             Files:   1  Lines: 557
-  Markdown             Files:  54  Lines: 15,387
+  Markdown             Files:  54  Lines: 15,494
   Other                Files:   2  Lines: 115
-  Python               Files: 200  Lines: 37,969
+  Python               Files: 200  Lines: 38,461
   SQL                  Files:   1  Lines: 236
   TOML                 Files:   1  Lines: 59
   Text                 Files:   2  Lines: 359
-  YAML                 Files:   8  Lines: 215
+  YAML                 Files:   8  Lines: 217
 
 Extensions grouped into Other:
   .example

@@ -401,6 +401,8 @@ def default_first_session_preflight_request(
     *,
     mode: PreflightMode = "fake",
     operator_approval_marker: str | None = None,
+    target_symbol: str | None = None,
+    target_symbol_allowlist: tuple[str, ...] | None = None,
     confirm_paper_endpoint: bool | None = None,
     confirm_no_broker_writes: bool | None = None,
     confirm_no_live_trading: bool | None = None,
@@ -414,6 +416,10 @@ def default_first_session_preflight_request(
         mode=mode,
         scenario_id=scenario,
         operator_approval_marker=operator_approval_marker,
+        target_symbol="AAPL" if target_symbol is None else target_symbol,
+        target_symbol_allowlist=(
+            ("AAPL",) if target_symbol_allowlist is None else target_symbol_allowlist
+        ),
         confirm_paper_endpoint=(
             default_confirm if confirm_paper_endpoint is None else confirm_paper_endpoint
         ),

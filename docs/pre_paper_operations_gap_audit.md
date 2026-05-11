@@ -435,3 +435,8 @@ explicitly gated first Alpaca paper execution path and a sanitized post-session 
 the repository run refused before broker writes because no operator-selected target symbol or order
 envelope was supplied. No live trading, autonomous live execution, schedules, leverage, or Level 4
 readiness were enabled.
+
+Milestone 35A updates that execution boundary to correct the first-session symbol/envelope model.
+The path no longer uses a universal `25.0` USD notional cap or derives limit price from max
+notional for real-paper mode. A future real execution requires explicit target symbol, max quantity,
+max notional, and limit price, with local validation before broker access.

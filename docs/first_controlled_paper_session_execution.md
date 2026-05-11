@@ -9,6 +9,12 @@ This milestone still refuses safely when the operator has not supplied a target 
 envelope. The Milestone 34 repository run recorded a NO-GO result because no operator-selected
 target symbol, maximum quantity, or maximum notional was provided.
 
+Milestone 35A corrects the first-session symbol and envelope model before real execution. The
+earlier universal `25.0` USD max-notional cap was too low for the configured approved universe and
+could force a far-below-market limit price if the system derived price from notional. The corrected
+model requires an explicit operator-supplied limit price and validates the resulting estimated
+notional locally before any broker access.
+
 ## Scope
 
 The execution path supports:
@@ -42,10 +48,41 @@ The real-paper path must refuse before broker writes unless all of these are pre
 - operator-provided `--target-symbol`;
 - operator-provided `--max-qty`;
 - operator-provided `--max-notional`.
+- operator-provided `--limit-price`.
 
 The target symbol must be approved by the configured universe, long-only, and clean of existing
 target-symbol open orders and positions before execution. The first-session envelope is intentionally
 small; the default policy requires one share and a limit DAY entry order.
+
+## Milestone 35A Envelope Policy
+
+The first-session envelope is now validated as:
+
+- `first_session_max_qty = 1`;
+- `first_session_absolute_max_notional_usd = 500.0`;
+- `estimated_entry_notional_usd = max_qty * limit_price`;
+- `max_qty <= first_session_max_qty`;
+- `max_notional <= first_session_absolute_max_notional_usd`;
+- `estimated_entry_notional_usd <= max_notional`;
+- `limit_price` must be explicit, positive, and finite;
+- target symbol must be in the configured live universe;
+- leveraged and inverse ETFs remain forbidden.
+
+The configured live universe currently contains:
+
+```text
+SPY, QQQ, DIA, IWM, XLK, XLF, XLE, XLV, AAPL, MSFT, NVDA, AMZN, META, GOOGL
+```
+
+Milestone 35A adds a local-only universe audit mode:
+
+```bash
+uv run python scripts/run_first_controlled_paper_session.py --mode audit-symbol-universe
+```
+
+This audit performs no external calls and no broker writes. It verifies that each configured symbol
+is structurally eligible for the first-session path when the operator supplies a valid quantity,
+max notional, and limit price.
 
 ## Commands
 
@@ -90,6 +127,7 @@ uv run python scripts/run_first_controlled_paper_session.py \
   --target-symbol <OPERATOR_SELECTED_SYMBOL> \
   --max-qty 1 \
   --max-notional <OPERATOR_SELECTED_MAX_NOTIONAL> \
+  --limit-price <OPERATOR_SELECTED_LIMIT_PRICE> \
   --confirm-paper-endpoint \
   --confirm-real-paper-writes \
   --confirm-no-live-trading \
@@ -104,6 +142,41 @@ uv run python scripts/run_first_controlled_paper_session.py \
 Do not choose the symbol automatically. Do not increase quantity or notional beyond the approved
 operator envelope.
 
+The following are examples only and do not claim current market prices:
+
+```bash
+uv run python scripts/run_first_controlled_paper_session.py \
+  --mode fake-real-paper \
+  --scenario happy_path \
+  --operator-approval MILESTONE_34_FAKE_REAL_PAPER \
+  --target-symbol AAPL \
+  --max-qty 1 \
+  --max-notional 350 \
+  --limit-price 330
+
+uv run python scripts/run_first_controlled_paper_session.py \
+  --mode fake-real-paper \
+  --scenario happy_path \
+  --operator-approval MILESTONE_34_FAKE_REAL_PAPER \
+  --target-symbol SPY \
+  --max-qty 1 \
+  --max-notional 500 \
+  --limit-price 490
+
+uv run python scripts/run_first_controlled_paper_session.py \
+  --mode fake-real-paper \
+  --scenario happy_path \
+  --operator-approval MILESTONE_34_FAKE_REAL_PAPER \
+  --target-symbol QQQ \
+  --max-qty 1 \
+  --max-notional 500 \
+  --limit-price 490
+```
+
+The future real M35 command must use the operator-selected target symbol and envelope, plus
+`MILESTONE_35_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION`. Milestone 35A does not run that
+real command.
+
 ## Evidence
 
 Milestone 34 writes a sanitized result packet to:
@@ -117,6 +190,11 @@ The packet records:
 - launch packet reference;
 - operator approval marker;
 - target symbol and order envelope if provided;
+- explicit limit price;
+- estimated entry notional;
+- first-session quantity and notional ceilings;
+- symbol allowlist decision;
+- order-envelope validation result and rejection reasons;
 - paper endpoint proof and live endpoint not-used proof;
 - pre-run broker state and reconciliation result;
 - candidate, decision, risk-check, `ExecutionIntent`, order, fill, and stop identifiers when
@@ -142,6 +220,14 @@ operator-selected target symbol and order envelope were absent. The sanitized re
 
 No actual paper trading started. No real broker orders were submitted, cancelled, replaced, or
 flattened. No protective stop was placed because no entry order was submitted.
+
+## Milestone 35A Result
+
+Milestone 35A is code, tests, docs, and fake/local rehearsal only. It does not run the real first
+controlled paper session and does not perform broker writes. The old universal `25.0` USD cap is
+replaced by the config-backed first-session ceiling. The future M35 execution path still requires
+operator approval, a fresh target/envelope decision, paper endpoint proof, clean reconciliation, a
+valid `ExecutionIntent`, and protective-stop enforcement.
 
 ## Post-Session Policy
 

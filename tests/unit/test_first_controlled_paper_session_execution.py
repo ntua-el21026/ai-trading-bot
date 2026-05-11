@@ -8,8 +8,10 @@ from packages.core.config import load_app_config
 from packages.paper import (
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35_REAL_OPERATOR_APPROVAL,
     FirstPaperSessionExecutionRequest,
     FirstPaperSessionExecutionResult,
+    audit_first_session_symbol_universe,
     default_first_paper_session_execution_request,
     run_first_controlled_paper_session_execution,
     write_first_controlled_paper_session_result_artifact,
@@ -32,7 +34,8 @@ def _real_request(
     *,
     target_symbol: str | None = "AAPL",
     max_quantity: int | None = 1,
-    max_notional_usd: float | None = 25.0,
+    max_notional_usd: float | None = 350.0,
+    limit_price: float | None = 330.0,
     operator_approval_marker: str | None = MILESTONE_34_REAL_OPERATOR_APPROVAL,
     confirm_real_paper_writes: bool = True,
 ) -> FirstPaperSessionExecutionRequest:
@@ -43,6 +46,7 @@ def _real_request(
         target_symbol=target_symbol,
         max_quantity=max_quantity,
         max_notional_usd=max_notional_usd,
+        limit_price=limit_price,
         confirm_paper_endpoint=True,
         confirm_real_paper_writes=confirm_real_paper_writes,
         confirm_no_live_trading=True,
@@ -57,6 +61,24 @@ def _real_request(
 
 def _run_fake(scenario_id: str = "happy_path") -> FirstPaperSessionExecutionResult:
     return run_first_controlled_paper_session_execution(_fake_request(scenario_id))
+
+
+def _fake_request_for_symbol(
+    symbol: str,
+    *,
+    max_quantity: int = 1,
+    max_notional_usd: float = 500.0,
+    limit_price: float = 490.0,
+) -> FirstPaperSessionExecutionRequest:
+    return default_first_paper_session_execution_request(
+        "happy_path",
+        mode="fake-real-paper",
+        operator_approval_marker=MILESTONE_34_FAKE_OPERATOR_APPROVAL,
+        target_symbol=symbol,
+        max_quantity=max_quantity,
+        max_notional_usd=max_notional_usd,
+        limit_price=limit_price,
+    )
 
 
 def test_default_real_session_script_refuses_before_external_calls(
@@ -93,7 +115,12 @@ def test_real_paper_without_confirm_real_paper_writes_refuses() -> None:
 
 def test_real_paper_without_target_symbol_or_envelope_refuses() -> None:
     result = run_first_controlled_paper_session_execution(
-        _real_request(target_symbol=None, max_quantity=None, max_notional_usd=None),
+        _real_request(
+            target_symbol=None,
+            max_quantity=None,
+            max_notional_usd=None,
+            limit_price=None,
+        ),
         environ={},
     )
 
@@ -101,6 +128,150 @@ def test_real_paper_without_target_symbol_or_envelope_refuses() -> None:
     assert "target_symbol_required" in result.blockers
     assert "max_qty_required" in result.blockers
     assert "max_notional_required" in result.blockers
+    assert "limit_price_required" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_old_twenty_five_dollar_cap_is_not_universal() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol("AAPL", max_notional_usd=350.0, limit_price=330.0)
+    )
+
+    assert result.success is True
+    assert result.result_packet.order_envelope.max_quantity == 1
+    assert result.result_packet.order_envelope.max_notional_usd == 350.0
+    assert result.result_packet.order_envelope.limit_price == 330.0
+    assert result.result_packet.estimated_entry_notional_usd == 330.0
+    assert result.result_packet.first_session_absolute_max_notional_usd == 500.0
+    assert result.result_packet.order_envelope_validation_result == "passed"
+
+
+def test_first_session_absolute_notional_ceiling_is_enforced() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol("AAPL", max_notional_usd=1000.0, limit_price=330.0)
+    )
+
+    assert result.refused is True
+    assert "max_notional_exceeds_first_session_ceiling" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_first_session_max_quantity_is_enforced() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol(
+            "AAPL",
+            max_quantity=2,
+            max_notional_usd=500.0,
+            limit_price=200.0,
+        )
+    )
+
+    assert result.refused is True
+    assert "max_qty_exceeds_first_session_max" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_limit_price_is_required_for_real_paper_mode() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _real_request(limit_price=None),
+        environ={},
+    )
+
+    assert result.refused is True
+    assert "limit_price_required" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_positive_finite_limit_price_is_required() -> None:
+    with pytest.raises(ValueError):
+        _real_request(limit_price=float("nan"))
+    with pytest.raises(ValueError, match="limit_price must be finite"):
+        _real_request(limit_price=float("inf"))
+
+
+def test_estimated_notional_cannot_exceed_max_notional() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol("AAPL", max_notional_usd=100.0, limit_price=330.0)
+    )
+
+    assert result.refused is True
+    assert "estimated_notional_exceeds_max_notional" in result.blockers
+    assert result.result_packet.estimated_entry_notional_usd == 330.0
+
+
+@pytest.mark.parametrize(
+    ("symbol", "max_notional", "limit_price"),
+    (
+        ("AAPL", 350.0, 330.0),
+        ("SPY", 500.0, 490.0),
+        ("QQQ", 500.0, 490.0),
+        ("XLK", 300.0, 290.0),
+    ),
+)
+def test_allowed_symbols_pass_local_envelope_validation(
+    symbol: str,
+    max_notional: float,
+    limit_price: float,
+) -> None:
+    result = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol(
+            symbol,
+            max_notional_usd=max_notional,
+            limit_price=limit_price,
+        )
+    )
+
+    assert result.success is True
+    assert result.result_packet.target_symbol == symbol
+    assert result.result_packet.symbol_allowlist_decision == "approved"
+    assert result.result_packet.estimated_entry_notional_usd == limit_price
+    assert result.result_packet.real_broker_writes_attempted is False
+
+
+def test_unallowed_and_leveraged_or_inverse_symbols_reject_before_broker() -> None:
+    unallowed = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol("TSLA", max_notional_usd=300.0, limit_price=250.0)
+    )
+    leveraged = run_first_controlled_paper_session_execution(
+        _fake_request_for_symbol("TQQQ", max_notional_usd=100.0, limit_price=90.0)
+    )
+
+    assert "target_symbol_not_approved" in unallowed.blockers
+    assert "target_symbol_not_approved" in leveraged.blockers
+    assert "leveraged_or_inverse_etf_forbidden" in leveraged.blockers
+    assert unallowed.real_broker_writes_attempted is False
+    assert leveraged.real_broker_writes_attempted is False
+
+
+def test_symbol_universe_audit_accepts_configured_symbols_offline() -> None:
+    audit = audit_first_session_symbol_universe()
+
+    assert audit.success is True
+    assert {"AAPL", "SPY", "QQQ"}.issubset(set(audit.allowed_symbols))
+    assert all(record.accepted_by_first_session_envelope_logic for record in audit.records)
+    assert audit.external_calls_attempted is False
+    assert audit.real_broker_writes_attempted is False
+
+
+def test_real_paper_valid_local_envelope_reaches_credential_gate_without_writes() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _real_request(max_notional_usd=350.0, limit_price=330.0),
+        environ={},
+    )
+
+    assert result.refused is True
+    assert result.result_packet.order_envelope_validation_result == "passed"
+    assert result.real_broker_writes_attempted is False
+    assert any(reason.startswith("alpaca_readonly_gate:") for reason in result.blockers)
+
+
+def test_m35_operator_marker_is_accepted_by_local_gate_model() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _real_request(operator_approval_marker=MILESTONE_35_REAL_OPERATOR_APPROVAL),
+        environ={},
+    )
+
+    assert "operator_approval_missing" not in result.blockers
     assert result.real_broker_writes_attempted is False
 
 
@@ -279,6 +450,11 @@ def test_result_packet_contains_required_fields_and_excludes_secrets(tmp_path: P
     assert packet.client_order_id
     assert packet.broker_order_id
     assert packet.fake_alert_summary == "fake_alert_summary_only"
+    assert packet.estimated_entry_notional_usd == 25.0
+    assert packet.first_session_max_quantity == 1
+    assert packet.first_session_absolute_max_notional_usd == 500.0
+    assert packet.symbol_allowlist_decision == "approved"
+    assert packet.order_envelope_validation_result == "passed"
     output = write_first_controlled_paper_session_result_artifact(
         result,
         tmp_path / "first_controlled_paper_session_result.json",
@@ -363,7 +539,19 @@ def test_m34_script_real_paper_missing_target_writes_result_packet(
     )
     output = capsys.readouterr().out
     assert '"target_symbol_required"' in output
+    assert '"limit_price_required"' in output
     assert str(output_path) in output
+
+
+def test_symbol_universe_audit_script_is_local_only(capsys: pytest.CaptureFixture[str]) -> None:
+    assert run_session_script_main(["--mode", "audit-symbol-universe"]) == 0
+    output = capsys.readouterr().out
+    assert '"success": true' in output
+    assert '"external_calls_attempted": false' in output
+    assert '"real_broker_writes_attempted": false' in output
+    assert "AAPL" in output
+    assert "SPY" in output
+    assert "QQQ" in output
 
 
 def test_m34_script_fake_real_paper_happy_path(
@@ -378,10 +566,19 @@ def test_m34_script_fake_real_paper_happy_path(
                 "happy_path",
                 "--operator-approval",
                 MILESTONE_34_FAKE_OPERATOR_APPROVAL,
+                "--target-symbol",
+                "AAPL",
+                "--max-qty",
+                "1",
+                "--max-notional",
+                "350",
+                "--limit-price",
+                "330",
             ]
         )
         == 0
     )
     output = capsys.readouterr().out
     assert '"status": "executed"' in output
+    assert '"estimated_entry_notional_usd": 330.0' in output
     assert '"real_broker_writes_attempted": false' in output

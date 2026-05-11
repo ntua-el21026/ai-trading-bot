@@ -12,8 +12,10 @@ from packages.paper import (
     MILESTONE_30_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
+    audit_first_session_symbol_universe,
     default_first_paper_session_execution_request,
     default_real_session_gate_config,
     load_preflight_environment,
@@ -34,7 +36,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("real-gated", "fake", "real-paper", "fake-real-paper"),
+        choices=(
+            "real-gated",
+            "fake",
+            "real-paper",
+            "fake-real-paper",
+            "audit-symbol-universe",
+        ),
         default="real-gated",
         help="Default real-gated mode refuses. M34 real-paper requires explicit gates.",
     )
@@ -53,12 +61,14 @@ def main(argv: list[str] | None = None) -> int:
             "Operator approval marker. For fake/stub success use "
             f"{MILESTONE_30_FAKE_OPERATOR_APPROVAL}; for M34 fake-real-paper use "
             f"{MILESTONE_34_FAKE_OPERATOR_APPROVAL}; for M34 real-paper use "
-            f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}; for M35 real-paper use "
+            f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)
     parser.add_argument("--max-qty", type=int, default=None)
     parser.add_argument("--max-notional", type=float, default=None)
+    parser.add_argument("--limit-price", type=float, default=None)
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-real-paper-writes", action="store_true")
     parser.add_argument("--confirm-no-live-trading", action="store_true")
@@ -76,6 +86,41 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     print(WARNING)
+    if args.mode == "audit-symbol-universe":
+        audit = audit_first_session_symbol_universe()
+        summary = {
+            "mode": args.mode,
+            "success": audit.success,
+            "allowed_symbols": audit.allowed_symbols,
+            "first_session_max_quantity": audit.first_session_max_quantity,
+            "first_session_absolute_max_notional_usd": (
+                audit.first_session_absolute_max_notional_usd
+            ),
+            "accepted_symbols": [
+                record.symbol
+                for record in audit.records
+                if record.accepted_by_first_session_envelope_logic
+            ],
+            "rejected_symbols": [
+                {
+                    "symbol": record.symbol,
+                    "reason_codes": record.reason_codes,
+                }
+                for record in audit.records
+                if not record.accepted_by_first_session_envelope_logic
+            ],
+            "actual_paper_trading_started": audit.actual_paper_trading_started,
+            "real_broker_writes_attempted": audit.real_broker_writes_attempted,
+            "external_calls_attempted": audit.external_calls_attempted,
+            "schedules_activated": audit.schedules_activated,
+            "live_trading_enabled": audit.live_trading_enabled,
+            "autonomous_live_execution_enabled": audit.autonomous_live_execution_enabled,
+            "leverage_enabled": audit.leverage_enabled,
+            "level4_ready": audit.level4_ready,
+        }
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if audit.success else 1
+
     if args.mode in {"real-paper", "fake-real-paper"}:
         execution_mode = cast(FirstPaperSessionMode, args.mode)
         execution_request = default_first_paper_session_execution_request(
@@ -85,6 +130,7 @@ def main(argv: list[str] | None = None) -> int:
             target_symbol=None if args.target_symbol is None else args.target_symbol.upper(),
             max_quantity=args.max_qty,
             max_notional_usd=args.max_notional,
+            limit_price=args.limit_price,
             confirm_paper_endpoint=(
                 True if execution_mode == "fake-real-paper" else args.confirm_paper_endpoint
             ),
@@ -146,6 +192,18 @@ def main(argv: list[str] | None = None) -> int:
             "target_symbol": packet.target_symbol,
             "max_qty": packet.order_envelope.max_quantity,
             "max_notional": packet.order_envelope.max_notional_usd,
+            "limit_price": packet.order_envelope.limit_price,
+            "estimated_entry_notional_usd": packet.estimated_entry_notional_usd,
+            "first_session_absolute_max_notional_usd": (
+                packet.first_session_absolute_max_notional_usd
+            ),
+            "order_envelope_validation_result": (
+                packet.order_envelope_validation_result
+            ),
+            "order_envelope_rejection_reasons": (
+                packet.order_envelope_rejection_reasons
+            ),
+            "symbol_allowlist_decision": packet.symbol_allowlist_decision,
             "entry_order_status": packet.entry_order_status,
             "fill_status": packet.fill_status,
             "filled_quantity": packet.filled_quantity,
