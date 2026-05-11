@@ -83,6 +83,7 @@ AI_Trading_Bot/
 │   │   └── paper_weekly_review.md
 │   ├── evidence/
 │   │   ├── first_controlled_paper_session_launch_packet.json
+│   │   ├── first_controlled_paper_session_post_session_audit.json
 │   │   └── first_controlled_paper_session_result.json
 │   ├── project_analytics/
 │   │   ├── project_analytics.py
@@ -200,6 +201,7 @@ AI_Trading_Bot/
 │   │   ├── first_session.py
 │   │   ├── fixtures.py
 │   │   ├── models.py
+│   │   ├── post_session_audit.py
 │   │   ├── preflight.py
 │   │   ├── readiness.py
 │   │   └── real_gate.py
@@ -238,6 +240,7 @@ AI_Trading_Bot/
 │   ├── check_alpaca_paper_readonly.py
 │   ├── check_dashboard_control_plane_runtime.py
 │   ├── check_first_controlled_paper_session.py
+│   ├── check_first_controlled_paper_session_post_audit.py
 │   ├── check_first_controlled_paper_session_preflight.py
 │   ├── check_ledger_database.py
 │   ├── check_paper_operations_readiness.py
@@ -287,6 +290,7 @@ AI_Trading_Bot/
 │       ├── test_features.py
 │       ├── test_first_controlled_paper_session.py
 │       ├── test_first_controlled_paper_session_execution.py
+│       ├── test_first_controlled_paper_session_post_audit.py
 │       ├── test_first_controlled_paper_session_preflight.py
 │       ├── test_first_controlled_paper_session_real_gate.py
 │       ├── test_idempotency.py
@@ -329,4 +333,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 284
+Total directories: 46, Total files: 288

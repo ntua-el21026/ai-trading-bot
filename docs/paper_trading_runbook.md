@@ -558,6 +558,29 @@ Weekly paper reports must include:
 - operational issues and unresolved gaps;
 - whether the frozen paper clock remains valid.
 
+## Milestone 35D Post-Session Audit
+
+Milestone 35D audited the first controlled Alpaca paper session incident without broker writes. The
+real-read-only audit verified one AAPL paper position and one open verified AAPL protective stop.
+No cancel, replace, flatten, new entry, new stop, schedule activation, live trading, autonomous live
+execution, leverage, provider call, or real alert delivery occurred in M35D.
+
+The incident root cause was fill metadata normalization: Alpaca account activity fill data omitted
+`client_order_id`, and the M35C execution path tried to map recent fills before the normal stop
+submission path. The code now falls back to `order_id` for fills without `client_order_id` and
+records malformed fill metadata as a structured incident while continuing to protective-stop
+submission from the known entry-order context.
+
+Current operational decision:
+
+- recommendation: `HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`;
+- cleanup/flatten performed: no;
+- repeated controlled paper sessions: NO-GO;
+- next allowed step: explicit post-session audit acceptance or a separately approved
+  risk-reducing cleanup/flatten decision.
+
+Frozen paper validation has not started. Level 4 remains not ready.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

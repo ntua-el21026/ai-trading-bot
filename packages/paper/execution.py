@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Literal, Protocol, Self, cast
 from uuid import NAMESPACE_URL, uuid5
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from packages.broker.alpaca import (
     AlpacaClientError,
@@ -877,7 +877,8 @@ def _run_adapter_execution(
     entry_status = entry_order.status
     filled_quantity = entry_order.filled_quantity
     fill_status = _fill_status(entry_order)
-    fill_id = _fill_id(adapter, entry_order)
+    fill_id, fill_lookup_incidents = _fill_id_with_incidents(adapter, entry_order)
+    incidents.extend(fill_lookup_incidents)
 
     if filled_quantity <= 0:
         if entry_order.is_open:
@@ -1148,13 +1149,19 @@ def _fill_status(order: BrokerOrder) -> str:
     return "filled"
 
 
-def _fill_id(adapter: AlpacaPaperAdapter, order: BrokerOrder) -> str | None:
-    fills = tuple(
-        fill
-        for fill in adapter.recent_fills()
-        if fill.client_order_id in {order.client_order_id, order.broker_order_id}
-    )
-    return None if not fills else fills[-1].broker_fill_id
+def _fill_id_with_incidents(
+    adapter: AlpacaPaperAdapter,
+    order: BrokerOrder,
+) -> tuple[str | None, tuple[str, ...]]:
+    try:
+        fills = tuple(
+            fill
+            for fill in adapter.recent_fills()
+            if fill.client_order_id in {order.client_order_id, order.broker_order_id}
+        )
+    except (AlpacaClientError, KeyError, TypeError, ValueError, ValidationError):
+        return None, ("fill_metadata_unavailable_recent_fills_unparseable",)
+    return (None if not fills else fills[-1].broker_fill_id), ()
 
 
 def _result_from_blockers(

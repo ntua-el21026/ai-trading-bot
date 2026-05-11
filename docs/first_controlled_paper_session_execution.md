@@ -332,6 +332,41 @@ The fill-mapping defect was fixed so future fill activity payloads that omit `cl
 back to `order_id` and do not crash the evidence path. Repeated controlled paper sessions remain
 blocked until the M35C incident and result packet are audited.
 
+## Milestone 35D Post-Session Audit
+
+Milestone 35D is post-session audit and incident review only. It does not start another session,
+submit a new entry, submit a new stop, cancel, replace, flatten, activate schedules, enable live
+trading, enable autonomous live execution, or add leverage.
+
+The M35C incident root cause was confined to Alpaca fill activity normalization and fill-id lookup:
+the account activity fill payload omitted `client_order_id`, and the first-session execution path
+queried recent fills before submitting the normal protective stop. Code hardening now handles this
+case in two layers:
+
+- fill mapping falls back to `order_id` when `client_order_id` is absent;
+- fill-id lookup records malformed fill metadata as a structured incident and continues to the
+  protective-stop path using the known entry-order context.
+
+The M35D real-read-only post-session audit used process-local safety overrides and performed only
+Alpaca paper reads. The audit verified:
+
+- AAPL paper position quantity remains `1`;
+- the expected AAPL protective stop is open and verified;
+- open orders consist of the expected protective stop;
+- positions consist of the expected AAPL paper position;
+- reconciliation is clean enough to hold the protected position for incident review;
+- no broker writes occurred in M35D.
+
+The cleanup/hold recommendation is `HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`. No flatten or
+cleanup was performed. Repeated controlled paper sessions remain NO-GO until the post-session audit
+is accepted and any later cleanup/flatten decision is explicitly approved.
+
+The sanitized M35D audit packet is:
+
+```text
+docs/evidence/first_controlled_paper_session_post_session_audit.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any

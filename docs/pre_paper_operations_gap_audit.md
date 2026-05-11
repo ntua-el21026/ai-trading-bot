@@ -50,6 +50,12 @@ filled, then a fill-mapping defect interrupted the normal stop path. A recovery 
 submitted and verified. The run is a safety incident and repeated controlled paper sessions are
 blocked pending post-session audit.
 
+Milestone 35D performed that post-session audit with read-only broker verification only. It verified
+the AAPL paper position remains open and protected by the expected open stop, hardened the fill
+metadata handling path, recommended `HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW`, and kept repeated
+controlled paper sessions NO-GO. No broker writes, cleanup, flatten, schedule activation, live
+trading, autonomous live execution, or leverage changes occurred in M35D.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

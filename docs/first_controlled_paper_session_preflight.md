@@ -252,3 +252,9 @@ Milestone 35C reran the real-read-only preflight during an open market session. 
 the AAPL launch prerequisites before the real-paper command was attempted. Post-execution read-only
 state is no longer clean because the session created an AAPL paper position protected by an open
 stop; repeated controlled sessions must wait for post-session audit.
+
+Milestone 35D added and ran that post-session audit as a read-only broker-state verification. The
+audit confirmed the current launch/preflight state remains NO-GO for repetition because AAPL is not
+clean, but the open AAPL position is protected by the expected verified stop. The cleanup/hold
+decision is documented in `docs/first_controlled_paper_session_execution.md`; no M35D broker writes
+occurred.
