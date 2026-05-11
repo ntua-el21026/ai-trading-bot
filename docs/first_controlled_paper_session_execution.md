@@ -393,6 +393,46 @@ The sanitized M35E hold decision packet is:
 docs/evidence/first_controlled_paper_session_hold_decision.json
 ```
 
+## Milestone 35F Cleanup And Incident Closure Attempt
+
+Milestone 35F changed the operator decision to
+`OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE` with cleanup approval marker
+`MILESTONE_35F_RISK_REDUCING_CLEANUP`. It did not start a new session and did not submit a buy or
+new-risk entry order.
+
+The real M35F command first verified broker state through Alpaca paper reads:
+
+- AAPL paper position remained open for quantity `1`;
+- the expected AAPL protective stop remained open and verified for quantity `1`;
+- no unexpected open orders were present outside the expected protective stop;
+- no unexpected positions were present outside the expected AAPL position;
+- reconciliation remained `protected_position_reconciled_for_hold`.
+
+The approved cleanup path then attempted one risk-reducing AAPL sell for the current long quantity.
+Alpaca paper rejected that cleanup sell with sanitized status `failed:invalid_order_request`. No
+broker order ID was created for the cleanup sell. Because the AAPL position was not verified flat,
+the session-created protective stop was not canceled. No unrelated order was canceled, replaced, or
+modified.
+
+Final M35F state:
+
+- AAPL position remains open for quantity `1`;
+- the expected AAPL protective stop remains open and verified for quantity `1`;
+- open orders consist of the expected protective stop;
+- positions consist of the expected AAPL position;
+- incident closure status is `protected_hold_continues`;
+- repeated controlled paper sessions remain NO-GO;
+- M36 recommendation is protected-position monitoring or a separately approved cleanup approach,
+  not a second controlled paper session;
+- frozen validation has not started;
+- Level 4 remains not ready.
+
+The sanitized M35F incident closure packet is:
+
+```text
+docs/evidence/first_controlled_paper_session_incident_closure.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any

@@ -60,6 +60,12 @@ Milestone 35E records the operator decision to hold the protected AAPL paper pos
 next review. It verified the position and stop through read-only broker calls only, performed no
 broker writes or cleanup actions, and kept repeated controlled paper sessions blocked.
 
+Milestone 35F attempted operator-approved risk-reducing incident closure. The command verified the
+protected AAPL state, attempted one cleanup sell for the current long quantity, and Alpaca paper
+rejected that sell with sanitized status `failed:invalid_order_request`. The protective stop was not
+canceled because AAPL was not flat. The incident remains open, AAPL remains protected, and repeated
+controlled paper sessions remain blocked.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:
@@ -465,3 +471,7 @@ Milestone 35E records the operator decision to hold the protected AAPL paper pos
 next review. The verification path is read-only only, confirms the expected open position and
 protective stop when broker state permits, performs no cleanup/flatten/cancel/replace actions, and
 keeps repeated controlled paper sessions blocked.
+
+Milestone 35F attempted risk-reducing cleanup and incident closure. The cleanup sell was rejected
+by Alpaca paper before a broker order ID was created, final state remained protected hold, and M36
+must remain a protected-position monitoring or separately approved cleanup milestone.

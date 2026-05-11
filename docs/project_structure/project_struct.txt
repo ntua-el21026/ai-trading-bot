@@ -82,6 +82,8 @@ AI_Trading_Bot/
 │   │   ├── paper_daily_checklist.md
 │   │   └── paper_weekly_review.md
 │   ├── evidence/
+│   │   ├── first_controlled_paper_session_hold_decision.json
+│   │   ├── first_controlled_paper_session_incident_closure.json
 │   │   ├── first_controlled_paper_session_launch_packet.json
 │   │   ├── first_controlled_paper_session_post_session_audit.json
 │   │   └── first_controlled_paper_session_result.json
@@ -333,4 +335,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 288
+Total directories: 46, Total files: 290

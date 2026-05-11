@@ -599,6 +599,28 @@ unverifiable, request a separately approved stop-repair or manual broker-review 
 unexpected position or order appears, request manual broker review. Repeated controlled paper
 sessions remain blocked until the incident is closed by a later approved decision.
 
+## Milestone 35F Cleanup And Closure Outcome
+
+Milestone 35F used the operator decision
+`OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE` and cleanup approval marker
+`MILESTONE_35F_RISK_REDUCING_CLEANUP`.
+
+The real cleanup command verified the AAPL position and protective stop before any cleanup write.
+It attempted one risk-reducing AAPL sell for the current long quantity. Alpaca paper rejected the
+sell with sanitized status `failed:invalid_order_request`. Because AAPL was not flat afterward,
+the protective stop was not canceled.
+
+Current operational state after M35F:
+
+- AAPL paper position remains open for quantity `1`;
+- the AAPL protective stop remains open and verified for quantity `1`;
+- no unexpected open orders or unexpected positions were found;
+- cleanup did not close the incident;
+- repeated controlled paper sessions remain blocked;
+- M36 should be protected-position monitoring or a separately approved cleanup approach.
+
+Do not start a second controlled paper session while this protected hold continues.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

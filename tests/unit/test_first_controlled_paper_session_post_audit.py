@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from packages.broker.alpaca import ALPACA_PAPER_BASE_URL, AlpacaPaperAdapter
 from packages.broker.fakes import DEFAULT_AS_OF, FakeAlpacaClient
@@ -11,13 +11,20 @@ from packages.core.config import load_app_config
 from packages.paper import (
     M34_RESULT_EVIDENCE_PATH,
     M35D_POST_SESSION_AUDIT_EVIDENCE_PATH,
+    M35E_HOLD_DECISION_EVIDENCE_PATH,
+    MILESTONE_35F_CLEANUP_APPROVAL,
+    IncidentClosureRequest,
+    PostSessionAuditMode,
     PostSessionAuditRequest,
     audit_m35c_result_packet,
     audit_m35d_post_session_audit_packet,
+    audit_m35e_hold_decision_packet,
     default_first_paper_session_execution_request,
     run_first_controlled_paper_session_hold_decision,
+    run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
     write_hold_decision_artifact,
+    write_incident_closure_artifact,
     write_post_session_audit_artifact,
 )
 from packages.paper.execution import (
@@ -144,6 +151,179 @@ def test_hold_decision_packet_excludes_secret_values(tmp_path: Path) -> None:
     hold_payload = json.loads(payload)["hold_decision"]
     assert hold_payload["operator_decision"] == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
     assert hold_payload["broker_writes_performed_in_this_milestone"] is False
+
+
+def test_m35e_hold_decision_packet_parser_validates_hold_decision() -> None:
+    audit = audit_m35e_hold_decision_packet(M35E_HOLD_DECISION_EVIDENCE_PATH)
+
+    assert audit.parseable is True
+    assert audit.milestone == "35E"
+    assert audit.operator_decision == "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW"
+    assert audit.hold_confirmed is True
+    assert audit.repeated_session_go_no_go == "no_go"
+    assert audit.broker_writes_performed_in_m35e is False
+    assert audit.protected_position_verified is True
+    assert audit.blockers == ()
+
+
+def test_incident_closure_validates_m35c_m35d_and_m35e_evidence() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("flat")
+    )
+
+    assert result.packet.m35c_result_audit.parseable is True
+    assert result.packet.m35d_post_session_audit.parseable is True
+    assert result.packet.m35e_hold_decision_audit.parseable is True
+    assert result.packet.cleanup_decision == (
+        "OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE"
+    )
+
+
+def test_incident_closure_refuses_without_cleanup_approval_marker() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("protected_position", cleanup_approval_marker=None)
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert result.broker_writes_performed_in_this_milestone is False
+    assert "cleanup_approval_marker_required" in result.blockers
+
+
+def test_incident_closure_already_flat_without_stale_stop_performs_no_writes() -> None:
+    result = run_first_controlled_paper_session_incident_closure(_closure_request("flat"))
+
+    assert result.incident_closed is True
+    assert result.cleanup_performed is False
+    assert result.stale_stop_cleanup_performed is False
+    assert result.packet.final_broker_state.target_position_open is False
+    assert result.packet.final_broker_state.open_orders_total == 0
+    assert result.packet.m36_readiness_recommendation == (
+        "M36_SECOND_CONTROLLED_SESSION_MAY_BE_CONSIDERED"
+    )
+
+
+def test_incident_closure_refuses_ambiguous_broker_state() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("unexpected_order")
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert "unexpected_open_orders_present" in result.blockers
+    assert result.packet.m36_readiness_recommendation == "MANUAL_BROKER_REVIEW_REQUIRED"
+
+
+def test_incident_closure_refuses_non_aapl_target() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("protected_position", target_symbol="MSFT")
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert "target_symbol_must_be_aapl" in result.blockers
+
+
+def test_incident_closure_refuses_excess_cleanup_quantity() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("protected_position", requested_cleanup_quantity=2.0)
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert "cleanup_quantity_exceeds_current_aapl_long_quantity" in result.blockers
+
+
+def test_incident_closure_refuses_cleanup_that_could_create_short() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("flat", requested_cleanup_quantity=1.0)
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert "cleanup_quantity_would_create_short" in result.blockers
+
+
+def test_incident_closure_submits_risk_reducing_sell_and_cancels_stale_stop() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("protected_position")
+    )
+
+    assert result.incident_closed is True
+    assert result.cleanup_performed is True
+    assert result.stale_stop_cleanup_performed is True
+    assert result.broker_writes_performed_in_this_milestone is False
+    assert [write.operation for write in result.packet.broker_writes] == [
+        "submit_cleanup_sell",
+        "cancel_stale_protective_stop",
+    ]
+    sell = result.packet.broker_writes[0]
+    assert sell.symbol == "AAPL"
+    assert sell.side == "sell"
+    assert sell.quantity == 1.0
+    assert sell.order_type == "market"
+    assert sell.fake_only is True
+    assert result.packet.final_broker_state.target_position_open is False
+    assert result.packet.final_broker_state.open_orders_total == 0
+
+
+def test_incident_closure_does_not_cancel_stop_while_position_open() -> None:
+    client = _UnfilledCleanupClient()
+
+    def factory(*_args: Any, **_kwargs: Any) -> _UnfilledCleanupClient:
+        return client
+
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request(
+            "protected_position",
+            mode="real-read-only",
+            confirm_paper_endpoint=True,
+            confirm_risk_reducing_only=True,
+            confirm_no_new_entry=True,
+            confirm_no_live_trading=True,
+            confirm_no_autonomous_live=True,
+            confirm_no_schedules=True,
+            confirm_no_leverage=True,
+        ),
+        environ=_safe_broker_env(),
+        client_factory=factory,
+        sleeper=lambda _seconds: None,
+        clock=_advancing_clock(),
+    )
+
+    assert result.incident_closed is False
+    assert result.cleanup_performed is True
+    assert result.stale_stop_cleanup_performed is False
+    assert "cleanup_sell_not_filled" in result.blockers
+    assert client.submit_order_calls == 1
+    assert client.cancel_order_calls == 0
+
+
+def test_incident_closure_missing_stop_requires_manual_review() -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("missing_stop")
+    )
+
+    assert result.incident_closed is False
+    assert result.packet.broker_writes == ()
+    assert "protective_stop_missing_or_unverified" in result.blockers
+    assert result.packet.m36_readiness_recommendation == "MANUAL_BROKER_REVIEW_REQUIRED"
+
+
+def test_incident_closure_packet_excludes_secret_values(tmp_path: Path) -> None:
+    result = run_first_controlled_paper_session_incident_closure(
+        _closure_request("protected_position")
+    )
+    path = write_incident_closure_artifact(result, tmp_path / "closure.json")
+    payload = path.read_text(encoding="utf-8")
+
+    assert "paper-secret" not in payload
+    assert "paper-key" not in payload
+    assert "postgres://" not in payload
+    assert "sk-" not in payload
+    closure_payload = json.loads(payload)["incident_closure"]
+    assert closure_payload["incident_closed"] is True
+    assert closure_payload["frozen_validation_started"] is False
 
 
 def test_fake_post_session_audit_missing_stop_requests_stop_repair() -> None:
@@ -289,6 +469,61 @@ def test_execution_path_continues_to_stop_when_fill_metadata_is_malformed() -> N
     assert [order["type"] for order in client.submitted_order_requests] == ["limit", "stop"]
 
 
+def _closure_request(
+    scenario_id: str,
+    *,
+    mode: str = "fake",
+    target_symbol: str = "AAPL",
+    cleanup_approval_marker: str | None = MILESTONE_35F_CLEANUP_APPROVAL,
+    requested_cleanup_quantity: float | None = None,
+    confirm_paper_endpoint: bool = False,
+    confirm_risk_reducing_only: bool = False,
+    confirm_no_new_entry: bool = False,
+    confirm_no_live_trading: bool = False,
+    confirm_no_autonomous_live: bool = False,
+    confirm_no_schedules: bool = False,
+    confirm_no_leverage: bool = False,
+) -> IncidentClosureRequest:
+    return IncidentClosureRequest(
+        mode=cast(PostSessionAuditMode, mode),
+        scenario_id=cast(Any, scenario_id),
+        target_symbol=target_symbol,
+        operator_decision=(
+            "OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE"
+        ),
+        cleanup_approval_marker=cleanup_approval_marker,
+        requested_cleanup_quantity=requested_cleanup_quantity,
+        confirm_paper_endpoint=confirm_paper_endpoint,
+        confirm_risk_reducing_only=confirm_risk_reducing_only,
+        confirm_no_new_entry=confirm_no_new_entry,
+        confirm_no_live_trading=confirm_no_live_trading,
+        confirm_no_autonomous_live=confirm_no_autonomous_live,
+        confirm_no_schedules=confirm_no_schedules,
+        confirm_no_leverage=confirm_no_leverage,
+        cleanup_timeout_seconds=0.01,
+    )
+
+
+def _safe_broker_env() -> dict[str, str]:
+    return {
+        "ALPACA_API_KEY": "placeholder-key",
+        "ALPACA_SECRET_KEY": "placeholder-secret",
+        "ALPACA_BASE_URL": ALPACA_PAPER_BASE_URL,
+        "RUN_ALPACA_PAPER_SMOKE": "1",
+        "ALPACA_PAPER_SMOKE_CONFIRM": "READ_ONLY_PAPER_ACCOUNT",
+    }
+
+
+def _advancing_clock() -> Any:
+    current = {"value": 0.0}
+
+    def tick() -> float:
+        current["value"] += 0.02
+        return current["value"]
+
+    return tick
+
+
 class _MalformedFillClient(FakeAlpacaClient):
     def list_fills(self) -> Sequence[Mapping[str, Any]]:
         return (
@@ -385,6 +620,36 @@ class _ReadOnlyGuardClient:
             .isoformat()
             .replace("+00:00", "Z"),
         }
+
+
+class _UnfilledCleanupClient(_ReadOnlyGuardClient):
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        return tuple(
+            dict(order)
+            for order in self._orders.values()
+            if str(order.get("status")) in {"new", "accepted", "pending_new", "partially_filled"}
+        )
+
+    def submit_order(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        self.submit_order_calls += 1
+        assert request["symbol"] == "AAPL"
+        assert request["side"] == "sell"
+        assert request["type"] == "market"
+        order = {
+            "id": "cleanup-order",
+            "client_order_id": request["client_order_id"],
+            "symbol": request["symbol"],
+            "side": request["side"],
+            "asset_class": "equity",
+            "qty": request["qty"],
+            "filled_qty": "0",
+            "type": request["type"],
+            "time_in_force": request["time_in_force"],
+            "status": "accepted",
+            "submitted_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+        }
+        self._orders["cleanup-order"] = dict(order)
+        return order
 
 
 def _order_payload(
