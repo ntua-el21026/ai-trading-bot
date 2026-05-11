@@ -44,6 +44,9 @@ M35E_HOLD_DECISION_EVIDENCE_PATH = (
 M35F_INCIDENT_CLOSURE_EVIDENCE_PATH = (
     "docs/evidence/first_controlled_paper_session_incident_closure.json"
 )
+M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH = (
+    "docs/evidence/protected_position_monitoring_m36.json"
+)
 MILESTONE_35F_CLEANUP_APPROVAL = "MILESTONE_35F_RISK_REDUCING_CLEANUP"
 
 PostSessionAuditMode = Literal["fake", "real-read-only"]
@@ -84,6 +87,20 @@ M36ReadinessRecommendation = Literal[
 ]
 RepeatedSessionGoNoGo = Literal["eligible_for_m36_consideration", "no_go"]
 CleanupWriteOperation = Literal["submit_cleanup_sell", "cancel_stale_protective_stop"]
+CleanupRejectionClassification = Literal[
+    "LIKELY_EXISTING_STOP_BLOCKED_SELL",
+    "LIKELY_ORDER_REQUEST_SHAPE_INVALID",
+    "LIKELY_POSITION_QTY_MISMATCH",
+    "LIKELY_SESSION_OR_TIF_RESTRICTION",
+    "LIKELY_ADAPTER_BUG",
+    "INSUFFICIENT_EVIDENCE",
+]
+M36NextRecommendation = Literal[
+    "CONTINUE_PROTECTED_HOLD",
+    "REQUEST_OPERATOR_APPROVED_CORRECTED_CLEANUP_MILESTONE",
+    "REQUEST_MANUAL_BROKER_REVIEW",
+    "DECLARE_POSITION_ALREADY_FLAT_PENDING_INCIDENT_CLOSURE_VERIFICATION",
+]
 Sleeper = Callable[[float], None]
 Clock = Callable[[], float]
 
@@ -141,6 +158,26 @@ class M35EHoldDecisionPacketAudit(M35DAuditModel):
     repeated_session_go_no_go: str | None
     broker_writes_performed_in_m35e: bool
     protected_position_verified: bool
+    blockers: tuple[str, ...]
+
+
+class M35FIncidentClosurePacketAudit(M35DAuditModel):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    incident_closed: bool
+    cleanup_attempted: bool
+    cleanup_rejected_invalid_order_request: bool
+    cleanup_sell_status: str | None
+    cleanup_sell_order_type: str | None
+    cleanup_sell_side: str | None
+    cleanup_sell_quantity: float | None
+    cleanup_sell_broker_order_id_created: bool
+    broker_writes_performed_in_m35f: bool
+    initial_protected_position_verified: bool
+    final_protected_position_verified: bool
+    repeated_session_go_no_go: str | None
+    m36_readiness_recommendation: str | None
     blockers: tuple[str, ...]
 
 
@@ -351,6 +388,71 @@ class IncidentClosureResult(M35DAuditModel):
     ai_broker_write_authority: bool = False
 
 
+class CleanupRejectionAnalysis(M35DAuditModel):
+    classification: CleanupRejectionClassification
+    evidence_sufficient: bool
+    explanation: str
+
+
+class ProtectedPositionMonitoringPacket(M35DAuditModel):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str
+    spec_version: str
+    commit_hash: str
+    m35c_result_packet_reference: str
+    m35d_post_session_audit_packet_reference: str
+    m35e_hold_decision_packet_reference: str
+    m35f_incident_closure_packet_reference: str
+    m35c_result_audit: M35CResultPacketAudit
+    m35d_post_session_audit: M35DPostSessionAuditPacketAudit
+    m35e_hold_decision_audit: M35EHoldDecisionPacketAudit
+    m35f_incident_closure_audit: M35FIncidentClosurePacketAudit
+    current_broker_state: PostSessionBrokerStateSummary
+    aapl_position_status: str
+    aapl_protective_stop_status: str
+    open_orders_summary: str
+    positions_summary: str
+    final_reconciliation_summary: str
+    broker_state_safe_to_continue_holding: bool
+    cleanup_rejection_classification: CleanupRejectionClassification
+    cleanup_rejection_evidence_sufficient: bool
+    cleanup_rejection_explanation: str
+    proposed_next_cleanup_or_monitoring_strategy: str
+    next_milestone_recommendation: M36NextRecommendation
+    broker_writes_performed_in_m36: bool = False
+    real_read_only_calls_performed: bool
+    repeated_session_go_no_go: Literal["no_go"]
+    frozen_validation_started: bool = False
+    level4_ready: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    schedules_activated: bool = False
+    provider_ai_telegram_vercel_temporal_calls: bool = False
+    blockers: tuple[str, ...]
+    secrets_redacted: dict[str, str] = Field(
+        default_factory=lambda: {name: "<redacted-not-inspected>" for name in SENSITIVE_ENV_NAMES}
+    )
+
+
+class ProtectedPositionMonitoringResult(M35DAuditModel):
+    mode: PostSessionAuditMode
+    scenario_id: PostSessionAuditScenarioId
+    monitoring_completed: bool
+    go_no_go: Literal["no_go"]
+    blockers: tuple[str, ...]
+    packet: ProtectedPositionMonitoringPacket
+    packet_path: str | None = None
+    broker_writes_performed_in_m36: bool = False
+    real_read_only_calls_performed: bool
+    schedules_activated: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    ai_broker_write_authority: bool = False
+
+
 class PostSessionAuditRequest(M35DAuditModel):
     mode: PostSessionAuditMode = "fake"
     scenario_id: PostSessionAuditScenarioId = "protected_position"
@@ -382,6 +484,23 @@ class IncidentClosureRequest(M35DAuditModel):
     confirm_no_schedules: bool = False
     confirm_no_leverage: bool = False
     cleanup_timeout_seconds: float = Field(default=30.0, ge=0, le=180.0)
+
+
+class ProtectedPositionMonitoringRequest(M35DAuditModel):
+    mode: PostSessionAuditMode = "fake"
+    scenario_id: PostSessionAuditScenarioId = "protected_position"
+    result_packet_path: str = M34_RESULT_EVIDENCE_PATH
+    post_session_audit_packet_path: str = M35D_POST_SESSION_AUDIT_EVIDENCE_PATH
+    hold_decision_packet_path: str = M35E_HOLD_DECISION_EVIDENCE_PATH
+    incident_closure_packet_path: str = M35F_INCIDENT_CLOSURE_EVIDENCE_PATH
+    target_symbol: str = "AAPL"
+    confirm_paper_endpoint: bool = False
+    confirm_no_broker_writes: bool = False
+    confirm_no_new_entry: bool = False
+    confirm_no_live_trading: bool = False
+    confirm_no_autonomous_live: bool = False
+    confirm_no_schedules: bool = False
+    confirm_no_leverage: bool = False
 
 
 def run_first_controlled_paper_session_hold_decision(
@@ -623,6 +742,122 @@ def run_first_controlled_paper_session_incident_closure(
             write.operation == "cancel_stale_protective_stop" for write in broker_writes
         ),
         broker_writes_performed_in_this_milestone=broker_writes_performed,
+        real_read_only_calls_performed=read_only_calls,
+    )
+
+
+def run_protected_position_monitoring(
+    request: ProtectedPositionMonitoringRequest | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    app_config: AppConfig | None = None,
+    client_factory: PostSessionAuditClientFactory = (
+        build_alpaca_paper_order_lifecycle_http_client
+    ),
+    now: datetime | None = None,
+) -> ProtectedPositionMonitoringResult:
+    active_request = request or ProtectedPositionMonitoringRequest()
+    active_config = app_config or load_app_config()
+    monitor_time = now or datetime.now(UTC)
+    result_audit, result_packet = audit_m35c_result_packet(active_request.result_packet_path)
+    m35d_audit = audit_m35d_post_session_audit_packet(
+        active_request.post_session_audit_packet_path
+    )
+    m35e_audit = audit_m35e_hold_decision_packet(active_request.hold_decision_packet_path)
+    m35f_audit = audit_m35f_incident_closure_packet(
+        active_request.incident_closure_packet_path
+    )
+    gate_blockers = _monitoring_gate_blockers(active_request, active_config)
+    broker_summary, broker_blockers, read_only_calls = _broker_summary_for_request(
+        PostSessionAuditRequest(
+            mode=active_request.mode,
+            scenario_id=active_request.scenario_id,
+            result_packet_path=active_request.result_packet_path,
+            target_symbol=active_request.target_symbol,
+            confirm_paper_endpoint=active_request.confirm_paper_endpoint,
+            confirm_no_broker_writes=active_request.confirm_no_broker_writes,
+            confirm_no_live_trading=active_request.confirm_no_live_trading,
+            confirm_no_autonomous_live=active_request.confirm_no_autonomous_live,
+            confirm_no_schedules=active_request.confirm_no_schedules,
+            confirm_no_leverage=active_request.confirm_no_leverage,
+        ),
+        result_packet=result_packet,
+        app_config=active_config,
+        environ={} if environ is None else environ,
+        client_factory=client_factory,
+        gate_blockers=gate_blockers,
+    )
+    rejection_analysis = classify_cleanup_rejection(m35f_audit, broker_summary)
+    state_blockers = _m36_broker_state_blockers(broker_summary)
+    blockers = _unique(
+        (
+            *result_audit.blockers,
+            *m35d_audit.blockers,
+            *m35e_audit.blockers,
+            *m35f_audit.blockers,
+            *gate_blockers,
+            *broker_blockers,
+            *state_blockers,
+            *_m36_repetition_blockers(broker_summary),
+        )
+    )
+    safe_hold = _safe_protected_hold(broker_summary)
+    next_recommendation = _m36_next_recommendation(broker_summary, rejection_analysis)
+    packet = ProtectedPositionMonitoringPacket(
+        packet_id=str(
+            uuid5(
+                NAMESPACE_URL,
+                f"m36-protected-position-monitoring:{active_request.mode}:"
+                f"{active_request.scenario_id}:{monitor_time.isoformat()}",
+            )
+        ),
+        timestamp=monitor_time,
+        latest_spec_path=f"docs/app/{FIRST_SESSION_SPEC_VERSION}",
+        spec_version=FIRST_SESSION_SPEC_VERSION,
+        commit_hash=_git_commit_or_unavailable(),
+        m35c_result_packet_reference=active_request.result_packet_path,
+        m35d_post_session_audit_packet_reference=(
+            active_request.post_session_audit_packet_path
+        ),
+        m35e_hold_decision_packet_reference=active_request.hold_decision_packet_path,
+        m35f_incident_closure_packet_reference=active_request.incident_closure_packet_path,
+        m35c_result_audit=result_audit,
+        m35d_post_session_audit=m35d_audit,
+        m35e_hold_decision_audit=m35e_audit,
+        m35f_incident_closure_audit=m35f_audit,
+        current_broker_state=broker_summary,
+        aapl_position_status=_m36_position_status(broker_summary),
+        aapl_protective_stop_status=_m36_protective_stop_status(broker_summary),
+        open_orders_summary=_m36_open_orders_summary(broker_summary),
+        positions_summary=_m36_positions_summary(broker_summary),
+        final_reconciliation_summary=broker_summary.reconciliation_summary,
+        broker_state_safe_to_continue_holding=safe_hold,
+        cleanup_rejection_classification=rejection_analysis.classification,
+        cleanup_rejection_evidence_sufficient=rejection_analysis.evidence_sufficient,
+        cleanup_rejection_explanation=rejection_analysis.explanation,
+        proposed_next_cleanup_or_monitoring_strategy=_m36_strategy(
+            broker_summary,
+            rejection_analysis,
+        ),
+        next_milestone_recommendation=next_recommendation,
+        real_read_only_calls_performed=read_only_calls,
+        repeated_session_go_no_go="no_go",
+        blockers=blockers,
+    )
+    monitoring_completed = (
+        result_audit.parseable
+        and m35d_audit.parseable
+        and m35e_audit.parseable
+        and m35f_audit.parseable
+        and broker_summary.account_reachable
+    )
+    return ProtectedPositionMonitoringResult(
+        mode=active_request.mode,
+        scenario_id=active_request.scenario_id,
+        monitoring_completed=monitoring_completed,
+        go_no_go="no_go",
+        blockers=blockers,
+        packet=packet,
         real_read_only_calls_performed=read_only_calls,
     )
 
@@ -950,6 +1185,108 @@ def audit_m35e_hold_decision_packet(
     )
 
 
+def audit_m35f_incident_closure_packet(
+    incident_closure_packet_path: str | Path,
+) -> M35FIncidentClosurePacketAudit:
+    path = Path(incident_closure_packet_path)
+    if not path.is_file():
+        return M35FIncidentClosurePacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            incident_closed=False,
+            cleanup_attempted=False,
+            cleanup_rejected_invalid_order_request=False,
+            cleanup_sell_status=None,
+            cleanup_sell_order_type=None,
+            cleanup_sell_side=None,
+            cleanup_sell_quantity=None,
+            cleanup_sell_broker_order_id_created=False,
+            broker_writes_performed_in_m35f=False,
+            initial_protected_position_verified=False,
+            final_protected_position_verified=False,
+            repeated_session_go_no_go=None,
+            m36_readiness_recommendation=None,
+            blockers=("m35f_incident_closure_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        packet = IncidentClosurePacket.model_validate(payload["incident_closure"])
+    except (OSError, KeyError, TypeError, ValueError):
+        return M35FIncidentClosurePacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            incident_closed=False,
+            cleanup_attempted=False,
+            cleanup_rejected_invalid_order_request=False,
+            cleanup_sell_status=None,
+            cleanup_sell_order_type=None,
+            cleanup_sell_side=None,
+            cleanup_sell_quantity=None,
+            cleanup_sell_broker_order_id_created=False,
+            broker_writes_performed_in_m35f=False,
+            initial_protected_position_verified=False,
+            final_protected_position_verified=False,
+            repeated_session_go_no_go=None,
+            m36_readiness_recommendation=None,
+            blockers=("m35f_incident_closure_packet_unparseable",),
+        )
+    result = payload.get("result", {})
+    cleanup_writes = tuple(
+        write for write in packet.broker_writes if write.operation == "submit_cleanup_sell"
+    )
+    cleanup_write = cleanup_writes[0] if cleanup_writes else None
+    cleanup_rejected_invalid = (
+        cleanup_write is not None
+        and cleanup_write.status == "failed:invalid_order_request"
+        and cleanup_write.broker_order_id is None
+    )
+    initial_protected = _packet_state_is_protected(packet.initial_broker_state)
+    final_protected = _packet_state_is_protected(packet.final_broker_state)
+    checks = {
+        "m35f_closure_milestone_is_35f": payload.get("milestone") == "35F",
+        "m35f_cleanup_attempted": cleanup_write is not None and cleanup_write.attempted,
+        "m35f_cleanup_rejected_invalid_order_request": cleanup_rejected_invalid,
+        "m35f_cleanup_no_broker_order_id_created": (
+            cleanup_write is not None and cleanup_write.broker_order_id is None
+        ),
+        "m35f_initial_protected_position_verified": initial_protected,
+        "m35f_final_protected_position_verified": final_protected,
+        "m35f_incident_not_closed": packet.incident_closed is False,
+        "m35f_repeated_sessions_no_go": packet.repeated_session_go_no_go == "no_go",
+        "m35f_m36_monitoring_required": (
+            packet.m36_readiness_recommendation == "M36_PROTECTED_POSITION_MONITORING_REQUIRED"
+        ),
+        "m35f_broker_write_attempt_recorded": (
+            result.get("broker_writes_performed_in_this_milestone") is True
+            and packet.broker_writes_performed_in_m35f
+        ),
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M35FIncidentClosurePacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=str(payload.get("milestone")),
+        incident_closed=packet.incident_closed,
+        cleanup_attempted=cleanup_write is not None and cleanup_write.attempted,
+        cleanup_rejected_invalid_order_request=cleanup_rejected_invalid,
+        cleanup_sell_status=None if cleanup_write is None else cleanup_write.status,
+        cleanup_sell_order_type=None if cleanup_write is None else cleanup_write.order_type,
+        cleanup_sell_side=None if cleanup_write is None else cleanup_write.side,
+        cleanup_sell_quantity=None if cleanup_write is None else cleanup_write.quantity,
+        cleanup_sell_broker_order_id_created=(
+            cleanup_write is not None and cleanup_write.broker_order_id is not None
+        ),
+        broker_writes_performed_in_m35f=packet.broker_writes_performed_in_m35f,
+        initial_protected_position_verified=initial_protected,
+        final_protected_position_verified=final_protected,
+        repeated_session_go_no_go=packet.repeated_session_go_no_go,
+        m36_readiness_recommendation=packet.m36_readiness_recommendation,
+        blockers=blockers,
+    )
+
+
 def write_post_session_audit_artifact(
     result: PostSessionAuditResult,
     output_path: str | Path,
@@ -973,6 +1310,32 @@ def write_post_session_audit_artifact(
             "ai_broker_write_authority": result.ai_broker_write_authority,
         },
         "post_session_audit": result.packet.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def write_protected_position_monitoring_artifact(
+    result: ProtectedPositionMonitoringResult,
+    output_path: str | Path,
+) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "milestone": "36",
+        "result": {
+            "monitoring_completed": result.monitoring_completed,
+            "go_no_go": result.go_no_go,
+            "blockers": result.blockers,
+            "broker_writes_performed_in_m36": result.broker_writes_performed_in_m36,
+            "real_read_only_calls_performed": result.real_read_only_calls_performed,
+            "schedules_activated": result.schedules_activated,
+            "live_trading_enabled": result.live_trading_enabled,
+            "autonomous_live_execution_enabled": result.autonomous_live_execution_enabled,
+            "leverage_enabled": result.leverage_enabled,
+            "ai_broker_write_authority": result.ai_broker_write_authority,
+        },
+        "protected_position_monitoring": result.packet.model_dump(mode="json"),
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
@@ -1038,6 +1401,88 @@ def write_incident_closure_artifact(
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def classify_cleanup_rejection(
+    m35f_audit: M35FIncidentClosurePacketAudit,
+    broker_summary: PostSessionBrokerStateSummary,
+) -> CleanupRejectionAnalysis:
+    if not m35f_audit.parseable or not m35f_audit.cleanup_attempted:
+        return CleanupRejectionAnalysis(
+            classification="INSUFFICIENT_EVIDENCE",
+            evidence_sufficient=False,
+            explanation=(
+                "M35F evidence is missing, unparseable, or does not include a cleanup sell "
+                "attempt."
+            ),
+        )
+    if not m35f_audit.cleanup_rejected_invalid_order_request:
+        return CleanupRejectionAnalysis(
+            classification="INSUFFICIENT_EVIDENCE",
+            evidence_sufficient=False,
+            explanation=(
+                "M35F did not record a sanitized failed:invalid_order_request cleanup "
+                "rejection."
+            ),
+        )
+    if (
+        m35f_audit.cleanup_sell_quantity is not None
+        and broker_summary.target_position_quantity >= 0
+        and m35f_audit.cleanup_sell_quantity > broker_summary.target_position_quantity + 1e-9
+    ):
+        return CleanupRejectionAnalysis(
+            classification="LIKELY_POSITION_QTY_MISMATCH",
+            evidence_sufficient=True,
+            explanation=(
+                "The cleanup sell quantity exceeds the current sanitized AAPL long quantity."
+            ),
+        )
+    if (
+        m35f_audit.initial_protected_position_verified
+        and m35f_audit.final_protected_position_verified
+        and broker_summary.target_position_open
+        and broker_summary.protective_stop_verified
+        and broker_summary.expected_protective_stop_open_orders > 0
+        and m35f_audit.cleanup_sell_side == "sell"
+        and m35f_audit.cleanup_sell_order_type == "market"
+        and not m35f_audit.cleanup_sell_broker_order_id_created
+    ):
+        return CleanupRejectionAnalysis(
+            classification="LIKELY_EXISTING_STOP_BLOCKED_SELL",
+            evidence_sufficient=True,
+            explanation=(
+                "Sanitized M35F evidence shows a market sell for the current long AAPL "
+                "quantity was rejected while the same position was already covered by an open "
+                "session-created sell stop. Alpaca paper likely treated the open stop as already "
+                "reserving the sellable quantity, so a separate sell would over-sell the long."
+            ),
+        )
+    if m35f_audit.cleanup_sell_side != "sell" or m35f_audit.cleanup_sell_order_type != "market":
+        return CleanupRejectionAnalysis(
+            classification="LIKELY_ORDER_REQUEST_SHAPE_INVALID",
+            evidence_sufficient=True,
+            explanation=(
+                "The rejected cleanup request shape in sanitized evidence is not the expected "
+                "market sell cleanup shape."
+            ),
+        )
+    if broker_summary.clock_is_open is False:
+        return CleanupRejectionAnalysis(
+            classification="LIKELY_SESSION_OR_TIF_RESTRICTION",
+            evidence_sufficient=True,
+            explanation=(
+                "The latest broker clock is closed while the rejected cleanup used DAY market "
+                "order semantics."
+            ),
+        )
+    return CleanupRejectionAnalysis(
+        classification="LIKELY_ORDER_REQUEST_SHAPE_INVALID",
+        evidence_sufficient=False,
+        explanation=(
+            "The sanitized error is invalid_order_request, but available evidence does not "
+            "identify an existing-stop reservation, quantity mismatch, or session/TIF cause."
+        ),
+    )
 
 
 def _incident_closure_gate_blockers(request: IncidentClosureRequest) -> tuple[str, ...]:
@@ -2026,6 +2471,181 @@ def _positions_summary(broker_summary: PostSessionBrokerStateSummary) -> str:
     if broker_summary.target_position_open:
         return "expected_aapl_position_only"
     return "no_target_position"
+
+
+def _packet_state_is_protected(broker_summary: PostSessionBrokerStateSummary) -> bool:
+    return (
+        broker_summary.target_symbol == "AAPL"
+        and broker_summary.target_position_open
+        and broker_summary.protective_stop_verified
+        and broker_summary.protective_stop_matches_position_quantity
+        and broker_summary.unexpected_open_orders_count == 0
+        and broker_summary.unexpected_positions_count == 0
+    )
+
+
+def _monitoring_gate_blockers(
+    request: ProtectedPositionMonitoringRequest,
+    app_config: AppConfig,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if request.target_symbol != "AAPL":
+        blockers.append("target_symbol_must_be_aapl")
+    if request.mode == "real-read-only":
+        for field_name, reason in (
+            ("confirm_paper_endpoint", "confirm_paper_endpoint_required"),
+            ("confirm_no_broker_writes", "confirm_no_broker_writes_required"),
+            ("confirm_no_new_entry", "confirm_no_new_entry_required"),
+            ("confirm_no_live_trading", "confirm_no_live_trading_required"),
+            ("confirm_no_autonomous_live", "confirm_no_autonomous_live_required"),
+            ("confirm_no_schedules", "confirm_no_schedules_required"),
+            ("confirm_no_leverage", "confirm_no_leverage_required"),
+        ):
+            if not bool(getattr(request, field_name)):
+                blockers.append(reason)
+    if app_config.system.live_trading_enabled or app_config.execution.allow_live_orders:
+        blockers.append("live_trading_enabled")
+    if (
+        app_config.system.autonomous_execution_enabled
+        or app_config.execution.autonomous_execution_enabled
+    ):
+        blockers.append("autonomous_live_execution_enabled")
+    if app_config.risk_level_4_micro_live.allow_margin:
+        blockers.append("leverage_enabled")
+    return _unique(tuple(blockers))
+
+
+def _m36_broker_state_blockers(
+    broker_summary: PostSessionBrokerStateSummary,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if not broker_summary.account_reachable:
+        blockers.append("broker_state_not_reached")
+        return tuple(blockers)
+    if broker_summary.unexpected_open_orders_count:
+        blockers.append("unexpected_open_orders_present")
+    if broker_summary.unexpected_positions_count:
+        blockers.append("unexpected_positions_present")
+    if broker_summary.target_position_open and not broker_summary.protective_stop_verified:
+        blockers.append("critical_protective_stop_missing_or_unverified_while_position_open")
+    if (
+        broker_summary.target_position_open
+        and broker_summary.protective_stop_verified
+        and not broker_summary.protective_stop_matches_position_quantity
+    ):
+        blockers.append("critical_protective_stop_quantity_mismatch_while_position_open")
+    return tuple(blockers)
+
+
+def _m36_repetition_blockers(
+    broker_summary: PostSessionBrokerStateSummary,
+) -> tuple[str, ...]:
+    if broker_summary.target_position_open:
+        return ("repeated_sessions_blocked_pending_aapl_position_resolution",)
+    return ("repeated_sessions_blocked_pending_incident_closure_verification",)
+
+
+def _safe_protected_hold(broker_summary: PostSessionBrokerStateSummary) -> bool:
+    return (
+        broker_summary.target_position_open
+        and broker_summary.protective_stop_verified
+        and broker_summary.protective_stop_matches_position_quantity
+        and broker_summary.unexpected_open_orders_count == 0
+        and broker_summary.unexpected_positions_count == 0
+    )
+
+
+def _m36_position_status(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if not broker_summary.account_reachable:
+        return "ambiguous"
+    if broker_summary.target_position_open:
+        return "open"
+    return "flat"
+
+
+def _m36_protective_stop_status(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if not broker_summary.account_reachable:
+        return "ambiguous"
+    if broker_summary.protective_stop_verified:
+        return "open_verified"
+    if broker_summary.target_position_open:
+        return "missing_or_unverified"
+    if broker_summary.protective_stop_order_status in {"filled", "cancelled", "expired"}:
+        return broker_summary.protective_stop_order_status
+    if broker_summary.expected_protective_stop_open_orders == 0:
+        return "not_open_or_not_found"
+    return "ambiguous"
+
+
+def _m36_open_orders_summary(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.unexpected_open_orders_count:
+        return "unexpected_open_orders_present"
+    if broker_summary.expected_protective_stop_open_orders:
+        return "expected_protective_stop_only"
+    return "no_open_orders"
+
+
+def _m36_positions_summary(broker_summary: PostSessionBrokerStateSummary) -> str:
+    if broker_summary.unexpected_positions_count:
+        return "unexpected_positions_present"
+    if broker_summary.target_position_open:
+        return "expected_aapl_position_only"
+    return "no_positions"
+
+
+def _m36_next_recommendation(
+    broker_summary: PostSessionBrokerStateSummary,
+    rejection_analysis: CleanupRejectionAnalysis,
+) -> M36NextRecommendation:
+    if broker_summary.unexpected_open_orders_count or broker_summary.unexpected_positions_count:
+        return "REQUEST_MANUAL_BROKER_REVIEW"
+    if broker_summary.target_position_open and not broker_summary.protective_stop_verified:
+        return "REQUEST_MANUAL_BROKER_REVIEW"
+    if not broker_summary.target_position_open and broker_summary.account_reachable:
+        return "DECLARE_POSITION_ALREADY_FLAT_PENDING_INCIDENT_CLOSURE_VERIFICATION"
+    if rejection_analysis.classification == "LIKELY_EXISTING_STOP_BLOCKED_SELL":
+        return "REQUEST_OPERATOR_APPROVED_CORRECTED_CLEANUP_MILESTONE"
+    if broker_summary.target_position_open and broker_summary.protective_stop_verified:
+        return "CONTINUE_PROTECTED_HOLD"
+    return "REQUEST_MANUAL_BROKER_REVIEW"
+
+
+def _m36_strategy(
+    broker_summary: PostSessionBrokerStateSummary,
+    rejection_analysis: CleanupRejectionAnalysis,
+) -> str:
+    if broker_summary.unexpected_open_orders_count or broker_summary.unexpected_positions_count:
+        return (
+            "Request manual broker review before any cleanup because broker state contains "
+            "unexpected orders or positions."
+        )
+    if broker_summary.target_position_open and not broker_summary.protective_stop_verified:
+        return (
+            "Critical NO-GO: request manual broker review or a separately approved stop-repair "
+            "milestone before any further automated action."
+        )
+    if not broker_summary.target_position_open:
+        return (
+            "AAPL appears flat in the latest read-only state; run a separate incident-closure "
+            "verification milestone to confirm no stale session orders remain."
+        )
+    if rejection_analysis.classification == "LIKELY_EXISTING_STOP_BLOCKED_SELL":
+        return (
+            "Continue the protected hold now. A future corrected cleanup milestone may use an "
+            "explicit operator-approved sequence: verify position and session-created stop, "
+            "cancel only that stop, verify cancellation, submit a risk reducing sell for the "
+            "current long quantity, verify flat state, then verify no stale orders. That sequence "
+            "must be separately approved because it temporarily removes protection."
+        )
+    if rejection_analysis.classification == "LIKELY_ORDER_REQUEST_SHAPE_INVALID":
+        return (
+            "Continue the protected hold and fix the cleanup request shape in a future approved "
+            "cleanup milestone before any new broker write is attempted."
+        )
+    return (
+        "Continue read-only monitoring and request manual broker review or a separately approved "
+        "cleanup-analysis milestone before attempting cleanup."
+    )
 
 
 def _git_commit_or_unavailable() -> str:

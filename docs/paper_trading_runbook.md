@@ -621,6 +621,41 @@ Current operational state after M35F:
 
 Do not start a second controlled paper session while this protected hold continues.
 
+## Milestone 36 Protected Position Monitoring
+
+Milestone 36 is protected-position monitoring and cleanup rejection analysis only. It does not
+start a new session, submit a buy, submit a sell, cancel, replace, flatten, change a stop, activate
+schedules, call AI/news providers, send real alerts, deploy, enable live trading, enable autonomous
+live execution, begin frozen validation, or add leverage.
+
+The real read-only monitoring command verified the current broker state:
+
+- AAPL paper position remains open for quantity `1`;
+- the AAPL protective stop remains open and verified for quantity `1`;
+- stop status is `new`;
+- open orders contain only the expected protective stop;
+- positions contain only the expected AAPL position;
+- reconciliation is `protected_position_reconciled_for_hold`;
+- broker writes performed in M36: `false`.
+
+The M35F cleanup rejection is classified as `LIKELY_EXISTING_STOP_BLOCKED_SELL`. M35F attempted a
+separate DAY market sell while the session-created GTC sell stop was already open for the same
+AAPL quantity. Alpaca paper rejected the sell as `failed:invalid_order_request` and no cleanup
+broker order ID was created. The likely cleanup correction is not to submit another separate sell
+while the stop is still open. A future closure attempt needs its own explicit operator-approved
+milestone, likely with an ordered verify, cancel session-created stop, verify cancellation, sell
+current long quantity, verify flat, and verify no stale orders sequence. That sequence temporarily
+removes protection and is not authorized by M36.
+
+Current M36 decision:
+
+- continue protected hold now;
+- repeated controlled paper sessions remain blocked;
+- frozen paper validation has not started;
+- Level 4 remains not ready;
+- next recommended milestone is an operator-approved corrected cleanup milestone or manual broker
+  review if broker state changes or becomes ambiguous.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

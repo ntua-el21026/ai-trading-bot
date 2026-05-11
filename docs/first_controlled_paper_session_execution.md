@@ -433,6 +433,51 @@ The sanitized M35F incident closure packet is:
 docs/evidence/first_controlled_paper_session_incident_closure.json
 ```
 
+## Milestone 36 Protected Position Monitoring
+
+Milestone 36 monitored the protected AAPL paper position and analyzed the M35F cleanup rejection.
+It was read-only only: no new session, entry order, buy order, sell order, cancel, replace,
+flatten, stop change, schedule activation, live trading, autonomous live execution, provider call,
+real alert delivery, or leverage change occurred.
+
+The M36 read-only Alpaca paper monitoring result verified:
+
+- AAPL paper position remains open for quantity `1`;
+- the expected AAPL protective stop remains open and verified for quantity `1`;
+- the protective stop status is `new`;
+- open orders consist of the expected protective stop;
+- positions consist of the expected AAPL position;
+- reconciliation remains `protected_position_reconciled_for_hold`;
+- broker writes performed in M36: `false`.
+
+The M35F cleanup rejection classification is `LIKELY_EXISTING_STOP_BLOCKED_SELL`. Sanitized
+evidence shows the M35F cleanup attempted a separate DAY market sell for the current long AAPL
+quantity while the session-created GTC sell stop was already open for the same quantity. Alpaca
+paper rejected the separate sell with `failed:invalid_order_request` and did not create a cleanup
+broker order ID. The likely cause is that the open stop was already reserving the held sellable
+quantity, so the additional sell would over-sell the protected long position. The sanitized evidence
+is sufficient for a likely classification, but not a definitive broker-rule diagnosis because raw
+broker error text is intentionally not recorded.
+
+M36 recommendation:
+
+- continue the protected hold while no separate cleanup approval exists;
+- request an operator-approved corrected cleanup milestone if the operator wants closure;
+- that future cleanup may need an explicitly approved ordered sequence: verify position and
+  session-created stop, cancel only that stop, verify cancellation, submit a risk reducing sell for
+  the current long quantity, verify flat state, then verify no stale orders;
+- request manual broker review if the stop becomes missing/unverified, the position quantity
+  changes unexpectedly, or any unexpected order or position appears.
+
+Repeated controlled paper sessions remain NO-GO. Frozen validation has not started. Level 4 remains
+not ready.
+
+The sanitized M36 monitoring packet is:
+
+```text
+docs/evidence/protected_position_monitoring_m36.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any

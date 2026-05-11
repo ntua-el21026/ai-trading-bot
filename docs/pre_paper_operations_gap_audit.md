@@ -66,6 +66,13 @@ rejected that sell with sanitized status `failed:invalid_order_request`. The pro
 canceled because AAPL was not flat. The incident remains open, AAPL remains protected, and repeated
 controlled paper sessions remain blocked.
 
+Milestone 36 monitored the protected AAPL state with Alpaca paper read-only calls only. It verified
+the AAPL position remains open for quantity `1`, the expected protective stop remains open and
+verified for quantity `1`, and no unexpected open orders or positions are present. The M35F cleanup
+rejection is classified as `LIKELY_EXISTING_STOP_BLOCKED_SELL`, meaning the existing open stop
+likely reserved the held sellable quantity and blocked the separate cleanup sell. No broker writes
+occurred in M36. Repeated controlled paper sessions remain blocked.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

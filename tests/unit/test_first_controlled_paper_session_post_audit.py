@@ -12,20 +12,26 @@ from packages.paper import (
     M34_RESULT_EVIDENCE_PATH,
     M35D_POST_SESSION_AUDIT_EVIDENCE_PATH,
     M35E_HOLD_DECISION_EVIDENCE_PATH,
+    M35F_INCIDENT_CLOSURE_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
     IncidentClosureRequest,
     PostSessionAuditMode,
     PostSessionAuditRequest,
+    ProtectedPositionMonitoringRequest,
     audit_m35c_result_packet,
     audit_m35d_post_session_audit_packet,
     audit_m35e_hold_decision_packet,
+    audit_m35f_incident_closure_packet,
+    classify_cleanup_rejection,
     default_first_paper_session_execution_request,
     run_first_controlled_paper_session_hold_decision,
     run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
+    run_protected_position_monitoring,
     write_hold_decision_artifact,
     write_incident_closure_artifact,
     write_post_session_audit_artifact,
+    write_protected_position_monitoring_artifact,
 )
 from packages.paper.execution import (
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
@@ -164,6 +170,177 @@ def test_m35e_hold_decision_packet_parser_validates_hold_decision() -> None:
     assert audit.broker_writes_performed_in_m35e is False
     assert audit.protected_position_verified is True
     assert audit.blockers == ()
+
+
+def test_m35f_incident_closure_packet_parser_validates_cleanup_rejection() -> None:
+    audit = audit_m35f_incident_closure_packet(M35F_INCIDENT_CLOSURE_EVIDENCE_PATH)
+
+    assert audit.parseable is True
+    assert audit.milestone == "35F"
+    assert audit.cleanup_attempted is True
+    assert audit.cleanup_rejected_invalid_order_request is True
+    assert audit.cleanup_sell_status == "failed:invalid_order_request"
+    assert audit.cleanup_sell_broker_order_id_created is False
+    assert audit.initial_protected_position_verified is True
+    assert audit.final_protected_position_verified is True
+    assert audit.repeated_session_go_no_go == "no_go"
+    assert audit.blockers == ()
+
+
+def test_monitoring_mode_parses_all_prior_evidence_and_reports_protected_hold() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="protected_position")
+    )
+
+    assert result.monitoring_completed is True
+    assert result.go_no_go == "no_go"
+    assert result.packet.m35c_result_audit.parseable is True
+    assert result.packet.m35d_post_session_audit.parseable is True
+    assert result.packet.m35e_hold_decision_audit.parseable is True
+    assert result.packet.m35f_incident_closure_audit.parseable is True
+    assert result.packet.aapl_position_status == "open"
+    assert result.packet.aapl_protective_stop_status == "open_verified"
+    assert result.packet.broker_state_safe_to_continue_holding is True
+    assert result.packet.current_broker_state.protective_stop_matches_position_quantity is True
+    assert result.packet.open_orders_summary == "expected_protective_stop_only"
+    assert result.packet.positions_summary == "expected_aapl_position_only"
+    assert result.packet.repeated_session_go_no_go == "no_go"
+    assert "repeated_sessions_blocked_pending_aapl_position_resolution" in result.blockers
+
+
+def test_monitoring_mode_real_read_only_stub_never_calls_write_methods() -> None:
+    client = _ReadOnlyGuardClient()
+
+    def factory(*_args: Any, **_kwargs: Any) -> _ReadOnlyGuardClient:
+        return client
+
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(
+            mode="real-read-only",
+            scenario_id="protected_position",
+            confirm_paper_endpoint=True,
+            confirm_no_broker_writes=True,
+            confirm_no_new_entry=True,
+            confirm_no_live_trading=True,
+            confirm_no_autonomous_live=True,
+            confirm_no_schedules=True,
+            confirm_no_leverage=True,
+        ),
+        environ=_safe_broker_env(),
+        client_factory=factory,
+    )
+
+    assert result.monitoring_completed is True
+    assert result.real_read_only_calls_performed is True
+    assert result.broker_writes_performed_in_m36 is False
+    assert result.packet.broker_writes_performed_in_m36 is False
+    assert client.submit_order_calls == 0
+    assert client.cancel_order_calls == 0
+    assert result.packet.cleanup_rejection_classification == "LIKELY_EXISTING_STOP_BLOCKED_SELL"
+
+
+def test_monitoring_mode_reports_clean_state_when_aapl_flat_and_stop_gone() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="flat")
+    )
+
+    assert result.monitoring_completed is True
+    assert result.packet.aapl_position_status == "flat"
+    assert result.packet.aapl_protective_stop_status == "not_open_or_not_found"
+    assert result.packet.open_orders_summary == "no_open_orders"
+    assert result.packet.positions_summary == "no_positions"
+    assert result.packet.final_reconciliation_summary == "flat_no_open_position"
+    assert result.packet.next_milestone_recommendation == (
+        "DECLARE_POSITION_ALREADY_FLAT_PENDING_INCIDENT_CLOSURE_VERIFICATION"
+    )
+    assert result.packet.broker_writes_performed_in_m36 is False
+
+
+def test_monitoring_mode_reports_critical_no_go_when_stop_missing() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="missing_stop")
+    )
+
+    assert result.monitoring_completed is True
+    assert result.packet.aapl_position_status == "open"
+    assert result.packet.aapl_protective_stop_status == "missing_or_unverified"
+    assert result.packet.broker_state_safe_to_continue_holding is False
+    assert "critical_protective_stop_missing_or_unverified_while_position_open" in result.blockers
+    assert result.packet.next_milestone_recommendation == "REQUEST_MANUAL_BROKER_REVIEW"
+
+
+def test_monitoring_mode_detects_unexpected_open_orders() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="unexpected_order")
+    )
+
+    assert result.packet.open_orders_summary == "unexpected_open_orders_present"
+    assert "unexpected_open_orders_present" in result.blockers
+    assert result.packet.next_milestone_recommendation == "REQUEST_MANUAL_BROKER_REVIEW"
+
+
+def test_monitoring_mode_detects_unexpected_positions() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="unexpected_position")
+    )
+
+    assert result.packet.positions_summary == "unexpected_positions_present"
+    assert "unexpected_positions_present" in result.blockers
+    assert result.packet.next_milestone_recommendation == "REQUEST_MANUAL_BROKER_REVIEW"
+
+
+def test_cleanup_rejection_classification_handles_invalid_order_request() -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="protected_position")
+    )
+
+    assert result.packet.cleanup_rejection_classification == "LIKELY_EXISTING_STOP_BLOCKED_SELL"
+    assert result.packet.cleanup_rejection_evidence_sufficient is True
+    assert "open session-created sell stop" in result.packet.cleanup_rejection_explanation
+
+
+def test_cleanup_rejection_classification_can_return_insufficient_evidence(tmp_path: Path) -> None:
+    missing_audit = audit_m35f_incident_closure_packet(tmp_path / "missing-m35f.json")
+    protected = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="protected_position")
+    )
+
+    analysis = classify_cleanup_rejection(missing_audit, protected.packet.current_broker_state)
+
+    assert analysis.classification == "INSUFFICIENT_EVIDENCE"
+    assert analysis.evidence_sufficient is False
+
+
+def test_monitoring_packet_contains_required_fields_and_excludes_secret_values(
+    tmp_path: Path,
+) -> None:
+    result = run_protected_position_monitoring(
+        ProtectedPositionMonitoringRequest(mode="fake", scenario_id="protected_position")
+    )
+    path = write_protected_position_monitoring_artifact(result, tmp_path / "m36.json")
+    payload_text = path.read_text(encoding="utf-8")
+    payload = json.loads(payload_text)
+    packet = payload["protected_position_monitoring"]
+
+    assert payload["milestone"] == "36"
+    assert packet["m35c_result_packet_reference"] == M34_RESULT_EVIDENCE_PATH
+    assert packet["m35d_post_session_audit_packet_reference"] == (
+        M35D_POST_SESSION_AUDIT_EVIDENCE_PATH
+    )
+    assert packet["m35e_hold_decision_packet_reference"] == M35E_HOLD_DECISION_EVIDENCE_PATH
+    assert packet["m35f_incident_closure_packet_reference"] == (
+        M35F_INCIDENT_CLOSURE_EVIDENCE_PATH
+    )
+    assert packet["broker_writes_performed_in_m36"] is False
+    assert packet["frozen_validation_started"] is False
+    assert packet["level4_ready"] is False
+    assert packet["live_trading_enabled"] is False
+    assert packet["autonomous_live_execution_enabled"] is False
+    assert packet["leverage_enabled"] is False
+    assert "paper-secret" not in payload_text
+    assert "paper-key" not in payload_text
+    assert "postgres://" not in payload_text
+    assert "sk-" not in payload_text
 
 
 def test_incident_closure_validates_m35c_m35d_and_m35e_evidence() -> None:

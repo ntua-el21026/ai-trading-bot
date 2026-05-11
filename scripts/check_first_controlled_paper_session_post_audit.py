@@ -11,6 +11,7 @@ from packages.paper import (
     M35D_POST_SESSION_AUDIT_EVIDENCE_PATH,
     M35E_HOLD_DECISION_EVIDENCE_PATH,
     M35F_INCIDENT_CLOSURE_EVIDENCE_PATH,
+    M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
     IncidentClosureRequest,
     OperatorHoldDecision,
@@ -18,13 +19,16 @@ from packages.paper import (
     PostSessionAuditMode,
     PostSessionAuditRequest,
     PostSessionAuditScenarioId,
+    ProtectedPositionMonitoringRequest,
     load_preflight_environment,
     run_first_controlled_paper_session_hold_decision,
     run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
+    run_protected_position_monitoring,
     write_hold_decision_artifact,
     write_incident_closure_artifact,
     write_post_session_audit_artifact,
+    write_protected_position_monitoring_artifact,
 )
 
 WARNING = (
@@ -32,6 +36,16 @@ WARNING = (
     "start a new session or submit entry orders. M35F writes, when explicitly approved, "
     "are limited to risk-reducing AAPL cleanup."
 )
+M36_WARNING = (
+    "Milestone 36 protected-position monitoring only. This command performs read-only "
+    "broker-state verification and cleanup rejection analysis; it submits, cancels, replaces, "
+    "and flattens nothing."
+)
+_M36_MODES = {
+    "protected-position-monitor",
+    "cleanup-rejection-analysis",
+    "monitoring",
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -40,12 +54,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("fake", "real-read-only", "hold-decision", "incident-closure"),
+        choices=(
+            "fake",
+            "real-read-only",
+            "hold-decision",
+            "incident-closure",
+            "protected-position-monitor",
+            "cleanup-rejection-analysis",
+            "monitoring",
+        ),
         default="fake",
         help=(
             "Fake mode uses local broker fixtures. Real-read-only and hold-decision "
             "modes perform gated Alpaca reads. Incident-closure performs gated M35F "
-            "risk-reducing cleanup."
+            "risk-reducing cleanup. M36 monitoring modes are read-only only."
         ),
     )
     parser.add_argument(
@@ -105,6 +127,11 @@ def main(argv: list[str] | None = None) -> int:
         default=M35F_INCIDENT_CLOSURE_EVIDENCE_PATH,
         help="Sanitized M35F incident closure packet path.",
     )
+    parser.add_argument(
+        "--monitoring-output",
+        default=M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
+        help="Sanitized M36 protected-position monitoring packet path.",
+    )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
     parser.add_argument("--confirm-risk-reducing-only", action="store_true")
@@ -115,8 +142,81 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--confirm-no-leverage", action="store_true")
     args = parser.parse_args(argv)
 
-    print(WARNING)
     mode = args.mode
+    print(M36_WARNING if mode in _M36_MODES else WARNING)
+    if mode in _M36_MODES:
+        monitoring_request = ProtectedPositionMonitoringRequest(
+            mode="real-read-only",
+            scenario_id=cast(PostSessionAuditScenarioId, args.scenario),
+            result_packet_path=args.result_packet,
+            post_session_audit_packet_path=args.post_session_audit_packet,
+            hold_decision_packet_path=args.hold_decision_output,
+            incident_closure_packet_path=args.incident_closure_output,
+            target_symbol=args.target_symbol.upper(),
+            confirm_paper_endpoint=args.confirm_paper_endpoint,
+            confirm_no_broker_writes=args.confirm_no_broker_writes,
+            confirm_no_new_entry=args.confirm_no_new_entry,
+            confirm_no_live_trading=args.confirm_no_live_trading,
+            confirm_no_autonomous_live=args.confirm_no_autonomous_live,
+            confirm_no_schedules=args.confirm_no_schedules,
+            confirm_no_leverage=args.confirm_no_leverage,
+        )
+        monitoring_result = run_protected_position_monitoring(
+            monitoring_request,
+            environ=load_preflight_environment(),
+        )
+        written_path = write_protected_position_monitoring_artifact(
+            monitoring_result,
+            args.monitoring_output,
+        )
+        packet = monitoring_result.packet
+        broker_state = packet.current_broker_state
+        summary = {
+            "mode": mode,
+            "scenario_id": monitoring_result.scenario_id,
+            "monitoring_completed": monitoring_result.monitoring_completed,
+            "go_no_go": monitoring_result.go_no_go,
+            "blockers": monitoring_result.blockers,
+            "target_symbol": broker_state.target_symbol,
+            "aapl_position_status": packet.aapl_position_status,
+            "aapl_protective_stop_status": packet.aapl_protective_stop_status,
+            "target_position_quantity": broker_state.target_position_quantity,
+            "protective_stop_quantity": broker_state.protective_stop_quantity,
+            "protective_stop_order_status": broker_state.protective_stop_order_status,
+            "open_orders_summary": packet.open_orders_summary,
+            "positions_summary": packet.positions_summary,
+            "final_reconciliation_summary": packet.final_reconciliation_summary,
+            "broker_state_safe_to_continue_holding": (
+                packet.broker_state_safe_to_continue_holding
+            ),
+            "cleanup_rejection_classification": (
+                packet.cleanup_rejection_classification
+            ),
+            "cleanup_rejection_evidence_sufficient": (
+                packet.cleanup_rejection_evidence_sufficient
+            ),
+            "next_milestone_recommendation": packet.next_milestone_recommendation,
+            "broker_writes_performed_in_m36": (
+                monitoring_result.broker_writes_performed_in_m36
+            ),
+            "real_read_only_calls_performed": (
+                monitoring_result.real_read_only_calls_performed
+            ),
+            "live_trading_enabled": monitoring_result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                monitoring_result.autonomous_live_execution_enabled
+            ),
+            "schedules_activated": monitoring_result.schedules_activated,
+            "leverage_enabled": monitoring_result.leverage_enabled,
+            "ai_broker_write_authority": monitoring_result.ai_broker_write_authority,
+            "monitoring_packet_path": str(written_path),
+            "note": M36_WARNING,
+        }
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        safe_or_flat = packet.broker_state_safe_to_continue_holding or (
+            packet.aapl_position_status == "flat" and broker_state.account_reachable
+        )
+        return 0 if monitoring_result.monitoring_completed and safe_or_flat else 1
     audit_mode = "real-read-only" if mode == "hold-decision" else mode
     if mode == "incident-closure":
         closure_request = IncidentClosureRequest(
