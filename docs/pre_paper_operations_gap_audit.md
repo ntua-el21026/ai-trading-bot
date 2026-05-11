@@ -41,6 +41,10 @@ Milestone 33 retries the operator-reviewed real-read-only preflight after isolat
 write-smoke blocker to a local `.env` safety flag. The retry remains read-only, no-session,
 no-broker-write, and no-schedule only.
 
+Milestone 35B attempted the operator-selected AAPL first-session launch only through the allowed
+read-only gates. It remained NO-GO because the refreshed Alpaca clock reported the regular session
+closed. No write-capable real-paper command was run, and no broker writes occurred.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:

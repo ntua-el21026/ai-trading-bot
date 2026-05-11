@@ -9,6 +9,7 @@ from packages.paper import (
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     FirstPaperSessionExecutionRequest,
     FirstPaperSessionExecutionResult,
     audit_first_session_symbol_universe,
@@ -268,6 +269,16 @@ def test_real_paper_valid_local_envelope_reaches_credential_gate_without_writes(
 def test_m35_operator_marker_is_accepted_by_local_gate_model() -> None:
     result = run_first_controlled_paper_session_execution(
         _real_request(operator_approval_marker=MILESTONE_35_REAL_OPERATOR_APPROVAL),
+        environ={},
+    )
+
+    assert "operator_approval_missing" not in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m35b_operator_marker_is_accepted_by_local_gate_model() -> None:
+    result = run_first_controlled_paper_session_execution(
+        _real_request(operator_approval_marker=MILESTONE_35B_REAL_OPERATOR_APPROVAL),
         environ={},
     )
 

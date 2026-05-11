@@ -106,6 +106,13 @@ uv run python scripts/run_first_controlled_paper_session.py --mode audit-symbol-
 
 It performs no external calls and no broker writes.
 
+Milestone 35B attempted the operator-selected first controlled paper session only up to the
+allowed read-only gates. The target/envelope was `AAPL`, quantity `1`, max notional `350`, limit
+price `330`, and estimated notional `330`. The real read-only Alpaca paper preflight completed
+cleanly, but the refreshed clock showed the market/session closed, so the write-capable
+real-paper command was not run. The result packet records `market_clock_not_open`, no broker
+writes, no actual paper trading, no schedules, no leverage, and no Level 4 readiness.
+
 The read-only Alpaca paper smoke command is opt-in and must not be treated as paper trading:
 
 ```bash

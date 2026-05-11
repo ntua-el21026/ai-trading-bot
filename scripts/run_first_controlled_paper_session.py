@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import UTC, datetime
 from typing import cast
 
 from packages.paper import (
@@ -13,6 +14,7 @@ from packages.paper import (
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
     audit_first_session_symbol_universe,
@@ -62,7 +64,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{MILESTONE_30_FAKE_OPERATOR_APPROVAL}; for M34 fake-real-paper use "
             f"{MILESTONE_34_FAKE_OPERATOR_APPROVAL}; for M34 real-paper use "
             f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}; for M35 real-paper use "
-            f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}; for M35B real-paper use "
+            f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)
@@ -161,6 +164,10 @@ def main(argv: list[str] | None = None) -> int:
                 True if execution_mode == "fake-real-paper" else args.confirm_cleanup_policy
             ),
         )
+        if execution_mode == "real-paper":
+            execution_request = execution_request.model_copy(
+                update={"started_at": datetime.now(UTC)}
+            )
         execution_result = run_first_controlled_paper_session_execution(
             execution_request,
             environ=(

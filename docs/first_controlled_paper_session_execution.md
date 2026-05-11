@@ -173,9 +173,50 @@ uv run python scripts/run_first_controlled_paper_session.py \
   --limit-price 490
 ```
 
-The future real M35 command must use the operator-selected target symbol and envelope, plus
-`MILESTONE_35_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION`. Milestone 35A does not run that
-real command.
+The future real M35 command must use the operator-selected target symbol and envelope, plus a
+milestone-scoped operator marker. Milestone 35A used
+`MILESTONE_35_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION` for local gate validation only and
+did not run the real command. Milestone 35B uses
+`MILESTONE_35B_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION` for the operator-selected AAPL
+execution attempt.
+
+Milestone 35B command shape, with process-local safety overrides because local `.env` may still
+contain unrelated smoke/control flags:
+
+```bash
+RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE= \
+ALERT_ENABLE_REAL_DELIVERY=false \
+AI_ENABLE_ESCALATION=false \
+NEWS_ENABLE_OPENAI_WEB_FALLBACK=false \
+DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS=false \
+RUN_FIRST_CONTROLLED_PAPER_SESSION= \
+RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION= \
+RUN_TEMPORAL_CLOUD_SMOKE= \
+RUN_DASHBOARD_CONTROL_PLANE_SMOKE= \
+RUN_VERCEL_DASHBOARD_PREVIEW= \
+RUN_TELEGRAM_ALERT_SMOKE= \
+uv run python scripts/run_first_controlled_paper_session.py \
+  --mode real-paper \
+  --operator-approval MILESTONE_35B_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION \
+  --target-symbol AAPL \
+  --max-qty 1 \
+  --max-notional 350 \
+  --limit-price 330 \
+  --confirm-paper-endpoint \
+  --confirm-real-paper-writes \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-schedules \
+  --confirm-no-leverage \
+  --confirm-first-session-only \
+  --confirm-protective-stop-required \
+  --confirm-cleanup-policy
+```
+
+This command may submit real Alpaca paper orders only when the launch packet is GO, the paper
+endpoint is proven, AAPL is clean, the market/session is acceptable, reconciliation is clean, the
+ExecutionIntent is valid, and the protective-stop plan is present. If any gate fails, it must refuse
+before broker writes or stop in a documented safe incident state.
 
 ## Evidence
 
@@ -228,6 +269,27 @@ controlled paper session and does not perform broker writes. The old universal `
 replaced by the config-backed first-session ceiling. The future M35 execution path still requires
 operator approval, a fresh target/envelope decision, paper endpoint proof, clean reconciliation, a
 valid `ExecutionIntent`, and protective-stop enforcement.
+
+## Milestone 35B Result
+
+Milestone 35B used the operator-selected target and envelope:
+
+- target symbol: `AAPL`;
+- max quantity: `1`;
+- max notional: `350`;
+- limit price: `330`;
+- estimated notional: `330`.
+
+The gated real read-only preflight was rerun with process-local safety overrides because local
+`.env` may still contain unrelated smoke/control flags. The preflight completed against the Alpaca
+paper endpoint with account, clock, open-order, and position reads only. It reported clean AAPL
+open orders and positions, no broker writes, no actual paper trading, no schedules, no leverage,
+and no Level 4 readiness claim.
+
+The real-paper write-capable execution command was not run because the refreshed Alpaca clock
+reported the regular session closed. The local sanitized result packet records `market_clock_not_open`
+as the M35B NO-GO blocker. No entry order, cancel, replacement, flatten, or protective stop was
+submitted.
 
 ## Post-Session Policy
 

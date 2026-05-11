@@ -38,6 +38,9 @@ MILESTONE_34_REAL_OPERATOR_APPROVAL = "MILESTONE_34_FIRST_CONTROLLED_PAPER_SESSI
 MILESTONE_35_REAL_OPERATOR_APPROVAL = (
     "MILESTONE_35_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION"
 )
+MILESTONE_35B_REAL_OPERATOR_APPROVAL = (
+    "MILESTONE_35B_OPERATOR_SELECTED_FIRST_CONTROLLED_PAPER_SESSION"
+)
 MILESTONE_34_FAKE_OPERATOR_APPROVAL = "MILESTONE_34_FAKE_REAL_PAPER"
 M34_RESULT_EVIDENCE_PATH = "docs/evidence/first_controlled_paper_session_result.json"
 M34_LAUNCH_PACKET_PATH = "docs/evidence/first_controlled_paper_session_launch_packet.json"
@@ -100,6 +103,7 @@ FIRST_PAPER_SESSION_SCENARIO_IDS: tuple[FirstPaperSessionScenarioId, ...] = (
 REAL_PAPER_OPERATOR_APPROVAL_MARKERS = (
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
+    MILESTONE_35B_REAL_OPERATOR_APPROVAL,
 )
 _ORDER_ENVELOPE_BLOCKER_CODES = frozenset(
     {
@@ -482,7 +486,7 @@ def write_first_controlled_paper_session_result_artifact(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "milestone": "34",
+        "milestone": _result_artifact_milestone(result),
         "result": {
             "status": result.status,
             "success": result.success,
@@ -507,6 +511,12 @@ def write_first_controlled_paper_session_result_artifact(
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _result_artifact_milestone(result: FirstPaperSessionExecutionResult) -> str:
+    if result.result_packet.operator_approval_marker == MILESTONE_35B_REAL_OPERATOR_APPROVAL:
+        return "35B"
+    return "34"
 
 
 def audit_first_session_symbol_universe(

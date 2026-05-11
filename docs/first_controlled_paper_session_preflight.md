@@ -242,3 +242,8 @@ Milestone 35A extends the pre-execution command model so a future launch packet 
 for an operator-selected target symbol, and the execution command can validate explicit max
 quantity, max notional, and limit price locally. The preflight remains read-only and no-broker-write
 only.
+
+Milestone 35B reran the real-read-only preflight for operator-selected `AAPL` with process-local
+safety overrides. The packet remained GO for read-only launch prerequisites, but the refreshed
+clock showed the regular session closed, so the write-capable execution command was not run and the
+session remained NO-GO before broker writes.
