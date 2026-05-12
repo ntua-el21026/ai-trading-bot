@@ -493,3 +493,13 @@ Milestone 37 attempted the corrected cleanup only up to the safe market/session 
 Alpaca paper clock was not open, no stop cancellation, cleanup sell, emergency re-protection, or
 other broker write occurred. The protected AAPL hold remains in place pending a corrected cleanup
 retry during an allowed session or manual broker review.
+
+Milestone 38 retried the corrected cleanup during an acceptable Alpaca paper market/session window.
+The command verified the open AAPL quantity `1` position and the expected session-created
+protective stop before any write, cancelled only that stop, verified cancellation, submitted one
+risk-reducing AAPL sell for the current long quantity, and verified the sell as filled. Final
+broker state is flat with zero open orders and zero positions, and the M35C incident is closed.
+Broker writes performed in M38 were limited to the approved AAPL stop cancellation and
+risk-reducing cleanup sell. Frozen validation has not started, Level 4 remains not ready, and any
+compact M39 controlled paper session plus audit still requires the usual explicit approval and
+preflight gates.

@@ -514,6 +514,46 @@ The sanitized M37 corrected cleanup packet is:
 docs/evidence/corrected_cleanup_m37.json
 ```
 
+## Milestone 38 Corrected Cleanup Retry
+
+Milestone 38 retried the corrected AAPL cleanup during an acceptable Alpaca paper market/session
+window with operator marker `OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY` and cleanup
+approval marker `MILESTONE_38_CORRECTED_AAPL_CLEANUP_RETRY`. It did not start a new session,
+submit a new entry, submit a buy, trade another symbol, use a live endpoint, activate schedules,
+call providers, or enable live/autonomous execution or leverage.
+
+The M38 command verified pre-cleanup state before any write:
+
+- market/session status was `open_acceptable_for_cleanup`;
+- AAPL paper position was open for quantity `1`;
+- the expected AAPL protective stop was open and verified for quantity `1`;
+- open orders consisted of the expected protective stop;
+- positions consisted of the expected AAPL position.
+
+The corrected cleanup sequence then cancelled only the expected session-created AAPL protective
+stop, verified cancellation, submitted one risk-reducing AAPL sell for the current long quantity,
+and verified the sell as `filled`. Emergency re-protection was not needed.
+
+Final M38 state:
+
+- AAPL position is flat;
+- final open orders total is `0`;
+- final positions total is `0`;
+- final reconciliation is `flat_no_open_position`;
+- incident closure status is `closed`;
+- broker writes performed in M38: `true`, limited to stop cancellation and risk-reducing AAPL
+  cleanup sell;
+- repeated controlled paper sessions may be considered in compact M39, but were not started in
+  M38;
+- frozen validation has not started;
+- Level 4 remains not ready.
+
+The sanitized M38 corrected cleanup retry packet is:
+
+```text
+docs/evidence/corrected_cleanup_m38.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any

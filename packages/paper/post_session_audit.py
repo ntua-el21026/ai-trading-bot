@@ -50,8 +50,10 @@ M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH = (
     "docs/evidence/protected_position_monitoring_m36.json"
 )
 M37_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m37.json"
+M38_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m38.json"
 MILESTONE_35F_CLEANUP_APPROVAL = "MILESTONE_35F_RISK_REDUCING_CLEANUP"
 MILESTONE_37_CORRECTED_CLEANUP_APPROVAL = "MILESTONE_37_CORRECTED_AAPL_CLEANUP"
+MILESTONE_38_CORRECTED_CLEANUP_APPROVAL = "MILESTONE_38_CORRECTED_AAPL_CLEANUP_RETRY"
 
 PostSessionAuditMode = Literal["fake", "real-read-only"]
 PostSessionAuditScenarioId = Literal[
@@ -73,7 +75,8 @@ OperatorIncidentClosureDecision = Literal[
     "OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE"
 ]
 OperatorCorrectedCleanupDecision = Literal[
-    "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE"
+    "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE",
+    "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY",
 ]
 HoldDecisionRecommendation = Literal[
     "CONTINUE_HOLD_UNTIL_NEXT_REVIEW",
@@ -121,13 +124,23 @@ CorrectedCleanupStatus = Literal[
     "manual_review_required",
     "no_go",
 ]
-CorrectedCleanupRepeatedSessionGoNoGo = Literal["eligible_for_m38_consideration", "no_go"]
-M37NextRecommendation = Literal[
+CorrectedCleanupMilestone = Literal["37", "38"]
+CorrectedCleanupRepeatedSessionGoNoGo = Literal[
+    "eligible_for_m38_consideration",
+    "eligible_for_m39_consideration",
+    "no_go",
+]
+CorrectedCleanupNextRecommendation = Literal[
     "M38_REPEATED_CONTROLLED_SESSION_REVIEW_MAY_BE_CONSIDERED",
     "M38_SAFE_REPROTECTED_INCIDENT_REVIEW_REQUIRED",
     "M38_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN",
+    "M39_COMPACT_CONTROLLED_SESSION_AND_AUDIT_MAY_BE_CONSIDERED",
+    "M39_SAFE_REPROTECTED_INCIDENT_REVIEW_REQUIRED",
+    "M39_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN",
     "MANUAL_BROKER_REVIEW_REQUIRED",
 ]
+M37NextRecommendation = CorrectedCleanupNextRecommendation
+M38NextRecommendation = CorrectedCleanupNextRecommendation
 Sleeper = Callable[[float], None]
 Clock = Callable[[], float]
 
@@ -216,6 +229,19 @@ class M36ProtectedPositionMonitoringPacketAudit(M35DAuditModel):
     cleanup_rejection_classification: str | None
     protected_position_verified: bool
     broker_writes_performed_in_m36: bool
+    repeated_session_go_no_go: str | None
+    next_milestone_recommendation: str | None
+    blockers: tuple[str, ...]
+
+
+class M37CorrectedCleanupPacketAudit(M35DAuditModel):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    incident_closed: bool
+    market_closed_no_go: bool
+    protected_position_verified: bool
+    broker_writes_performed_in_m37: bool
     repeated_session_go_no_go: str | None
     next_milestone_recommendation: str | None
     blockers: tuple[str, ...]
@@ -507,6 +533,7 @@ class ProtectedPositionMonitoringResult(M35DAuditModel):
 
 
 class CorrectedCleanupPacket(M35DAuditModel):
+    milestone: CorrectedCleanupMilestone = "37"
     packet_id: str
     timestamp: datetime
     latest_spec_path: str
@@ -517,19 +544,23 @@ class CorrectedCleanupPacket(M35DAuditModel):
     m35e_hold_decision_packet_reference: str
     m35f_incident_closure_packet_reference: str
     m36_monitoring_packet_reference: str
+    m37_corrected_cleanup_packet_reference: str | None = None
     m35c_result_audit: M35CResultPacketAudit
     m35d_post_session_audit: M35DPostSessionAuditPacketAudit
     m35e_hold_decision_audit: M35EHoldDecisionPacketAudit
     m35f_incident_closure_audit: M35FIncidentClosurePacketAudit
     m36_monitoring_audit: M36ProtectedPositionMonitoringPacketAudit
+    m37_corrected_cleanup_audit: M37CorrectedCleanupPacketAudit | None = None
     operator_approval_marker: OperatorCorrectedCleanupDecision | None
     cleanup_approval_marker_present: bool
     pre_cleanup_broker_state: PostSessionBrokerStateSummary
+    market_session_status: str = "unknown"
     cleanup_strategy_selected: str
     stop_cancellation_action_result: str
     sell_action_result: str
     emergency_reprotection_action_result: str
     broker_writes_performed_in_m37: bool
+    broker_writes_performed_in_m38: bool = False
     broker_writes: tuple[CorrectedCleanupBrokerWriteRecord, ...]
     final_broker_state: PostSessionBrokerStateSummary
     aapl_position_status: str
@@ -540,7 +571,8 @@ class CorrectedCleanupPacket(M35DAuditModel):
     incident_closure_status: CorrectedCleanupStatus
     incident_closed: bool
     repeated_session_go_no_go: CorrectedCleanupRepeatedSessionGoNoGo
-    next_milestone_recommendation: M37NextRecommendation
+    next_milestone_recommendation: CorrectedCleanupNextRecommendation
+    next_compact_milestone_recommendation: CorrectedCleanupNextRecommendation | None = None
     frozen_validation_started: bool = False
     level4_ready: bool = False
     live_trading_enabled: bool = False
@@ -566,6 +598,7 @@ class CorrectedCleanupResult(M35DAuditModel):
     cleanup_sell_performed: bool
     emergency_reprotection_performed: bool
     broker_writes_performed_in_m37: bool
+    broker_writes_performed_in_m38: bool = False
     real_read_only_calls_performed: bool
     schedules_activated: bool = False
     live_trading_enabled: bool = False
@@ -632,6 +665,7 @@ class CorrectedCleanupRequest(M35DAuditModel):
     hold_decision_packet_path: str = M35E_HOLD_DECISION_EVIDENCE_PATH
     incident_closure_packet_path: str = M35F_INCIDENT_CLOSURE_EVIDENCE_PATH
     monitoring_packet_path: str = M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH
+    m37_corrected_cleanup_packet_path: str = M37_CORRECTED_CLEANUP_EVIDENCE_PATH
     target_symbol: str = "AAPL"
     operator_decision: OperatorCorrectedCleanupDecision | None = None
     cleanup_approval_marker: str | None = None
@@ -1022,6 +1056,7 @@ def run_corrected_aapl_cleanup(
     active_request = request or CorrectedCleanupRequest()
     active_config = app_config or load_app_config()
     cleanup_time = now or datetime.now(UTC)
+    cleanup_milestone = _corrected_cleanup_milestone(active_request)
     result_audit, result_packet = audit_m35c_result_packet(active_request.result_packet_path)
     m35d_audit = audit_m35d_post_session_audit_packet(
         active_request.post_session_audit_packet_path
@@ -1033,6 +1068,12 @@ def run_corrected_aapl_cleanup(
     m36_audit = audit_m36_protected_position_monitoring_packet(
         active_request.monitoring_packet_path
     )
+    m37_audit = (
+        audit_m37_corrected_cleanup_packet(active_request.m37_corrected_cleanup_packet_path)
+        if cleanup_milestone == "38"
+        else None
+    )
+    m37_blockers = () if m37_audit is None else m37_audit.blockers
     gate_blockers = _corrected_cleanup_gate_blockers(active_request, active_config)
     client, adapter, setup_blockers, read_only_calls = _corrected_cleanup_client_and_adapter(
         active_request,
@@ -1068,6 +1109,7 @@ def run_corrected_aapl_cleanup(
                 *m35e_audit.blockers,
                 *m35f_audit.blockers,
                 *m36_audit.blockers,
+                *m37_blockers,
                 *gate_blockers,
                 *setup_blockers,
                 *initial_blockers,
@@ -1097,6 +1139,7 @@ def run_corrected_aapl_cleanup(
             *m35e_audit.blockers,
             *m35f_audit.blockers,
             *m36_audit.blockers,
+            *m37_blockers,
             *gate_blockers,
             *action_blockers,
             *final_state_blockers,
@@ -1104,12 +1147,10 @@ def run_corrected_aapl_cleanup(
         )
     )
     incident_closed = status == "closed" and not blockers
-    if incident_closed:
-        repeated_go_no_go: CorrectedCleanupRepeatedSessionGoNoGo = (
-            "eligible_for_m38_consideration"
-        )
-    else:
-        repeated_go_no_go = "no_go"
+    repeated_go_no_go = _corrected_cleanup_repeated_go(
+        milestone=cleanup_milestone,
+        incident_closed=incident_closed,
+    )
     broker_writes_performed = any(
         write.attempted and not write.fake_only for write in broker_writes
     )
@@ -1129,10 +1170,11 @@ def run_corrected_aapl_cleanup(
         default="not_needed",
     )
     packet = CorrectedCleanupPacket(
+        milestone=cleanup_milestone,
         packet_id=str(
             uuid5(
                 NAMESPACE_URL,
-                f"m37-corrected-cleanup:{active_request.mode}:"
+                f"m{cleanup_milestone}-corrected-cleanup:{active_request.mode}:"
                 f"{active_request.scenario_id}:{cleanup_time.isoformat()}",
             )
         ),
@@ -1147,22 +1189,33 @@ def run_corrected_aapl_cleanup(
         m35e_hold_decision_packet_reference=active_request.hold_decision_packet_path,
         m35f_incident_closure_packet_reference=active_request.incident_closure_packet_path,
         m36_monitoring_packet_reference=active_request.monitoring_packet_path,
+        m37_corrected_cleanup_packet_reference=(
+            active_request.m37_corrected_cleanup_packet_path
+            if cleanup_milestone == "38"
+            else None
+        ),
         m35c_result_audit=result_audit,
         m35d_post_session_audit=m35d_audit,
         m35e_hold_decision_audit=m35e_audit,
         m35f_incident_closure_audit=m35f_audit,
         m36_monitoring_audit=m36_audit,
+        m37_corrected_cleanup_audit=m37_audit,
         operator_approval_marker=active_request.operator_decision,
-        cleanup_approval_marker_present=(
-            active_request.cleanup_approval_marker
-            == MILESTONE_37_CORRECTED_CLEANUP_APPROVAL
-        ),
+        cleanup_approval_marker_present=_corrected_cleanup_marker_valid(active_request),
         pre_cleanup_broker_state=pre_cleanup_state,
+        market_session_status=_corrected_cleanup_market_session_status(
+            pre_cleanup_state,
+        ),
         cleanup_strategy_selected=_corrected_cleanup_strategy(pre_cleanup_state),
         stop_cancellation_action_result=stop_action_result,
         sell_action_result=sell_action_result,
         emergency_reprotection_action_result=reprotect_action_result,
-        broker_writes_performed_in_m37=broker_writes_performed,
+        broker_writes_performed_in_m37=(
+            broker_writes_performed if cleanup_milestone == "37" else False
+        ),
+        broker_writes_performed_in_m38=(
+            broker_writes_performed if cleanup_milestone == "38" else False
+        ),
         broker_writes=broker_writes,
         final_broker_state=final_state,
         aapl_position_status=_m36_position_status(final_state),
@@ -1173,9 +1226,19 @@ def run_corrected_aapl_cleanup(
         incident_closure_status=status,
         incident_closed=incident_closed,
         repeated_session_go_no_go=repeated_go_no_go,
-        next_milestone_recommendation=_m37_next_recommendation(
+        next_milestone_recommendation=_corrected_cleanup_next_recommendation(
+            milestone=cleanup_milestone,
             status=status,
             blockers=blockers,
+        ),
+        next_compact_milestone_recommendation=(
+            _corrected_cleanup_next_recommendation(
+                milestone=cleanup_milestone,
+                status=status,
+                blockers=blockers,
+            )
+            if cleanup_milestone == "38"
+            else None
         ),
         blockers=blockers,
     )
@@ -1196,7 +1259,12 @@ def run_corrected_aapl_cleanup(
             write.operation == "submit_emergency_protective_stop"
             for write in broker_writes
         ),
-        broker_writes_performed_in_m37=broker_writes_performed,
+        broker_writes_performed_in_m37=(
+            broker_writes_performed if cleanup_milestone == "37" else False
+        ),
+        broker_writes_performed_in_m38=(
+            broker_writes_performed if cleanup_milestone == "38" else False
+        ),
         real_read_only_calls_performed=read_only_calls,
     )
 
@@ -1704,6 +1772,84 @@ def audit_m36_protected_position_monitoring_packet(
     )
 
 
+def audit_m37_corrected_cleanup_packet(
+    corrected_cleanup_packet_path: str | Path,
+) -> M37CorrectedCleanupPacketAudit:
+    path = Path(corrected_cleanup_packet_path)
+    if not path.is_file():
+        return M37CorrectedCleanupPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            incident_closed=False,
+            market_closed_no_go=False,
+            protected_position_verified=False,
+            broker_writes_performed_in_m37=False,
+            repeated_session_go_no_go=None,
+            next_milestone_recommendation=None,
+            blockers=("m37_corrected_cleanup_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        packet = CorrectedCleanupPacket.model_validate(payload["corrected_cleanup"])
+    except (OSError, KeyError, TypeError, ValueError):
+        return M37CorrectedCleanupPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            incident_closed=False,
+            market_closed_no_go=False,
+            protected_position_verified=False,
+            broker_writes_performed_in_m37=False,
+            repeated_session_go_no_go=None,
+            next_milestone_recommendation=None,
+            blockers=("m37_corrected_cleanup_packet_unparseable",),
+        )
+    result = payload.get("result", {})
+    final_state = packet.final_broker_state
+    protected_verified = (
+        final_state.target_symbol == "AAPL"
+        and packet.aapl_position_status == "open"
+        and packet.aapl_protective_stop_status == "open_verified"
+        and final_state.protective_stop_verified
+        and final_state.protective_stop_matches_position_quantity
+        and final_state.unexpected_open_orders_count == 0
+        and final_state.unexpected_positions_count == 0
+    )
+    market_closed_no_go = (
+        "market_clock_not_open_for_corrected_cleanup" in packet.blockers
+        and packet.stop_cancellation_action_result == "not_attempted"
+        and packet.sell_action_result == "not_attempted"
+    )
+    checks = {
+        "m37_corrected_cleanup_milestone_is_37": payload.get("milestone") == "37",
+        "m37_market_closed_no_go_recorded": market_closed_no_go,
+        "m37_protected_position_verified": protected_verified,
+        "m37_broker_writes_false": (
+            result.get("broker_writes_performed_in_m37") is False
+            and packet.broker_writes_performed_in_m37 is False
+        ),
+        "m37_repeated_sessions_no_go": packet.repeated_session_go_no_go == "no_go",
+        "m37_recommends_m38_retry": (
+            packet.next_milestone_recommendation
+            == "M38_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN"
+        ),
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M37CorrectedCleanupPacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=str(payload.get("milestone")),
+        incident_closed=packet.incident_closed,
+        market_closed_no_go=market_closed_no_go,
+        protected_position_verified=protected_verified,
+        broker_writes_performed_in_m37=packet.broker_writes_performed_in_m37,
+        repeated_session_go_no_go=packet.repeated_session_go_no_go,
+        next_milestone_recommendation=packet.next_milestone_recommendation,
+        blockers=blockers,
+    )
+
+
 def write_post_session_audit_artifact(
     result: PostSessionAuditResult,
     output_path: str | Path,
@@ -1765,7 +1911,7 @@ def write_corrected_cleanup_artifact(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "milestone": "37",
+        "milestone": result.packet.milestone,
         "result": {
             "incident_closed": result.incident_closed,
             "go_no_go": result.go_no_go,
@@ -1774,6 +1920,7 @@ def write_corrected_cleanup_artifact(
             "cleanup_sell_performed": result.cleanup_sell_performed,
             "emergency_reprotection_performed": result.emergency_reprotection_performed,
             "broker_writes_performed_in_m37": result.broker_writes_performed_in_m37,
+            "broker_writes_performed_in_m38": result.broker_writes_performed_in_m38,
             "real_read_only_calls_performed": result.real_read_only_calls_performed,
             "schedules_activated": result.schedules_activated,
             "live_trading_enabled": result.live_trading_enabled,
@@ -2033,12 +2180,12 @@ def _corrected_cleanup_gate_blockers(
     blockers: list[str] = []
     if request.target_symbol != "AAPL":
         blockers.append("target_symbol_must_be_aapl")
-    if (
-        request.operator_decision
-        != "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE"
-    ):
+    if request.operator_decision not in {
+        "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE",
+        "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY",
+    }:
         blockers.append("operator_corrected_cleanup_decision_required")
-    if request.cleanup_approval_marker != MILESTONE_37_CORRECTED_CLEANUP_APPROVAL:
+    if not _corrected_cleanup_marker_valid(request):
         blockers.append("cleanup_approval_marker_required")
     if request.mode == "real-read-only":
         for field_name, reason in (
@@ -2996,19 +3143,68 @@ def _write_status_summary(
     return ",".join(write.status or "unknown" for write in matching)
 
 
-def _m37_next_recommendation(
+def _corrected_cleanup_milestone(request: CorrectedCleanupRequest) -> CorrectedCleanupMilestone:
+    if (
+        request.operator_decision == "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY"
+        or request.cleanup_approval_marker == MILESTONE_38_CORRECTED_CLEANUP_APPROVAL
+    ):
+        return "38"
+    return "37"
+
+
+def _corrected_cleanup_marker_valid(request: CorrectedCleanupRequest) -> bool:
+    return (
+        request.operator_decision
+        == "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE"
+        and request.cleanup_approval_marker == MILESTONE_37_CORRECTED_CLEANUP_APPROVAL
+    ) or (
+        request.operator_decision == "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY"
+        and request.cleanup_approval_marker == MILESTONE_38_CORRECTED_CLEANUP_APPROVAL
+    )
+
+
+def _corrected_cleanup_market_session_status(
+    broker_summary: PostSessionBrokerStateSummary,
+) -> str:
+    if not broker_summary.account_reachable or broker_summary.clock_is_open is None:
+        return "ambiguous"
+    if broker_summary.clock_is_open:
+        return "open_acceptable_for_cleanup"
+    return "closed_not_acceptable_for_cleanup"
+
+
+def _corrected_cleanup_repeated_go(
     *,
+    milestone: CorrectedCleanupMilestone,
+    incident_closed: bool,
+) -> CorrectedCleanupRepeatedSessionGoNoGo:
+    if not incident_closed:
+        return "no_go"
+    if milestone == "38":
+        return "eligible_for_m39_consideration"
+    return "eligible_for_m38_consideration"
+
+
+def _corrected_cleanup_next_recommendation(
+    *,
+    milestone: CorrectedCleanupMilestone,
     status: CorrectedCleanupStatus,
     blockers: tuple[str, ...],
-) -> M37NextRecommendation:
+) -> CorrectedCleanupNextRecommendation:
     if status == "closed":
+        if milestone == "38":
+            return "M39_COMPACT_CONTROLLED_SESSION_AND_AUDIT_MAY_BE_CONSIDERED"
         return "M38_REPEATED_CONTROLLED_SESSION_REVIEW_MAY_BE_CONSIDERED"
     if status == "safe_reprotected_incident":
+        if milestone == "38":
+            return "M39_SAFE_REPROTECTED_INCIDENT_REVIEW_REQUIRED"
         return "M38_SAFE_REPROTECTED_INCIDENT_REVIEW_REQUIRED"
     if (
         status == "protected_hold_continues"
         and "market_clock_not_open_for_corrected_cleanup" in blockers
     ):
+        if milestone == "38":
+            return "M39_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN"
         return "M38_RETRY_CORRECTED_CLEANUP_WHEN_MARKET_OPEN"
     return "MANUAL_BROKER_REVIEW_REQUIRED"
 

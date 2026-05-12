@@ -679,6 +679,35 @@ The next recommended milestone is a corrected cleanup retry during an allowed ma
 or manual broker review if broker state changes before then. Do not start another controlled paper
 session until the AAPL state is resolved and incident closure is accepted.
 
+## Milestone 38 Corrected Cleanup Retry
+
+Milestone 38 retried the corrected AAPL cleanup with the operator-approved retry marker and the
+same paper-only safety gates. The command verified an acceptable market/session window, confirmed
+the AAPL paper position was open for quantity `1`, and confirmed the expected session-created AAPL
+protective stop was open and verified for quantity `1` before any write.
+
+M38 result:
+
+- only the expected session-created AAPL protective stop was cancelled;
+- stop cancellation was verified before the sell;
+- one risk-reducing AAPL sell for the current long quantity was submitted and filled;
+- emergency re-protection was not needed;
+- final AAPL position is flat;
+- final open orders total is `0`;
+- final positions total is `0`;
+- final reconciliation is `flat_no_open_position`;
+- incident closure status is `closed`;
+- broker writes performed in M38: `true`, limited to stop cancellation and risk-reducing AAPL
+  cleanup sell;
+- repeated controlled paper sessions may be considered in compact M39, but no session was started
+  in M38;
+- frozen paper validation has not started;
+- Level 4 remains not ready.
+
+The sanitized packet is `docs/evidence/corrected_cleanup_m38.json`. The next recommended milestone
+is a compact M39 controlled paper session and audit consideration, gated by the usual operator
+approval and preflight checks. Do not treat this as schedule activation or unattended operation.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

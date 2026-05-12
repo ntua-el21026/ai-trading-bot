@@ -13,8 +13,10 @@ from packages.paper import (
     M35F_INCIDENT_CLOSURE_EVIDENCE_PATH,
     M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
     M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
+    M38_CORRECTED_CLEANUP_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
     MILESTONE_37_CORRECTED_CLEANUP_APPROVAL,
+    MILESTONE_38_CORRECTED_CLEANUP_APPROVAL,
     CorrectedCleanupRequest,
     IncidentClosureRequest,
     OperatorCorrectedCleanupDecision,
@@ -48,9 +50,9 @@ M36_WARNING = (
     "and flattens nothing."
 )
 M37_WARNING = (
-    "Milestone 37 corrected AAPL cleanup only. This command refuses live endpoints, starts no "
-    "new session, submits no buys or entries, and may write only paper AAPL risk-reducing "
-    "cleanup or emergency re-protection when every explicit gate passes."
+    "Corrected AAPL cleanup only. This command refuses live endpoints, starts no new session, "
+    "submits no buys or entries, and may write only paper AAPL risk-reducing cleanup or "
+    "emergency re-protection when every explicit gate passes."
 )
 _M36_MODES = {
     "protected-position-monitor",
@@ -115,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
             "HOLD_PROTECTED_POSITION_UNTIL_NEXT_REVIEW",
             "OPERATOR_APPROVED_RISK_REDUCING_CLEANUP_AND_INCIDENT_CLOSURE",
             "OPERATOR_APPROVED_CORRECTED_AAPL_CLEANUP_AND_INCIDENT_CLOSURE",
+            "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY",
         ),
         default=None,
         help="Optional M35E/M35F operator decision to record.",
@@ -125,7 +128,8 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Cleanup approval marker. M35F expects "
             f"{MILESTONE_35F_CLEANUP_APPROVAL}; M37 expects "
-            f"{MILESTONE_37_CORRECTED_CLEANUP_APPROVAL}."
+            f"{MILESTONE_37_CORRECTED_CLEANUP_APPROVAL}; M38 expects "
+            f"{MILESTONE_38_CORRECTED_CLEANUP_APPROVAL}."
         ),
     )
     parser.add_argument(
@@ -159,8 +163,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--corrected-cleanup-output",
+        default=None,
+        help=(
+            "Sanitized corrected cleanup packet path. Defaults to the M37 packet for M37 "
+            "approval and the M38 packet for M38 approval."
+        ),
+    )
+    parser.add_argument(
+        "--m37-corrected-cleanup-packet",
         default=M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
-        help="Sanitized M37 corrected cleanup packet path.",
+        help="Sanitized M37 corrected cleanup packet path for M38 retry evidence audit.",
     )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
@@ -178,6 +190,18 @@ def main(argv: list[str] | None = None) -> int:
     mode = args.mode
     print(M37_WARNING if mode in _M37_MODES else (M36_WARNING if mode in _M36_MODES else WARNING))
     if mode in _M37_MODES:
+        is_m38_retry = (
+            args.operator_decision == "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY"
+            or args.cleanup_approval == MILESTONE_38_CORRECTED_CLEANUP_APPROVAL
+        )
+        corrected_cleanup_output = (
+            args.corrected_cleanup_output
+            or (
+                M38_CORRECTED_CLEANUP_EVIDENCE_PATH
+                if is_m38_retry
+                else M37_CORRECTED_CLEANUP_EVIDENCE_PATH
+            )
+        )
         corrected_request = CorrectedCleanupRequest(
             mode="real-read-only",
             scenario_id=cast(PostSessionAuditScenarioId, args.scenario),
@@ -186,6 +210,7 @@ def main(argv: list[str] | None = None) -> int:
             hold_decision_packet_path=args.hold_decision_output,
             incident_closure_packet_path=args.incident_closure_output,
             monitoring_packet_path=args.monitoring_output,
+            m37_corrected_cleanup_packet_path=args.m37_corrected_cleanup_packet,
             target_symbol=args.target_symbol.upper(),
             operator_decision=cast(
                 OperatorCorrectedCleanupDecision | None,
@@ -213,19 +238,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         written_path = write_corrected_cleanup_artifact(
             corrected_result,
-            args.corrected_cleanup_output,
+            corrected_cleanup_output,
         )
         corrected_packet = corrected_result.packet
         pre = corrected_packet.pre_cleanup_broker_state
         final = corrected_packet.final_broker_state
         summary = {
             "mode": mode,
+            "milestone": corrected_packet.milestone,
             "scenario_id": corrected_result.scenario_id,
             "incident_closed": corrected_result.incident_closed,
             "go_no_go": corrected_result.go_no_go,
             "blockers": corrected_result.blockers,
             "pre_cleanup_target_position_quantity": pre.target_position_quantity,
             "pre_cleanup_protective_stop_verified": pre.protective_stop_verified,
+            "market_session_status": corrected_packet.market_session_status,
             "cleanup_strategy_selected": corrected_packet.cleanup_strategy_selected,
             "stop_cancellation_action_result": (
                 corrected_packet.stop_cancellation_action_result
@@ -236,6 +263,9 @@ def main(argv: list[str] | None = None) -> int:
             ),
             "broker_writes_performed_in_m37": (
                 corrected_result.broker_writes_performed_in_m37
+            ),
+            "broker_writes_performed_in_m38": (
+                corrected_result.broker_writes_performed_in_m38
             ),
             "broker_write_operations": [
                 write.operation
@@ -249,6 +279,9 @@ def main(argv: list[str] | None = None) -> int:
             "incident_closure_status": corrected_packet.incident_closure_status,
             "next_milestone_recommendation": (
                 corrected_packet.next_milestone_recommendation
+            ),
+            "next_compact_milestone_recommendation": (
+                corrected_packet.next_compact_milestone_recommendation
             ),
             "real_read_only_calls_performed": corrected_result.real_read_only_calls_performed,
             "live_trading_enabled": corrected_result.live_trading_enabled,
