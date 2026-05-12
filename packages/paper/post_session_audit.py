@@ -33,7 +33,10 @@ from packages.core.config import AppConfig, load_app_config
 from packages.execution.models import ExecutionIntent
 from packages.paper.execution import (
     M34_RESULT_EVIDENCE_PATH,
+    M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH,
+    M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH,
     FirstPaperSessionResultPacket,
+    RepeatedControlledBatchM40Packet,
 )
 from packages.paper.first_session import FIRST_SESSION_SPEC_VERSION, SENSITIVE_ENV_NAMES
 
@@ -51,6 +54,9 @@ M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH = (
 )
 M37_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m37.json"
 M38_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m38.json"
+M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH = (
+    "docs/evidence/supervised_scheduled_paper_readiness_m41.json"
+)
 MILESTONE_35F_CLEANUP_APPROVAL = "MILESTONE_35F_RISK_REDUCING_CLEANUP"
 MILESTONE_37_CORRECTED_CLEANUP_APPROVAL = "MILESTONE_37_CORRECTED_AAPL_CLEANUP"
 MILESTONE_38_CORRECTED_CLEANUP_APPROVAL = "MILESTONE_38_CORRECTED_AAPL_CLEANUP_RETRY"
@@ -59,6 +65,7 @@ PostSessionAuditMode = Literal["fake", "real-read-only"]
 PostSessionAuditScenarioId = Literal[
     "protected_position",
     "missing_stop",
+    "missing_msft_stop",
     "unexpected_order",
     "unexpected_position",
     "flat",
@@ -141,6 +148,10 @@ CorrectedCleanupNextRecommendation = Literal[
 ]
 M37NextRecommendation = CorrectedCleanupNextRecommendation
 M38NextRecommendation = CorrectedCleanupNextRecommendation
+M41ReadinessRecommendation = Literal[
+    "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED",
+    "M42_SUPERVISED_SCHEDULED_PAPER_READINESS_REPAIR_REQUIRED",
+]
 Sleeper = Callable[[float], None]
 Clock = Callable[[], float]
 
@@ -244,6 +255,38 @@ class M37CorrectedCleanupPacketAudit(M35DAuditModel):
     broker_writes_performed_in_m37: bool
     repeated_session_go_no_go: str | None
     next_milestone_recommendation: str | None
+    blockers: tuple[str, ...]
+
+
+class M40RepeatedControlledBatchPacketAudit(M35DAuditModel):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    m39_evidence_accepted: bool
+    existing_aapl_protected_hold_verified: bool
+    msft_attempt_clean_success: bool
+    msft_protective_stop_verified: bool
+    normal_stop_path_succeeded_without_recovery: bool
+    final_reconciliation_clean_protected_hold: bool
+    supervised_schedule_readiness_may_be_considered: bool
+    no_unresolved_incidents: bool
+    schedules_not_activated: bool
+    frozen_validation_started: bool
+    level4_ready: bool
+    blockers: tuple[str, ...]
+
+
+class M40ReadOnlyPreflightPacketAudit(M35DAuditModel):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    preflight_go: bool
+    read_only_broker_calls_performed: bool
+    broker_writes_performed: bool
+    provider_ai_telegram_vercel_temporal_calls_performed: bool
+    schedules_activated: bool
+    frozen_validation_started: bool
+    level4_ready: bool
     blockers: tuple[str, ...]
 
 
@@ -600,6 +643,114 @@ class CorrectedCleanupResult(M35DAuditModel):
     broker_writes_performed_in_m37: bool
     broker_writes_performed_in_m38: bool = False
     real_read_only_calls_performed: bool
+    schedules_activated: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    ai_broker_write_authority: bool = False
+
+
+class ProtectedHoldingVerification(M35DAuditModel):
+    symbol: str
+    position_status: str
+    position_quantity: float
+    protective_stop_status: str
+    protective_stop_quantity: float | None
+    protective_stop_order_status: str | None
+    protective_stop_verified: bool
+    protective_stop_matches_position_quantity: bool
+
+
+class ScheduleReadinessGate(M35DAuditModel):
+    gate: str
+    passed: bool
+    detail: str
+
+
+class SupervisedScheduleBrokerStateSummary(M35DAuditModel):
+    account_reachable: bool
+    clock_reachable: bool
+    clock_is_open: bool | None
+    paper_endpoint_proven: bool
+    live_endpoint_used: bool = False
+    aapl: ProtectedHoldingVerification
+    msft: ProtectedHoldingVerification
+    open_orders_total: int = Field(ge=0)
+    expected_protective_stop_open_orders: int = Field(ge=0)
+    unexpected_open_orders_count: int = Field(ge=0)
+    unexpected_open_order_symbols: tuple[str, ...]
+    positions_total: int = Field(ge=0)
+    unexpected_positions_count: int = Field(ge=0)
+    unexpected_position_symbols: tuple[str, ...]
+    reconciliation_summary: str
+    read_only_calls_performed: bool
+    broker_writes_attempted: bool = False
+
+
+class SupervisedScheduleReadinessRequest(M35DAuditModel):
+    mode: PostSessionAuditMode = "fake"
+    scenario_id: PostSessionAuditScenarioId = "protected_position"
+    m40_repeated_batch_packet_path: str = M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
+    m40_preflight_packet_path: str = M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH
+    confirm_paper_endpoint: bool = False
+    confirm_no_broker_writes: bool = False
+    confirm_no_live_trading: bool = False
+    confirm_no_autonomous_live: bool = False
+    confirm_no_schedules: bool = False
+    confirm_no_leverage: bool = False
+
+
+class SupervisedScheduleReadinessPacket(M35DAuditModel):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str
+    spec_version: str
+    commit_hash: str
+    m40_packet_reference: str
+    m40_preflight_packet_reference: str
+    m40_repeated_batch_audit: M40RepeatedControlledBatchPacketAudit
+    m40_preflight_audit: M40ReadOnlyPreflightPacketAudit
+    current_broker_state_summary: SupervisedScheduleBrokerStateSummary
+    aapl_position_stop_status: ProtectedHoldingVerification
+    msft_position_stop_status: ProtectedHoldingVerification
+    open_orders_summary: str
+    positions_summary: str
+    reconciliation_summary: str
+    schedule_activation_performed: bool = False
+    temporal_schedules_created: bool = False
+    temporal_schedules_activated: bool = False
+    broker_writes_performed_in_m41: bool = False
+    real_read_only_calls_performed: bool
+    schedule_readiness_gate_list: tuple[ScheduleReadinessGate, ...]
+    missing_gates: tuple[str, ...]
+    operator_monitoring_requirements: tuple[str, ...]
+    cleanup_flatten_policy_summary: str
+    evidence_reporting_dashboard_expectations: tuple[str, ...]
+    supervised_scheduled_paper_run_readiness_recommendation: M41ReadinessRecommendation
+    frozen_validation_started: bool = False
+    level4_ready: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    schedules_activated: bool = False
+    provider_ai_telegram_vercel_temporal_calls: bool = False
+    blockers: tuple[str, ...]
+    secrets_redacted: dict[str, str] = Field(
+        default_factory=lambda: {name: "<redacted-not-inspected>" for name in SENSITIVE_ENV_NAMES}
+    )
+
+
+class SupervisedScheduleReadinessResult(M35DAuditModel):
+    mode: PostSessionAuditMode
+    scenario_id: PostSessionAuditScenarioId
+    readiness_approved: bool
+    go_no_go: Literal["go", "no_go"]
+    blockers: tuple[str, ...]
+    packet: SupervisedScheduleReadinessPacket
+    packet_path: str | None = None
+    broker_writes_performed_in_m41: bool = False
+    real_read_only_calls_performed: bool
+    schedules_created: bool = False
     schedules_activated: bool = False
     live_trading_enabled: bool = False
     autonomous_live_execution_enabled: bool = False
@@ -1269,6 +1420,106 @@ def run_corrected_aapl_cleanup(
     )
 
 
+def run_supervised_schedule_readiness_review(
+    request: SupervisedScheduleReadinessRequest | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    app_config: AppConfig | None = None,
+    client_factory: PostSessionAuditClientFactory = (
+        build_alpaca_paper_order_lifecycle_http_client
+    ),
+    now: datetime | None = None,
+) -> SupervisedScheduleReadinessResult:
+    active_request = request or SupervisedScheduleReadinessRequest()
+    active_config = app_config or load_app_config()
+    readiness_time = now or datetime.now(UTC)
+    m40_audit = audit_m40_repeated_controlled_batch_packet(
+        active_request.m40_repeated_batch_packet_path
+    )
+    m40_preflight_audit = audit_m40_read_only_preflight_packet(
+        active_request.m40_preflight_packet_path
+    )
+    gate_blockers = _schedule_readiness_gate_blockers(active_request, active_config)
+    broker_summary, broker_blockers, read_only_calls = (
+        _schedule_readiness_broker_summary_for_request(
+            active_request,
+            app_config=active_config,
+            environ={} if environ is None else environ,
+            client_factory=client_factory,
+            gate_blockers=gate_blockers,
+        )
+    )
+    broker_state_blockers = _schedule_readiness_broker_state_blockers(broker_summary)
+    blockers = _unique(
+        (
+            *m40_audit.blockers,
+            *m40_preflight_audit.blockers,
+            *gate_blockers,
+            *broker_blockers,
+            *broker_state_blockers,
+        )
+    )
+    gate_list = _schedule_readiness_gate_list(
+        m40_audit=m40_audit,
+        m40_preflight_audit=m40_preflight_audit,
+        broker_summary=broker_summary,
+        gate_blockers=gate_blockers,
+        broker_blockers=broker_blockers,
+        broker_state_blockers=broker_state_blockers,
+    )
+    missing_gates = tuple(gate.gate for gate in gate_list if not gate.passed)
+    readiness_approved = not blockers and not missing_gates
+    recommendation: M41ReadinessRecommendation = (
+        "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED"
+        if readiness_approved
+        else "M42_SUPERVISED_SCHEDULED_PAPER_READINESS_REPAIR_REQUIRED"
+    )
+    packet = SupervisedScheduleReadinessPacket(
+        packet_id=str(
+            uuid5(
+                NAMESPACE_URL,
+                f"m41-supervised-schedule-readiness:{active_request.mode}:"
+                f"{active_request.scenario_id}:{readiness_time.isoformat()}",
+            )
+        ),
+        timestamp=readiness_time,
+        latest_spec_path=f"docs/app/{FIRST_SESSION_SPEC_VERSION}",
+        spec_version=FIRST_SESSION_SPEC_VERSION,
+        commit_hash=_git_commit_or_unavailable(),
+        m40_packet_reference=active_request.m40_repeated_batch_packet_path,
+        m40_preflight_packet_reference=active_request.m40_preflight_packet_path,
+        m40_repeated_batch_audit=m40_audit,
+        m40_preflight_audit=m40_preflight_audit,
+        current_broker_state_summary=broker_summary,
+        aapl_position_stop_status=broker_summary.aapl,
+        msft_position_stop_status=broker_summary.msft,
+        open_orders_summary=_schedule_open_orders_summary(broker_summary),
+        positions_summary=_schedule_positions_summary(broker_summary),
+        reconciliation_summary=broker_summary.reconciliation_summary,
+        real_read_only_calls_performed=read_only_calls,
+        schedule_readiness_gate_list=gate_list,
+        missing_gates=missing_gates,
+        operator_monitoring_requirements=_m41_operator_monitoring_requirements(),
+        cleanup_flatten_policy_summary=(
+            "Future supervised scheduled paper runs may only use explicit operator-approved "
+            "risk reducing cleanup for session-created quantities. Protected holds must remain "
+            "covered by verified stops until a separately approved cleanup or repair milestone."
+        ),
+        evidence_reporting_dashboard_expectations=_m41_evidence_expectations(),
+        supervised_scheduled_paper_run_readiness_recommendation=recommendation,
+        blockers=blockers,
+    )
+    return SupervisedScheduleReadinessResult(
+        mode=active_request.mode,
+        scenario_id=active_request.scenario_id,
+        readiness_approved=readiness_approved,
+        go_no_go="go" if readiness_approved else "no_go",
+        blockers=blockers,
+        packet=packet,
+        real_read_only_calls_performed=read_only_calls,
+    )
+
+
 def run_first_controlled_paper_session_post_session_audit(
     request: PostSessionAuditRequest | None = None,
     *,
@@ -1850,6 +2101,237 @@ def audit_m37_corrected_cleanup_packet(
     )
 
 
+def audit_m40_repeated_controlled_batch_packet(
+    repeated_batch_packet_path: str | Path,
+) -> M40RepeatedControlledBatchPacketAudit:
+    path = Path(repeated_batch_packet_path)
+    if not path.is_file():
+        return M40RepeatedControlledBatchPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            m39_evidence_accepted=False,
+            existing_aapl_protected_hold_verified=False,
+            msft_attempt_clean_success=False,
+            msft_protective_stop_verified=False,
+            normal_stop_path_succeeded_without_recovery=False,
+            final_reconciliation_clean_protected_hold=False,
+            supervised_schedule_readiness_may_be_considered=False,
+            no_unresolved_incidents=False,
+            schedules_not_activated=False,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m40_repeated_controlled_batch_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        packet = RepeatedControlledBatchM40Packet.model_validate(
+            payload["repeated_controlled_batch"]
+        )
+    except (OSError, KeyError, TypeError, ValueError):
+        return M40RepeatedControlledBatchPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            m39_evidence_accepted=False,
+            existing_aapl_protected_hold_verified=False,
+            msft_attempt_clean_success=False,
+            msft_protective_stop_verified=False,
+            normal_stop_path_succeeded_without_recovery=False,
+            final_reconciliation_clean_protected_hold=False,
+            supervised_schedule_readiness_may_be_considered=False,
+            no_unresolved_incidents=False,
+            schedules_not_activated=False,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m40_repeated_controlled_batch_packet_unparseable",),
+        )
+    result = payload.get("result", {})
+    post_state = packet.post_run_broker_state
+    m39_accepted = (
+        packet.m39_clean_controlled_session_audit.parseable
+        and packet.m39_clean_controlled_session_audit.clean_success_or_resolved
+        and packet.m39_clean_controlled_session_audit.repeated_batch_m40_eligible
+        and not packet.m39_clean_controlled_session_audit.blockers
+    )
+    aapl_verified = bool(
+        packet.existing_aapl_protected_hold_status == "clean_protected_hold"
+        and post_state is not None
+        and post_state.aapl_hold_status == "clean_protected_hold"
+        and post_state.aapl_position_quantity is not None
+        and abs(post_state.aapl_position_quantity - 1.0) <= 1e-9
+        and post_state.aapl_protective_stop_verified
+        and post_state.aapl_protective_stop_quantity is not None
+        and abs(post_state.aapl_protective_stop_quantity - 1.0) <= 1e-9
+    )
+    msft_attempt_clean = (
+        packet.selected_target_symbol == "MSFT"
+        and packet.fill_status == "filled"
+        and abs(packet.filled_quantity - 1.0) <= 1e-9
+        and not packet.incidents
+        and not packet.blockers
+    )
+    msft_stop_verified = bool(
+        packet.protective_stop_verification_result == "verified"
+        and post_state is not None
+        and post_state.protective_stop_verified
+        and post_state.protective_stop_quantity is not None
+        and abs(post_state.protective_stop_quantity - 1.0) <= 1e-9
+    )
+    normal_without_recovery = (
+        packet.normal_stop_path_succeeded and not packet.recovery_stop_path_used
+    )
+    final_clean = bool(
+        packet.final_reconciliation == "clean_protected_hold"
+        and post_state is not None
+        and post_state.open_order_count == 2
+        and post_state.position_count == 2
+        and post_state.reconciliation_result == "clean_protected_hold"
+    )
+    readiness_considered = (
+        packet.supervised_schedule_readiness_recommendation
+        == "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_MAY_BE_CONSIDERED"
+        and result.get("supervised_schedule_readiness_recommendation")
+        == "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_MAY_BE_CONSIDERED"
+    )
+    no_incidents = not packet.incidents and not packet.blockers and not result.get("blockers")
+    schedules_not_activated = (
+        packet.schedules_activated is False
+        and result.get("schedules_activated") is False
+    )
+    frozen_started = packet.frozen_validation_started
+    level4_ready = packet.level4_ready
+    checks = {
+        "m40_repeated_batch_milestone_is_40": payload.get("milestone") == "40",
+        "m40_result_success_go": (
+            result.get("success") is True and result.get("go_no_go") == "go"
+        ),
+        "m40_m39_evidence_accepted": m39_accepted,
+        "m40_existing_aapl_protected_hold_verified": aapl_verified,
+        "m40_msft_attempt_clean_success": msft_attempt_clean,
+        "m40_msft_protective_stop_verified": msft_stop_verified,
+        "m40_normal_stop_path_succeeded_without_recovery": normal_without_recovery,
+        "m40_final_reconciliation_clean_protected_hold": final_clean,
+        "m40_supervised_schedule_readiness_may_be_considered": readiness_considered,
+        "m40_no_unresolved_incidents": no_incidents,
+        "m40_schedules_not_activated": schedules_not_activated,
+        "m40_frozen_validation_not_started": not frozen_started,
+        "m40_level4_not_ready": not level4_ready,
+        "m40_live_trading_disabled": (
+            packet.live_trading_enabled is False and result.get("live_trading_enabled") is False
+        ),
+        "m40_autonomous_live_disabled": (
+            packet.autonomous_live_execution_enabled is False
+            and result.get("autonomous_live_execution_enabled") is False
+        ),
+        "m40_leverage_disabled": (
+            packet.leverage_enabled is False and result.get("leverage_enabled") is False
+        ),
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M40RepeatedControlledBatchPacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=None if payload.get("milestone") is None else str(payload.get("milestone")),
+        m39_evidence_accepted=m39_accepted,
+        existing_aapl_protected_hold_verified=aapl_verified,
+        msft_attempt_clean_success=msft_attempt_clean,
+        msft_protective_stop_verified=msft_stop_verified,
+        normal_stop_path_succeeded_without_recovery=normal_without_recovery,
+        final_reconciliation_clean_protected_hold=final_clean,
+        supervised_schedule_readiness_may_be_considered=readiness_considered,
+        no_unresolved_incidents=no_incidents,
+        schedules_not_activated=schedules_not_activated,
+        frozen_validation_started=frozen_started,
+        level4_ready=level4_ready,
+        blockers=blockers,
+    )
+
+
+def audit_m40_read_only_preflight_packet(
+    preflight_packet_path: str | Path,
+) -> M40ReadOnlyPreflightPacketAudit:
+    path = Path(preflight_packet_path)
+    if not path.is_file():
+        return M40ReadOnlyPreflightPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            preflight_go=False,
+            read_only_broker_calls_performed=False,
+            broker_writes_performed=False,
+            provider_ai_telegram_vercel_temporal_calls_performed=False,
+            schedules_activated=False,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m40_read_only_preflight_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        result = payload["result"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return M40ReadOnlyPreflightPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            preflight_go=False,
+            read_only_broker_calls_performed=False,
+            broker_writes_performed=False,
+            provider_ai_telegram_vercel_temporal_calls_performed=False,
+            schedules_activated=False,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m40_read_only_preflight_packet_unparseable",),
+        )
+    read_only = (
+        result.get("read_only_broker_calls_performed") is True
+        and result.get("real_read_only_alpaca_calls_performed") is True
+    )
+    broker_writes = (
+        result.get("broker_write_methods_called") is True
+        or result.get("real_broker_orders_submitted") is True
+        or result.get("real_broker_writes_attempted") is True
+    )
+    provider_calls = (
+        result.get("provider_ai_telegram_vercel_temporal_calls_performed") is True
+    )
+    schedules_activated = bool(result.get("schedules_activated"))
+    frozen_started = bool(result.get("frozen_validation_started", False))
+    level4_ready = bool(result.get("level4_ready"))
+    preflight_go = (
+        payload.get("milestone") == "33"
+        and result.get("success") is True
+        and result.get("go_no_go_decision") == "go"
+        and not result.get("blockers")
+    )
+    checks = {
+        "m40_preflight_milestone_is_33": payload.get("milestone") == "33",
+        "m40_preflight_go": preflight_go,
+        "m40_preflight_read_only_calls_performed": read_only,
+        "m40_preflight_no_broker_writes": not broker_writes,
+        "m40_preflight_no_provider_ai_telegram_vercel_temporal_calls": (
+            not provider_calls
+        ),
+        "m40_preflight_no_schedules_activated": not schedules_activated,
+        "m40_preflight_frozen_validation_not_started": not frozen_started,
+        "m40_preflight_level4_not_ready": not level4_ready,
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M40ReadOnlyPreflightPacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=None if payload.get("milestone") is None else str(payload.get("milestone")),
+        preflight_go=preflight_go,
+        read_only_broker_calls_performed=read_only,
+        broker_writes_performed=broker_writes,
+        provider_ai_telegram_vercel_temporal_calls_performed=provider_calls,
+        schedules_activated=schedules_activated,
+        frozen_validation_started=frozen_started,
+        level4_ready=level4_ready,
+        blockers=blockers,
+    )
+
+
 def write_post_session_audit_artifact(
     result: PostSessionAuditResult,
     output_path: str | Path,
@@ -1931,6 +2413,38 @@ def write_corrected_cleanup_artifact(
             "ai_broker_write_authority": result.ai_broker_write_authority,
         },
         "corrected_cleanup": result.packet.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def write_supervised_schedule_readiness_artifact(
+    result: SupervisedScheduleReadinessResult,
+    output_path: str | Path,
+) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "milestone": "41",
+        "result": {
+            "readiness_approved": result.readiness_approved,
+            "go_no_go": result.go_no_go,
+            "blockers": result.blockers,
+            "broker_writes_performed_in_m41": result.broker_writes_performed_in_m41,
+            "real_read_only_calls_performed": result.real_read_only_calls_performed,
+            "schedules_created": result.schedules_created,
+            "schedules_activated": result.schedules_activated,
+            "live_trading_enabled": result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                result.autonomous_live_execution_enabled
+            ),
+            "leverage_enabled": result.leverage_enabled,
+            "ai_broker_write_authority": result.ai_broker_write_authority,
+            "supervised_scheduled_paper_run_readiness_recommendation": (
+                result.packet.supervised_scheduled_paper_run_readiness_recommendation
+            ),
+        },
+        "supervised_schedule_readiness": result.packet.model_dump(mode="json"),
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
@@ -2077,6 +2591,487 @@ def classify_cleanup_rejection(
             "The sanitized error is invalid_order_request, but available evidence does not "
             "identify an existing-stop reservation, quantity mismatch, or session/TIF cause."
         ),
+    )
+
+
+def _schedule_readiness_gate_blockers(
+    request: SupervisedScheduleReadinessRequest,
+    app_config: AppConfig,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if request.mode == "real-read-only":
+        for field_name, reason in (
+            ("confirm_paper_endpoint", "confirm_paper_endpoint_required"),
+            ("confirm_no_broker_writes", "confirm_no_broker_writes_required"),
+            ("confirm_no_live_trading", "confirm_no_live_trading_required"),
+            ("confirm_no_autonomous_live", "confirm_no_autonomous_live_required"),
+            ("confirm_no_schedules", "confirm_no_schedules_required"),
+            ("confirm_no_leverage", "confirm_no_leverage_required"),
+        ):
+            if not bool(getattr(request, field_name)):
+                blockers.append(reason)
+    if app_config.system.live_trading_enabled or app_config.execution.allow_live_orders:
+        blockers.append("live_trading_enabled")
+    if (
+        app_config.system.autonomous_execution_enabled
+        or app_config.execution.autonomous_execution_enabled
+    ):
+        blockers.append("autonomous_live_execution_enabled")
+    if app_config.risk_level_4_micro_live.allow_margin:
+        blockers.append("leverage_enabled")
+    return _unique(tuple(blockers))
+
+
+def _schedule_readiness_broker_summary_for_request(
+    request: SupervisedScheduleReadinessRequest,
+    *,
+    app_config: AppConfig,
+    environ: Mapping[str, str],
+    client_factory: PostSessionAuditClientFactory,
+    gate_blockers: tuple[str, ...],
+) -> tuple[SupervisedScheduleBrokerStateSummary, tuple[str, ...], bool]:
+    if gate_blockers:
+        return _unreached_schedule_broker_summary(), (), False
+    if request.mode == "fake":
+        client = _fake_client_for_schedule_readiness(request)
+        adapter = AlpacaPaperAdapter(
+            system_config=app_config.system,
+            execution_config=app_config.execution,
+            client=client,
+            credentials=None,
+            run_mode="test",
+        )
+        return _schedule_readiness_broker_state_summary(
+            adapter=adapter,
+            client=client,
+            read_only_calls_performed=False,
+        )
+    try:
+        credentials = validate_alpaca_paper_readonly_smoke_gates(
+            environ=environ,
+            app_config=app_config,
+        )
+        settings = AlpacaPaperOrderLifecycleSmokeSettings(
+            symbol="AAPL",
+            quantity=1,
+            max_notional_usd=500.0,
+            timeout_seconds=0.0,
+        )
+        real_client = client_factory(credentials, settings)
+        adapter = AlpacaPaperAdapter(
+            system_config=app_config.system,
+            execution_config=app_config.execution,
+            client=real_client,
+            credentials=credentials,
+            run_mode="runtime",
+        )
+    except Exception:
+        return (
+            _unreached_schedule_broker_summary(),
+            ("alpaca_m41_read_only_gates_or_credentials_unavailable",),
+            False,
+        )
+    return _schedule_readiness_broker_state_summary(
+        adapter=adapter,
+        client=real_client,
+        read_only_calls_performed=True,
+    )
+
+
+def _schedule_readiness_broker_state_summary(
+    *,
+    adapter: AlpacaPaperAdapter,
+    client: AlpacaPaperOrderLifecycleClient | FakeAlpacaClient,
+    read_only_calls_performed: bool,
+) -> tuple[SupervisedScheduleBrokerStateSummary, tuple[str, ...], bool]:
+    try:
+        adapter.account_snapshot()
+        clock = map_alpaca_clock(client.get_clock())
+        open_orders = adapter.open_orders()
+        positions = adapter.positions()
+    except AlpacaClientError as exc:
+        return (
+            _unreached_schedule_broker_summary(),
+            (f"alpaca_read_only_m41_failed:{exc.code}",),
+            read_only_calls_performed,
+        )
+    except Exception as exc:
+        return (
+            _unreached_schedule_broker_summary(),
+            (f"alpaca_read_only_m41_failed:{type(exc).__name__}",),
+            read_only_calls_performed,
+        )
+
+    expected_stop_order_ids: set[str] = set()
+    aapl = _protected_holding_verification(
+        adapter=adapter,
+        positions=positions,
+        symbol="AAPL",
+        expected_stop_order_ids=expected_stop_order_ids,
+    )
+    msft = _protected_holding_verification(
+        adapter=adapter,
+        positions=positions,
+        symbol="MSFT",
+        expected_stop_order_ids=expected_stop_order_ids,
+    )
+    unexpected_open_orders = tuple(
+        order for order in open_orders if order.broker_order_id not in expected_stop_order_ids
+    )
+    expected_symbols = {"AAPL", "MSFT"}
+    unexpected_positions = tuple(
+        position
+        for position in positions
+        if abs(position.quantity) > 1e-9 and position.symbol not in expected_symbols
+    )
+    blockers = _schedule_readiness_broker_state_blockers_from_parts(
+        aapl=aapl,
+        msft=msft,
+        unexpected_open_orders=unexpected_open_orders,
+        unexpected_positions=unexpected_positions,
+        account_reachable=True,
+    )
+    reconciliation = _schedule_reconciliation_summary(
+        aapl=aapl,
+        msft=msft,
+        unexpected_open_orders=unexpected_open_orders,
+        unexpected_positions=unexpected_positions,
+    )
+    return (
+        SupervisedScheduleBrokerStateSummary(
+            account_reachable=True,
+            clock_reachable=True,
+            clock_is_open=clock.is_open,
+            paper_endpoint_proven=True,
+            aapl=aapl,
+            msft=msft,
+            open_orders_total=len(open_orders),
+            expected_protective_stop_open_orders=len(expected_stop_order_ids),
+            unexpected_open_orders_count=len(unexpected_open_orders),
+            unexpected_open_order_symbols=tuple(
+                sorted({order.symbol for order in unexpected_open_orders})
+            ),
+            positions_total=len(positions),
+            unexpected_positions_count=len(unexpected_positions),
+            unexpected_position_symbols=tuple(
+                sorted({position.symbol for position in unexpected_positions})
+            ),
+            reconciliation_summary=reconciliation,
+            read_only_calls_performed=read_only_calls_performed,
+        ),
+        blockers,
+        read_only_calls_performed,
+    )
+
+
+def _protected_holding_verification(
+    *,
+    adapter: AlpacaPaperAdapter,
+    positions: tuple[BrokerPosition, ...],
+    symbol: str,
+    expected_stop_order_ids: set[str],
+) -> ProtectedHoldingVerification:
+    quantity = sum(position.quantity for position in positions if position.symbol == symbol)
+    verification = adapter.verify_protective_stop(
+        symbol=symbol,
+        required_quantity=max(quantity, 0.0),
+    )
+    stop = verification.stop
+    if verification.protected and stop is not None:
+        expected_stop_order_ids.add(stop.broker_order_id)
+    stop_quantity = None if stop is None else stop.quantity
+    stop_matches = (
+        stop is not None
+        and quantity > 1e-9
+        and abs(stop.quantity - max(quantity, 0.0)) <= 1e-9
+    )
+    return ProtectedHoldingVerification(
+        symbol=symbol,
+        position_status="open" if abs(quantity) > 1e-9 else "flat",
+        position_quantity=quantity,
+        protective_stop_status=(
+            "open_verified" if verification.protected else "missing_or_unverified"
+        ),
+        protective_stop_quantity=stop_quantity,
+        protective_stop_order_status=None if stop is None else stop.status,
+        protective_stop_verified=verification.protected,
+        protective_stop_matches_position_quantity=stop_matches,
+    )
+
+
+def _unreached_schedule_broker_summary() -> SupervisedScheduleBrokerStateSummary:
+    ambiguous_aapl = _ambiguous_holding("AAPL")
+    ambiguous_msft = _ambiguous_holding("MSFT")
+    return SupervisedScheduleBrokerStateSummary(
+        account_reachable=False,
+        clock_reachable=False,
+        clock_is_open=None,
+        paper_endpoint_proven=False,
+        aapl=ambiguous_aapl,
+        msft=ambiguous_msft,
+        open_orders_total=0,
+        expected_protective_stop_open_orders=0,
+        unexpected_open_orders_count=0,
+        unexpected_open_order_symbols=(),
+        positions_total=0,
+        unexpected_positions_count=0,
+        unexpected_position_symbols=(),
+        reconciliation_summary="broker_state_not_reached",
+        read_only_calls_performed=False,
+    )
+
+
+def _ambiguous_holding(symbol: str) -> ProtectedHoldingVerification:
+    return ProtectedHoldingVerification(
+        symbol=symbol,
+        position_status="ambiguous",
+        position_quantity=0.0,
+        protective_stop_status="ambiguous",
+        protective_stop_quantity=None,
+        protective_stop_order_status=None,
+        protective_stop_verified=False,
+        protective_stop_matches_position_quantity=False,
+    )
+
+
+def _fake_client_for_schedule_readiness(
+    request: SupervisedScheduleReadinessRequest,
+) -> FakeAlpacaClient:
+    orders: list[dict[str, Any]] = []
+    positions: list[dict[str, Any]] = []
+    if request.scenario_id != "flat":
+        positions.extend(
+            [
+                _fake_position_payload("AAPL", 1.0),
+                _fake_position_payload("MSFT", 1.0),
+            ]
+        )
+    if request.scenario_id not in {"missing_stop", "flat"}:
+        orders.append(
+            _fake_stop_order_payload(
+                "AAPL",
+                "m39-aapl-stop",
+                "m39-aapl-stop-client",
+                1.0,
+            )
+        )
+    if request.scenario_id not in {"missing_msft_stop", "flat"}:
+        orders.append(
+            _fake_stop_order_payload(
+                "MSFT",
+                "m40-msft-stop",
+                "m40-msft-stop-client",
+                1.0,
+            )
+        )
+    if request.scenario_id == "unexpected_order":
+        orders.append(
+            _fake_stop_order_payload(
+                "XLK",
+                "unexpected-xlk-stop",
+                "unexpected-xlk-stop-client",
+                1.0,
+            )
+        )
+    if request.scenario_id == "unexpected_position":
+        positions.append(_fake_position_payload("XLK", 1.0))
+    return FakeAlpacaClient(orders=tuple(orders), positions=tuple(positions))
+
+
+def _schedule_readiness_broker_state_blockers(
+    broker_summary: SupervisedScheduleBrokerStateSummary,
+) -> tuple[str, ...]:
+    return _schedule_readiness_broker_state_blockers_from_parts(
+        aapl=broker_summary.aapl,
+        msft=broker_summary.msft,
+        unexpected_open_orders=(),
+        unexpected_positions=(),
+        account_reachable=broker_summary.account_reachable,
+        unexpected_open_orders_count=broker_summary.unexpected_open_orders_count,
+        unexpected_positions_count=broker_summary.unexpected_positions_count,
+    )
+
+
+def _schedule_readiness_broker_state_blockers_from_parts(
+    *,
+    aapl: ProtectedHoldingVerification,
+    msft: ProtectedHoldingVerification,
+    unexpected_open_orders: tuple[BrokerOrder, ...],
+    unexpected_positions: tuple[BrokerPosition, ...],
+    account_reachable: bool,
+    unexpected_open_orders_count: int | None = None,
+    unexpected_positions_count: int | None = None,
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if not account_reachable:
+        blockers.append("broker_state_not_reached")
+        return tuple(blockers)
+    open_order_count = (
+        len(unexpected_open_orders)
+        if unexpected_open_orders_count is None
+        else unexpected_open_orders_count
+    )
+    position_count = (
+        len(unexpected_positions)
+        if unexpected_positions_count is None
+        else unexpected_positions_count
+    )
+    if open_order_count:
+        blockers.append("unexpected_open_orders_present")
+    if position_count:
+        blockers.append("unexpected_positions_present")
+    blockers.extend(_holding_blockers(aapl, expected_quantity=1.0))
+    blockers.extend(_holding_blockers(msft, expected_quantity=1.0))
+    return _unique(tuple(blockers))
+
+
+def _holding_blockers(
+    holding: ProtectedHoldingVerification,
+    *,
+    expected_quantity: float,
+) -> tuple[str, ...]:
+    symbol = holding.symbol.lower()
+    blockers: list[str] = []
+    if holding.position_status != "open":
+        blockers.append(f"{symbol}_position_not_open")
+    if abs(holding.position_quantity - expected_quantity) > 1e-9:
+        blockers.append(f"{symbol}_position_quantity_not_expected")
+    if not holding.protective_stop_verified:
+        blockers.append(f"{symbol}_protective_stop_missing_or_unverified")
+    if holding.protective_stop_verified and not holding.protective_stop_matches_position_quantity:
+        blockers.append(f"{symbol}_protective_stop_quantity_mismatch")
+    return tuple(blockers)
+
+
+def _schedule_reconciliation_summary(
+    *,
+    aapl: ProtectedHoldingVerification,
+    msft: ProtectedHoldingVerification,
+    unexpected_open_orders: tuple[BrokerOrder, ...],
+    unexpected_positions: tuple[BrokerPosition, ...],
+) -> str:
+    if unexpected_open_orders or unexpected_positions:
+        return "unexpected_broker_state_requires_manual_review"
+    if _holding_clean(aapl) and _holding_clean(msft):
+        return "clean_protected_holds"
+    return "protected_hold_missing_or_unverified"
+
+
+def _holding_clean(holding: ProtectedHoldingVerification) -> bool:
+    return (
+        holding.position_status == "open"
+        and abs(holding.position_quantity - 1.0) <= 1e-9
+        and holding.protective_stop_verified
+        and holding.protective_stop_matches_position_quantity
+        and holding.protective_stop_quantity is not None
+        and abs(holding.protective_stop_quantity - 1.0) <= 1e-9
+    )
+
+
+def _schedule_open_orders_summary(
+    broker_summary: SupervisedScheduleBrokerStateSummary,
+) -> str:
+    if broker_summary.unexpected_open_orders_count:
+        return "unexpected_open_orders_present"
+    if broker_summary.expected_protective_stop_open_orders == 2:
+        return "expected_aapl_msft_protective_stops_only"
+    return "expected_protective_stops_missing_or_ambiguous"
+
+
+def _schedule_positions_summary(
+    broker_summary: SupervisedScheduleBrokerStateSummary,
+) -> str:
+    if broker_summary.unexpected_positions_count:
+        return "unexpected_positions_present"
+    if _holding_clean(broker_summary.aapl) and _holding_clean(broker_summary.msft):
+        return "expected_aapl_msft_positions_only"
+    return "expected_positions_missing_or_ambiguous"
+
+
+def _schedule_readiness_gate_list(
+    *,
+    m40_audit: M40RepeatedControlledBatchPacketAudit,
+    m40_preflight_audit: M40ReadOnlyPreflightPacketAudit,
+    broker_summary: SupervisedScheduleBrokerStateSummary,
+    gate_blockers: tuple[str, ...],
+    broker_blockers: tuple[str, ...],
+    broker_state_blockers: tuple[str, ...],
+) -> tuple[ScheduleReadinessGate, ...]:
+    return (
+        ScheduleReadinessGate(
+            gate="m40_repeated_batch_evidence_accepted",
+            passed=m40_audit.parseable and not m40_audit.blockers,
+            detail="M40 packet is parseable, clean, and recommends M41 readiness review.",
+        ),
+        ScheduleReadinessGate(
+            gate="m40_read_only_preflight_accepted",
+            passed=m40_preflight_audit.parseable and not m40_preflight_audit.blockers,
+            detail="M40 preflight packet is parseable, read-only, and GO.",
+        ),
+        ScheduleReadinessGate(
+            gate="paper_read_only_endpoint_confirmed",
+            passed=broker_summary.paper_endpoint_proven and not gate_blockers,
+            detail="Readiness review uses paper-only read-only broker access.",
+        ),
+        ScheduleReadinessGate(
+            gate="aapl_protected_hold_verified",
+            passed=_holding_clean(broker_summary.aapl),
+            detail="AAPL position quantity and protective stop quantity are both one.",
+        ),
+        ScheduleReadinessGate(
+            gate="msft_protected_hold_verified",
+            passed=_holding_clean(broker_summary.msft),
+            detail="MSFT position quantity and protective stop quantity are both one.",
+        ),
+        ScheduleReadinessGate(
+            gate="no_unexpected_open_orders",
+            passed=broker_summary.unexpected_open_orders_count == 0,
+            detail="Only verified AAPL/MSFT protective stops may be open.",
+        ),
+        ScheduleReadinessGate(
+            gate="no_unexpected_positions",
+            passed=broker_summary.unexpected_positions_count == 0,
+            detail="Only expected AAPL/MSFT protected positions may be open.",
+        ),
+        ScheduleReadinessGate(
+            gate="broker_reconciliation_clean",
+            passed=broker_summary.reconciliation_summary == "clean_protected_holds"
+            and not broker_blockers
+            and not broker_state_blockers,
+            detail="Broker state reconciles to protected AAPL/MSFT holds.",
+        ),
+        ScheduleReadinessGate(
+            gate="schedule_activation_blocked",
+            passed=True,
+            detail="M41 creates and activates no schedules.",
+        ),
+        ScheduleReadinessGate(
+            gate="frozen_validation_blocked",
+            passed=True,
+            detail="Frozen validation remains blocked until supervised scheduled paper evidence.",
+        ),
+    )
+
+
+def _m41_operator_monitoring_requirements() -> tuple[str, ...]:
+    return (
+        "Operator approval is required before any future supervised scheduled paper activation.",
+        "Operator must monitor first scheduled paper runs while schedules remain disabled.",
+        "Operator must review reconciliation, alerts, dashboard state, and evidence.",
+        "Operator must pause new risk on unexpected broker state, missing stops, duplicates, "
+        "API ambiguity, or kill-switch activation.",
+    )
+
+
+def _m41_evidence_expectations() -> tuple[str, ...]:
+    return (
+        "Each future scheduled paper run must write a sanitized packet with preflight, broker "
+        "state, order lifecycle, stop verification, and reconciliation.",
+        "Daily or per-run reports must summarize fills, stops, incidents, risk, and protected "
+        "holds without secrets.",
+        "Dashboard views must show paper-only status, pauses, blockers, open positions, stops, "
+        "and latest reconciliation.",
+        "Alerting must remain fake/local until separately approved for real delivery.",
     )
 
 

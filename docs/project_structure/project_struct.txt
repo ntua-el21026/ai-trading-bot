@@ -90,7 +90,10 @@ AI_Trading_Bot/
 │   │   ├── first_controlled_paper_session_launch_packet.json
 │   │   ├── first_controlled_paper_session_post_session_audit.json
 │   │   ├── first_controlled_paper_session_result.json
-│   │   └── protected_position_monitoring_m36.json
+│   │   ├── protected_position_monitoring_m36.json
+│   │   ├── repeated_controlled_batch_m40.json
+│   │   ├── repeated_controlled_batch_m40_preflight.json
+│   │   └── supervised_scheduled_paper_readiness_m41.json
 │   ├── project_analytics/
 │   │   ├── project_analytics.py
 │   │   └── project_analytics.txt
@@ -135,8 +138,10 @@ AI_Trading_Bot/
 │   ├── paper_trading_runbook.md
 │   ├── post_milestone_11_audit.md
 │   ├── pre_paper_operations_gap_audit.md
+│   ├── repeated_controlled_batch_m40.md
 │   ├── reporting.md
 │   ├── risk_policy.md
+│   ├── supervised_scheduled_paper_readiness_m41.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
 ├── packages/
@@ -340,4 +345,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 295
+Total directories: 46, Total files: 300

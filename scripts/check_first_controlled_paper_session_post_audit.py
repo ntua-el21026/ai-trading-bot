@@ -14,6 +14,9 @@ from packages.paper import (
     M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
     M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
     M38_CORRECTED_CLEANUP_EVIDENCE_PATH,
+    M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH,
+    M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH,
+    M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
     MILESTONE_37_CORRECTED_CLEANUP_APPROVAL,
     MILESTONE_38_CORRECTED_CLEANUP_APPROVAL,
@@ -26,17 +29,20 @@ from packages.paper import (
     PostSessionAuditRequest,
     PostSessionAuditScenarioId,
     ProtectedPositionMonitoringRequest,
+    SupervisedScheduleReadinessRequest,
     load_preflight_environment,
     run_corrected_aapl_cleanup,
     run_first_controlled_paper_session_hold_decision,
     run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
     run_protected_position_monitoring,
+    run_supervised_schedule_readiness_review,
     write_corrected_cleanup_artifact,
     write_hold_decision_artifact,
     write_incident_closure_artifact,
     write_post_session_audit_artifact,
     write_protected_position_monitoring_artifact,
+    write_supervised_schedule_readiness_artifact,
 )
 
 WARNING = (
@@ -54,6 +60,11 @@ M37_WARNING = (
     "submits no buys or entries, and may write only paper AAPL risk-reducing cleanup or "
     "emergency re-protection when every explicit gate passes."
 )
+M41_WARNING = (
+    "Milestone 41 supervised scheduled paper readiness review only. This command performs "
+    "read-only broker-state verification, creates and activates no schedules, and submits, "
+    "cancels, replaces, and flattens nothing."
+)
 _M36_MODES = {
     "protected-position-monitor",
     "cleanup-rejection-analysis",
@@ -63,6 +74,11 @@ _M37_MODES = {
     "corrected-cleanup",
     "corrected-incident-closure",
     "cleanup-after-stop-cancel",
+}
+_M41_MODES = {
+    "supervised-schedule-readiness",
+    "schedule-readiness",
+    "m41-readiness",
 }
 
 
@@ -83,13 +99,17 @@ def main(argv: list[str] | None = None) -> int:
             "corrected-cleanup",
             "corrected-incident-closure",
             "cleanup-after-stop-cancel",
+            "supervised-schedule-readiness",
+            "schedule-readiness",
+            "m41-readiness",
         ),
         default="fake",
         help=(
             "Fake mode uses local broker fixtures. Real-read-only and hold-decision "
             "modes perform gated Alpaca reads. Incident-closure performs gated M35F "
             "risk-reducing cleanup. M36 monitoring modes are read-only only. M37 "
-            "corrected cleanup modes require explicit corrected-cleanup approval."
+            "corrected cleanup modes require explicit corrected-cleanup approval. M41 "
+            "schedule-readiness modes are read-only only and activate no schedules."
         ),
     )
     parser.add_argument(
@@ -97,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=(
             "protected_position",
             "missing_stop",
+            "missing_msft_stop",
             "unexpected_order",
             "unexpected_position",
             "flat",
@@ -174,6 +195,21 @@ def main(argv: list[str] | None = None) -> int:
         default=M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
         help="Sanitized M37 corrected cleanup packet path for M38 retry evidence audit.",
     )
+    parser.add_argument(
+        "--m40-repeated-batch-packet",
+        default=M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH,
+        help="Sanitized M40 repeated controlled batch packet path for M41 readiness.",
+    )
+    parser.add_argument(
+        "--m40-preflight-packet",
+        default=M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH,
+        help="Sanitized M40 read-only preflight packet path for M41 readiness.",
+    )
+    parser.add_argument(
+        "--schedule-readiness-output",
+        default=M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH,
+        help="Sanitized M41 supervised scheduled paper readiness packet path.",
+    )
     parser.add_argument("--confirm-paper-endpoint", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
     parser.add_argument("--confirm-risk-reducing-only", action="store_true")
@@ -188,7 +224,91 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     mode = args.mode
-    print(M37_WARNING if mode in _M37_MODES else (M36_WARNING if mode in _M36_MODES else WARNING))
+    print(
+        M41_WARNING
+        if mode in _M41_MODES
+        else (
+            M37_WARNING
+            if mode in _M37_MODES
+            else (M36_WARNING if mode in _M36_MODES else WARNING)
+        )
+    )
+    if mode in _M41_MODES:
+        readiness_request = SupervisedScheduleReadinessRequest(
+            mode="real-read-only",
+            scenario_id=cast(PostSessionAuditScenarioId, args.scenario),
+            m40_repeated_batch_packet_path=args.m40_repeated_batch_packet,
+            m40_preflight_packet_path=args.m40_preflight_packet,
+            confirm_paper_endpoint=args.confirm_paper_endpoint,
+            confirm_no_broker_writes=args.confirm_no_broker_writes,
+            confirm_no_live_trading=args.confirm_no_live_trading,
+            confirm_no_autonomous_live=args.confirm_no_autonomous_live,
+            confirm_no_schedules=args.confirm_no_schedules,
+            confirm_no_leverage=args.confirm_no_leverage,
+        )
+        readiness_result = run_supervised_schedule_readiness_review(
+            readiness_request,
+            environ=load_preflight_environment(),
+        )
+        written_path = write_supervised_schedule_readiness_artifact(
+            readiness_result,
+            args.schedule_readiness_output,
+        )
+        packet = readiness_result.packet
+        broker_state = packet.current_broker_state_summary
+        summary = {
+            "mode": mode,
+            "scenario_id": readiness_result.scenario_id,
+            "readiness_approved": readiness_result.readiness_approved,
+            "go_no_go": readiness_result.go_no_go,
+            "blockers": readiness_result.blockers,
+            "aapl_position_status": packet.aapl_position_stop_status.position_status,
+            "aapl_position_quantity": (
+                packet.aapl_position_stop_status.position_quantity
+            ),
+            "aapl_protective_stop_status": (
+                packet.aapl_position_stop_status.protective_stop_status
+            ),
+            "aapl_protective_stop_quantity": (
+                packet.aapl_position_stop_status.protective_stop_quantity
+            ),
+            "msft_position_status": packet.msft_position_stop_status.position_status,
+            "msft_position_quantity": (
+                packet.msft_position_stop_status.position_quantity
+            ),
+            "msft_protective_stop_status": (
+                packet.msft_position_stop_status.protective_stop_status
+            ),
+            "msft_protective_stop_quantity": (
+                packet.msft_position_stop_status.protective_stop_quantity
+            ),
+            "open_orders_summary": packet.open_orders_summary,
+            "positions_summary": packet.positions_summary,
+            "reconciliation_summary": packet.reconciliation_summary,
+            "open_orders_total": broker_state.open_orders_total,
+            "positions_total": broker_state.positions_total,
+            "broker_writes_performed_in_m41": (
+                readiness_result.broker_writes_performed_in_m41
+            ),
+            "real_read_only_calls_performed": (
+                readiness_result.real_read_only_calls_performed
+            ),
+            "schedules_created": readiness_result.schedules_created,
+            "schedules_activated": readiness_result.schedules_activated,
+            "live_trading_enabled": readiness_result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                readiness_result.autonomous_live_execution_enabled
+            ),
+            "leverage_enabled": readiness_result.leverage_enabled,
+            "ai_broker_write_authority": readiness_result.ai_broker_write_authority,
+            "readiness_recommendation": (
+                packet.supervised_scheduled_paper_run_readiness_recommendation
+            ),
+            "schedule_readiness_packet_path": str(written_path),
+            "note": M41_WARNING,
+        }
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if readiness_result.readiness_approved else 1
     if mode in _M37_MODES:
         is_m38_retry = (
             args.operator_decision == "OPERATOR_APPROVED_M38_CORRECTED_AAPL_CLEANUP_RETRY"

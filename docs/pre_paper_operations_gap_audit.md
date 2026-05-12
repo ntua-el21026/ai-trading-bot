@@ -513,3 +513,26 @@ protective stop. The M39 evidence packet is
 `docs/evidence/clean_controlled_session_m39.json`. Repeated controlled paper batch may be
 considered in M40, but M39 did not start repeated sessions, schedules, unattended operation, frozen
 validation, or Level 4.
+
+Milestone 40 evaluated repeated controlled paper batch readiness, verified the existing AAPL
+protected hold, and ran one approved MSFT repeated-batch attempt. MSFT was the primary approved
+candidate, was target-clean, and passed its max quantity `1`, max notional `500`, limit price `500`
+envelope. The MSFT entry filled for quantity `1`, the normal protective-stop path submitted and
+verified a stop for quantity `1`, and no recovery stop path was used. Final reconciliation is
+`clean_protected_hold` with AAPL and MSFT paper positions both protected by verified stops. The M40
+evidence packet is `docs/evidence/repeated_controlled_batch_m40.json`. Supervised scheduled paper
+readiness may be considered in M41, but no schedule, unattended operation, frozen validation, or
+Level 4 step started in M40.
+
+Milestone 41 is the supervised scheduled paper readiness review only. It must verify the current
+AAPL and MSFT protected holds with read-only Alpaca paper calls, document schedule gates and
+operator monitoring requirements, and generate
+`docs/evidence/supervised_scheduled_paper_readiness_m41.json`. It must not create or activate
+schedules, start unattended operation, submit/cancel/replace/flatten broker orders or positions,
+start frozen validation, enable live trading, enable autonomous live execution, enable leverage, or
+claim Level 4 readiness.
+
+The M41 read-only verification returned GO: AAPL and MSFT are both open for quantity `1`, each has
+a verified protective stop for quantity `1`, open orders contain only the expected AAPL/MSFT
+protective stops, positions contain only the expected AAPL/MSFT paper positions, and reconciliation
+is `clean_protected_holds`. Broker writes and schedule actions in M41 were `false`.

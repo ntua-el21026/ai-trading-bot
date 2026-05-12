@@ -19,3 +19,13 @@ reconciliation was `flat_no_open_position`.
 
 Repeated controlled paper batch may be considered in M40, but M39 did not start repeated sessions,
 schedules, unattended operation, frozen validation, or Level 4.
+
+## M40 Follow-On
+
+Milestone 40 validated this M39 packet before any repeated-batch write. The M40 audit accepted the
+M39 state as `clean_protected_hold`: AAPL position quantity `1` with a verified protective stop for
+quantity `1`, normal stop path succeeded, no recovery path was used, and no unresolved incident was
+present.
+
+M40 then used the operator-approved primary candidate `MSFT`; the target was allowed and clean, so
+the `XLK` fallback was not used. M40 did not trade AAPL again.

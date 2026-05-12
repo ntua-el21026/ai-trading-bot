@@ -733,6 +733,64 @@ The sanitized packet is `docs/evidence/clean_controlled_session_m39.json`. Befor
 controlled paper batch actually starts, the next milestone must explicitly account for the current
 protected AAPL hold and continue to require read-only reconciliation gates.
 
+## Milestone 40 Repeated Controlled Batch
+
+Milestone 40 accepted the M39 clean protected hold as the starting state, verified AAPL remained
+protected, and treated AAPL as unavailable for a duplicate entry. The preferred operator-approved
+candidate was `MSFT`; it was in the allowed universe and target-clean, so the `XLK` fallback was
+not used.
+
+M40 result:
+
+- selected target was `MSFT`;
+- envelope was max quantity `1`, max notional `500`, limit price `500`;
+- entry order filled for quantity `1`;
+- the normal protective-stop path submitted and verified a stop for MSFT quantity `1`;
+- recovery stop handling was not used;
+- cleanup/flatten was not performed because the current cleanup policy is `verify_only`;
+- final broker state has protected AAPL and MSFT paper positions, each quantity `1` with a verified
+  protective stop;
+- broker writes performed in M40: `true`, limited to the approved MSFT entry and protective stop;
+- supervised scheduled paper readiness may be considered in M41, but no schedule was activated in
+  M40;
+- frozen paper validation has not started;
+- Level 4 remains not ready.
+
+The sanitized packet is `docs/evidence/repeated_controlled_batch_m40.json`. Any M41 schedule
+readiness review must still be explicitly approved and must account for the current protected paper
+positions.
+
+## Milestone 41 Supervised Scheduled Paper Readiness Review
+
+Milestone 41 is a readiness review only. It accepts the M40 packet only if the AAPL and MSFT
+protected holds remain verified through Alpaca paper read-only calls, open orders contain only the
+expected AAPL/MSFT protective stops, positions contain only the expected AAPL/MSFT paper positions,
+and reconciliation is clean for the protected-hold state.
+
+M41 documents schedule design and activation gates in
+`docs/supervised_scheduled_paper_readiness_m41.md`, and writes the sanitized readiness packet to
+`docs/evidence/supervised_scheduled_paper_readiness_m41.json`.
+
+M41 result:
+
+- AAPL protected hold verified for quantity `1`;
+- MSFT protected hold verified for quantity `1`;
+- open orders summary is `expected_aapl_msft_protective_stops_only`;
+- positions summary is `expected_aapl_msft_positions_only`;
+- reconciliation is `clean_protected_holds`;
+- broker writes performed in M41: `false`;
+- schedules created or activated: `false`;
+- next compact milestone recommendation is
+  `M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED`.
+
+M41 does not create schedules, activate schedules, submit broker orders, cancel broker orders,
+replace orders, flatten positions, start unattended operation, start frozen validation, enable live
+trading, enable autonomous live execution, enable leverage, or claim Level 4 readiness.
+
+If M41 returns GO, the next compact milestone may consider a supervised scheduled paper run under
+explicit operator approval. Frozen validation remains blocked until after supervised scheduled
+paper run evidence exists and a later freeze milestone explicitly starts the frozen period.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

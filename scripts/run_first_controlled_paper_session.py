@@ -11,6 +11,8 @@ from packages.paper import (
     FIRST_PAPER_SESSION_SCENARIO_IDS,
     M34_RESULT_EVIDENCE_PATH,
     M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH,
+    M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH,
+    M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH,
     MILESTONE_30_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
@@ -18,6 +20,7 @@ from packages.paper import (
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     MILESTONE_39_REAL_OPERATOR_APPROVAL,
+    MILESTONE_40_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
     audit_first_session_symbol_universe,
@@ -28,6 +31,7 @@ from packages.paper import (
     run_real_first_controlled_paper_session_gate,
     write_clean_controlled_session_m39_artifact,
     write_first_controlled_paper_session_result_artifact,
+    write_repeated_controlled_batch_m40_artifact,
 )
 
 WARNING = (
@@ -71,7 +75,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}; for M35B real-paper use "
             f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}; for M35C real-paper use "
             f"{MILESTONE_35C_REAL_OPERATOR_APPROVAL}; for M39 real-paper use "
-            f"{MILESTONE_39_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_39_REAL_OPERATOR_APPROVAL}; for M40 real-paper use "
+            f"{MILESTONE_40_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)
@@ -171,9 +176,10 @@ def main(argv: list[str] | None = None) -> int:
             ),
         )
         if execution_mode == "real-paper":
-            execution_request = execution_request.model_copy(
-                update={"started_at": datetime.now(UTC)}
-            )
+            updates: dict[str, object] = {"started_at": datetime.now(UTC)}
+            if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+                updates["launch_packet_path"] = M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH
+            execution_request = execution_request.model_copy(update=updates)
         execution_result = run_first_controlled_paper_session_execution(
             execution_request,
             environ=(
@@ -185,13 +191,22 @@ def main(argv: list[str] | None = None) -> int:
         result_path = args.result_output
         if result_path is None and execution_mode == "real-paper":
             result_path = (
-                M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
+                M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
+                if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL
+                else M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
                 if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL
                 else M34_RESULT_EVIDENCE_PATH
             )
         written_path = None
         if result_path:
-            if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL:
+            if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+                written_path = str(
+                    write_repeated_controlled_batch_m40_artifact(
+                        execution_result,
+                        result_path,
+                    )
+                )
+            elif args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL:
                 written_path = str(
                     write_clean_controlled_session_m39_artifact(
                         execution_result,

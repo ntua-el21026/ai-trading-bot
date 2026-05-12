@@ -47,13 +47,23 @@ MILESTONE_35C_REAL_OPERATOR_APPROVAL = (
 MILESTONE_39_REAL_OPERATOR_APPROVAL = (
     "MILESTONE_39_CLEAN_CONTROLLED_PAPER_SESSION_AND_AUDIT"
 )
+MILESTONE_40_REAL_OPERATOR_APPROVAL = (
+    "MILESTONE_40_REPEATED_CONTROLLED_BATCH_AND_AUDIT"
+)
 MILESTONE_34_FAKE_OPERATOR_APPROVAL = "MILESTONE_34_FAKE_REAL_PAPER"
 M34_RESULT_EVIDENCE_PATH = "docs/evidence/first_controlled_paper_session_result.json"
 M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH = (
     "docs/evidence/clean_controlled_session_m39.json"
 )
+M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH = (
+    "docs/evidence/repeated_controlled_batch_m40.json"
+)
+M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH = (
+    "docs/evidence/repeated_controlled_batch_m40_preflight.json"
+)
 M34_LAUNCH_PACKET_PATH = "docs/evidence/first_controlled_paper_session_launch_packet.json"
 M38_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m38.json"
+M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH = M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
 M34_STARTED_AT = datetime(2026, 5, 10, 14, 0, tzinfo=UTC)
 M34_STRATEGY_VERSION = "first_controlled_paper_session_v0_3"
 M34_RISK_CONFIG_VERSION = "first_controlled_paper_session_cap_v0_3"
@@ -116,6 +126,7 @@ REAL_PAPER_OPERATOR_APPROVAL_MARKERS = (
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     MILESTONE_39_REAL_OPERATOR_APPROVAL,
+    MILESTONE_40_REAL_OPERATOR_APPROVAL,
 )
 _ORDER_ENVELOPE_BLOCKER_CODES = frozenset(
     {
@@ -178,6 +189,10 @@ class BrokerStateSummary(M34Model):
     position_count: int = Field(ge=0)
     target_symbol_position_quantity: float
     reconciliation_clean: bool
+    aapl_position_quantity: float | None = None
+    aapl_protective_stop_verified: bool | None = None
+    aapl_protective_stop_quantity: float | None = None
+    aapl_hold_status: str | None = None
 
 
 class PostRunBrokerStateSummary(M34Model):
@@ -193,6 +208,10 @@ class PostRunBrokerStateSummary(M34Model):
     protective_stop_order_status: str | None
     reconciliation_result: str
     read_only_calls_performed: bool = False
+    aapl_position_quantity: float | None = None
+    aapl_protective_stop_verified: bool | None = None
+    aapl_protective_stop_quantity: float | None = None
+    aapl_hold_status: str | None = None
 
 
 class ProtectiveStopPlan(M34Model):
@@ -318,6 +337,7 @@ class FirstPaperSessionExecutionRequest(M34Model):
     confirm_cleanup_policy: bool = False
     launch_packet_path: str = M34_LAUNCH_PACKET_PATH
     m38_corrected_cleanup_packet_path: str = M38_CORRECTED_CLEANUP_EVIDENCE_PATH
+    m39_clean_controlled_session_packet_path: str = M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
     cleanup_policy: Literal["verify_only"] = "verify_only"
     current_gross_exposure: float = Field(default=0.0, ge=0)
     valid_execution_intent_present: bool = True
@@ -395,9 +415,32 @@ class M38CorrectedCleanupPacketAudit(M34Model):
     blockers: tuple[str, ...]
 
 
+class M39CleanControlledSessionPacketAudit(M34Model):
+    packet_path: str
+    parseable: bool
+    milestone: str | None
+    m38_incident_closure_accepted: bool
+    clean_success_or_resolved: bool
+    normal_stop_path_succeeded_without_recovery: bool
+    final_reconciliation_clean: bool
+    no_unresolved_incident: bool
+    repeated_batch_m40_eligible: bool
+    existing_aapl_position_quantity: float | None
+    existing_aapl_protective_stop_verified: bool
+    existing_aapl_protective_stop_quantity: float | None
+    frozen_validation_started: bool
+    level4_ready: bool
+    blockers: tuple[str, ...]
+
+
 M39RepeatedBatchReadinessRecommendation = Literal[
     "M40_REPEATED_CONTROLLED_PAPER_BATCH_MAY_BE_CONSIDERED",
     "M40_REPEATED_CONTROLLED_PAPER_BATCH_BLOCKED",
+]
+
+M40SupervisedScheduleReadinessRecommendation = Literal[
+    "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_MAY_BE_CONSIDERED",
+    "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_BLOCKED",
 ]
 
 
@@ -458,6 +501,68 @@ class CleanControlledSessionM39Result(M34Model):
     repeated_batch_readiness_recommendation: M39RepeatedBatchReadinessRecommendation
 
 
+class RepeatedControlledBatchM40Packet(M34Model):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str
+    spec_version: str
+    commit_hash: str
+    m39_clean_controlled_session_packet_reference: str
+    m39_clean_controlled_session_audit: M39CleanControlledSessionPacketAudit
+    existing_aapl_protected_hold_status: str | None
+    selected_target_symbol: str | None
+    order_envelope: OrderEnvelope
+    limit_price: float | None
+    estimated_notional: float | None
+    pre_run_broker_state: BrokerStateSummary
+    pre_run_reconciliation: str
+    candidate_id: str | None
+    decision_id: str | None
+    risk_check_id: str | None
+    execution_intent_id: str | None
+    entry_order_status: str | None
+    fill_status: str
+    filled_quantity: float = Field(ge=0)
+    protective_stop_plan: ProtectiveStopPlan
+    protective_stop_order_id: str | None
+    protective_stop_verification_result: str
+    normal_stop_path_succeeded: bool
+    recovery_stop_path_used: bool
+    cleanup_flatten_policy: str
+    cleanup_flatten_result: str
+    post_run_broker_state: PostRunBrokerStateSummary | None
+    final_reconciliation: str
+    incidents: tuple[str, ...]
+    actual_paper_trading_started: bool
+    broker_writes: tuple[BrokerWriteRecord, ...]
+    provider_ai_telegram_vercel_temporal_calls: bool = False
+    schedules_activated: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    frozen_validation_started: bool = False
+    level4_ready: bool = False
+    ai_broker_write_authority: bool = False
+    supervised_schedule_readiness_recommendation: (
+        M40SupervisedScheduleReadinessRecommendation
+    )
+    blockers: tuple[str, ...]
+    secrets_redacted: dict[str, str] = Field(
+        default_factory=lambda: {name: "<redacted-not-inspected>" for name in SENSITIVE_ENV_NAMES}
+    )
+
+
+class RepeatedControlledBatchM40Result(M34Model):
+    success: bool
+    go_no_go: Literal["go", "no_go"]
+    blockers: tuple[str, ...]
+    packet: RepeatedControlledBatchM40Packet
+    evidence_packet_path: str | None = None
+    supervised_schedule_readiness_recommendation: (
+        M40SupervisedScheduleReadinessRecommendation
+    )
+
+
 def default_first_paper_session_execution_request(
     scenario_id: str = "happy_path",
     *,
@@ -477,6 +582,9 @@ def default_first_paper_session_execution_request(
     confirm_protective_stop_required: bool | None = None,
     confirm_cleanup_policy: bool | None = None,
     m38_corrected_cleanup_packet_path: str = M38_CORRECTED_CLEANUP_EVIDENCE_PATH,
+    m39_clean_controlled_session_packet_path: str = (
+        M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
+    ),
 ) -> FirstPaperSessionExecutionRequest:
     scenario = _validate_scenario_id(scenario_id)
     default_confirm = mode == "fake-real-paper"
@@ -528,6 +636,7 @@ def default_first_paper_session_execution_request(
             default_confirm if confirm_cleanup_policy is None else confirm_cleanup_policy
         ),
         m38_corrected_cleanup_packet_path=m38_corrected_cleanup_packet_path,
+        m39_clean_controlled_session_packet_path=m39_clean_controlled_session_packet_path,
     )
     return _scenario_request(request, scenario)
 
@@ -754,7 +863,148 @@ def write_clean_controlled_session_m39_artifact(
     return path
 
 
+def build_repeated_controlled_batch_m40_result(
+    execution_result: FirstPaperSessionExecutionResult,
+    *,
+    m39_clean_controlled_session_packet_path: str | Path = (
+        M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
+    ),
+) -> RepeatedControlledBatchM40Result:
+    packet = execution_result.result_packet
+    m39_audit = audit_m39_clean_controlled_session_packet(
+        m39_clean_controlled_session_packet_path
+    )
+    blockers = _unique(
+        (
+            *execution_result.blockers,
+            *packet.incidents,
+            *m39_audit.blockers,
+            *_m40_packet_blockers(execution_result),
+        )
+    )
+    success = execution_result.success and not blockers
+    recommendation: M40SupervisedScheduleReadinessRecommendation = (
+        "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_MAY_BE_CONSIDERED"
+        if success
+        else "M41_SUPERVISED_SCHEDULED_PAPER_READINESS_BLOCKED"
+    )
+    cleanup_result = (
+        "not_applicable_verify_only"
+        if not packet.cleanup_actions
+        else ",".join(packet.cleanup_actions)
+    )
+    batch_packet = RepeatedControlledBatchM40Packet(
+        packet_id=str(
+            uuid5(
+                NAMESPACE_URL,
+                f"m40-repeated-batch:{packet.result_packet_id}:"
+                f"{packet.timestamp.isoformat()}",
+            )
+        ),
+        timestamp=packet.timestamp,
+        latest_spec_path=packet.latest_spec_path,
+        spec_version=packet.spec_version,
+        commit_hash=packet.commit_hash,
+        m39_clean_controlled_session_packet_reference=str(
+            m39_clean_controlled_session_packet_path
+        ),
+        m39_clean_controlled_session_audit=m39_audit,
+        existing_aapl_protected_hold_status=packet.pre_run_broker_state.aapl_hold_status,
+        selected_target_symbol=packet.target_symbol,
+        order_envelope=packet.order_envelope,
+        limit_price=packet.order_envelope.limit_price,
+        estimated_notional=packet.estimated_entry_notional_usd,
+        pre_run_broker_state=packet.pre_run_broker_state,
+        pre_run_reconciliation=packet.pre_run_reconciliation_result,
+        candidate_id=packet.candidate_id,
+        decision_id=packet.decision_id,
+        risk_check_id=packet.risk_check_id,
+        execution_intent_id=packet.execution_intent_id,
+        entry_order_status=packet.entry_order_status,
+        fill_status=packet.fill_status,
+        filled_quantity=packet.filled_quantity,
+        protective_stop_plan=packet.protective_stop_plan,
+        protective_stop_order_id=packet.protective_stop_order_id,
+        protective_stop_verification_result=packet.protective_stop_verification_result,
+        normal_stop_path_succeeded=packet.normal_stop_path_succeeded,
+        recovery_stop_path_used=packet.recovery_stop_path_used,
+        cleanup_flatten_policy=packet.cleanup_flatten_policy,
+        cleanup_flatten_result=cleanup_result,
+        post_run_broker_state=packet.post_run_broker_state,
+        final_reconciliation=packet.post_run_reconciliation_result,
+        incidents=packet.incidents,
+        actual_paper_trading_started=execution_result.actual_paper_trading_started,
+        broker_writes=packet.broker_writes,
+        provider_ai_telegram_vercel_temporal_calls=(
+            execution_result.provider_ai_telegram_vercel_temporal_calls
+        ),
+        schedules_activated=execution_result.schedules_activated,
+        live_trading_enabled=execution_result.live_trading_enabled,
+        autonomous_live_execution_enabled=(
+            execution_result.autonomous_live_execution_enabled
+        ),
+        leverage_enabled=execution_result.leverage_enabled,
+        level4_ready=execution_result.level4_ready,
+        ai_broker_write_authority=execution_result.ai_broker_write_authority,
+        supervised_schedule_readiness_recommendation=recommendation,
+        blockers=blockers,
+    )
+    return RepeatedControlledBatchM40Result(
+        success=success,
+        go_no_go="go" if success else "no_go",
+        blockers=blockers,
+        packet=batch_packet,
+        supervised_schedule_readiness_recommendation=recommendation,
+    )
+
+
+def write_repeated_controlled_batch_m40_artifact(
+    execution_result: FirstPaperSessionExecutionResult,
+    output_path: Path | str,
+    *,
+    m39_clean_controlled_session_packet_path: str | Path = (
+        M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
+    ),
+) -> Path:
+    result = build_repeated_controlled_batch_m40_result(
+        execution_result,
+        m39_clean_controlled_session_packet_path=m39_clean_controlled_session_packet_path,
+    )
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "milestone": "40",
+        "result": {
+            "success": result.success,
+            "go_no_go": result.go_no_go,
+            "blockers": result.blockers,
+            "actual_paper_trading_started": execution_result.actual_paper_trading_started,
+            "real_broker_orders_submitted": execution_result.real_broker_orders_submitted,
+            "real_broker_writes_attempted": execution_result.real_broker_writes_attempted,
+            "real_read_only_alpaca_calls_performed": (
+                execution_result.real_read_only_alpaca_calls_performed
+            ),
+            "schedules_activated": execution_result.schedules_activated,
+            "live_trading_enabled": execution_result.live_trading_enabled,
+            "autonomous_live_execution_enabled": (
+                execution_result.autonomous_live_execution_enabled
+            ),
+            "leverage_enabled": execution_result.leverage_enabled,
+            "ai_broker_write_authority": execution_result.ai_broker_write_authority,
+            "level4_ready": execution_result.level4_ready,
+            "supervised_schedule_readiness_recommendation": (
+                result.supervised_schedule_readiness_recommendation
+            ),
+        },
+        "repeated_controlled_batch": result.packet.model_dump(mode="json"),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
 def _result_artifact_milestone(result: FirstPaperSessionExecutionResult) -> str:
+    if result.result_packet.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+        return "40"
     if result.result_packet.operator_approval_marker == MILESTONE_39_REAL_OPERATOR_APPROVAL:
         return "39"
     if result.result_packet.operator_approval_marker == MILESTONE_35C_REAL_OPERATOR_APPROVAL:
@@ -806,6 +1056,58 @@ def _m39_packet_blockers(
     if execution_result.level4_ready:
         blockers.append("m39_level4_claim_present")
     return tuple(blockers)
+
+
+def _m40_packet_blockers(
+    execution_result: FirstPaperSessionExecutionResult,
+) -> tuple[str, ...]:
+    packet = execution_result.result_packet
+    blockers: list[str] = []
+    if packet.operator_approval_marker != MILESTONE_40_REAL_OPERATOR_APPROVAL:
+        blockers.append("m40_operator_approval_marker_required")
+    blockers.extend(_m40_request_gate_blockers_from_packet(packet))
+    if packet.pre_run_broker_state.aapl_hold_status not in {
+        "clean_protected_hold",
+        "flat_no_open_position",
+    }:
+        blockers.append("m40_existing_aapl_hold_not_clean")
+    if execution_result.status == "executed" and packet.filled_quantity > 0:
+        if not packet.normal_stop_path_succeeded:
+            blockers.append("m40_normal_stop_path_not_verified")
+        if packet.recovery_stop_path_used:
+            blockers.append("m40_recovery_stop_path_used")
+    if execution_result.status == "incident":
+        blockers.append("m40_incident_recorded")
+    if packet.post_run_broker_state is None:
+        blockers.append("m40_post_run_broker_state_missing")
+    elif packet.post_run_broker_state.reconciliation_result not in {
+        "flat_no_open_position",
+        "clean_protected_hold",
+    }:
+        blockers.append("m40_final_reconciliation_not_clean")
+    if execution_result.schedules_activated:
+        blockers.append("m40_schedules_activated")
+    if execution_result.live_trading_enabled:
+        blockers.append("m40_live_trading_enabled")
+    if execution_result.autonomous_live_execution_enabled:
+        blockers.append("m40_autonomous_live_execution_enabled")
+    if execution_result.leverage_enabled:
+        blockers.append("m40_leverage_enabled")
+    if execution_result.level4_ready:
+        blockers.append("m40_level4_claim_present")
+    return tuple(blockers)
+
+
+def _m40_request_gate_blockers_from_packet(
+    packet: FirstPaperSessionResultPacket,
+) -> tuple[str, ...]:
+    request_like = FirstPaperSessionExecutionRequest(
+        mode="real-paper",
+        operator_approval_marker=packet.operator_approval_marker,
+        target_symbol=packet.target_symbol,
+        order_envelope=packet.order_envelope,
+    )
+    return _m40_request_gate_blockers(request_like)
 
 
 def audit_first_session_symbol_universe(
@@ -910,12 +1212,22 @@ def _pre_broker_blockers(
         if not bool(getattr(request, field_name)):
             blockers.append(reason)
     if request.mode == "real-paper":
-        blockers.extend(_launch_packet_blockers(request.launch_packet_path))
+        if request.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+            blockers.extend(_m40_launch_packet_blockers(request.launch_packet_path, request))
+        else:
+            blockers.extend(_launch_packet_blockers(request.launch_packet_path))
         if request.operator_approval_marker == MILESTONE_39_REAL_OPERATOR_APPROVAL:
             blockers.extend(_m39_request_gate_blockers(request))
             blockers.extend(
                 audit_m38_corrected_cleanup_packet(
                     request.m38_corrected_cleanup_packet_path
+                ).blockers
+            )
+        if request.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+            blockers.extend(_m40_request_gate_blockers(request))
+            blockers.extend(
+                audit_m39_clean_controlled_session_packet(
+                    request.m39_clean_controlled_session_packet_path
                 ).blockers
             )
     if not request.target_symbol:
@@ -1018,6 +1330,34 @@ def _m39_request_gate_blockers(
     return tuple(blockers)
 
 
+def _m40_request_gate_blockers(
+    request: FirstPaperSessionExecutionRequest,
+) -> tuple[str, ...]:
+    envelope = request.order_envelope
+    blockers: list[str] = []
+    if request.target_symbol not in {"MSFT", "XLK"}:
+        blockers.append("m40_target_symbol_must_be_msft_or_xlk")
+    if request.target_symbol == "AAPL":
+        blockers.append("m40_duplicate_aapl_entry_forbidden")
+    if envelope.max_quantity != 1:
+        blockers.append("m40_max_qty_must_be_one")
+    if request.target_symbol == "MSFT":
+        if envelope.max_notional_usd != 500.0:
+            blockers.append("m40_msft_max_notional_must_be_500")
+        if envelope.limit_price != 500.0:
+            blockers.append("m40_msft_limit_price_must_be_500")
+        if _estimated_entry_notional(envelope) != 500.0:
+            blockers.append("m40_msft_estimated_notional_must_be_500")
+    elif request.target_symbol == "XLK":
+        if envelope.max_notional_usd != 300.0:
+            blockers.append("m40_xlk_max_notional_must_be_300")
+        if envelope.limit_price != 300.0:
+            blockers.append("m40_xlk_limit_price_must_be_300")
+        if _estimated_entry_notional(envelope) != 300.0:
+            blockers.append("m40_xlk_estimated_notional_must_be_300")
+    return tuple(blockers)
+
+
 def _launch_packet_blockers(path: str) -> tuple[str, ...]:
     packet_path = Path(path)
     if not packet_path.is_file():
@@ -1053,6 +1393,60 @@ def _launch_packet_blockers(path: str) -> tuple[str, ...]:
         blockers.append("launch_packet_leverage_enabled")
     if result.get("level4_ready"):
         blockers.append("launch_packet_level4_claim_present")
+    return _unique(tuple(blockers))
+
+
+def _m40_launch_packet_blockers(
+    path: str,
+    request: FirstPaperSessionExecutionRequest,
+) -> tuple[str, ...]:
+    packet_path = Path(path)
+    if not packet_path.is_file():
+        return ("m40_launch_packet_missing",)
+    try:
+        payload = json.loads(packet_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ("m40_launch_packet_unparseable",)
+    result = payload.get("result", {})
+    packet = payload.get("launch_packet", {})
+    target_cleanliness = packet.get("target_symbol_cleanliness", {})
+    open_orders = packet.get("open_orders_summary", {})
+    positions = packet.get("positions_summary", {})
+    blockers: list[str] = []
+    if payload.get("milestone") != "33":
+        blockers.append("m40_launch_packet_not_m33")
+    if result.get("go_no_go_decision") != "go":
+        blockers.append("m40_launch_packet_not_go")
+    if result.get("blockers"):
+        blockers.append("m40_launch_packet_has_blockers")
+    if not result.get("read_only_broker_calls_performed"):
+        blockers.append("m40_launch_packet_read_only_preflight_missing")
+    if result.get("real_broker_writes_attempted"):
+        blockers.append("m40_launch_packet_prior_broker_write_detected")
+    if result.get("actual_paper_trading_started"):
+        blockers.append("m40_launch_packet_prior_paper_trading_started")
+    if packet.get("broker_endpoint_mode") != "paper":
+        blockers.append("m40_launch_packet_not_paper_endpoint")
+    if target_cleanliness.get("target_symbol") != request.target_symbol:
+        blockers.append("m40_launch_packet_target_mismatch")
+    if not target_cleanliness.get("clean"):
+        blockers.append("m40_launch_packet_target_not_clean")
+    if _safe_float(target_cleanliness.get("open_order_count"), default=-1.0) != 0.0:
+        blockers.append("m40_launch_packet_target_open_orders_not_clean")
+    if _safe_float(target_cleanliness.get("position_quantity"), default=-1.0) != 0.0:
+        blockers.append("m40_launch_packet_target_position_not_clean")
+    open_order_symbols = set(open_orders.get("symbols") or ())
+    position_symbols = set(positions.get("symbols") or ())
+    if open_order_symbols - {"AAPL"}:
+        blockers.append("m40_launch_packet_unexpected_open_order_symbol")
+    if position_symbols - {"AAPL"}:
+        blockers.append("m40_launch_packet_unexpected_position_symbol")
+    if result.get("schedules_activated"):
+        blockers.append("m40_launch_packet_schedules_activated")
+    if result.get("leverage_enabled"):
+        blockers.append("m40_launch_packet_leverage_enabled")
+    if result.get("level4_ready"):
+        blockers.append("m40_launch_packet_level4_claim_present")
     return _unique(tuple(blockers))
 
 
@@ -1146,6 +1540,128 @@ def audit_m38_corrected_cleanup_packet(
         positions_clean=positions_clean,
         final_reconciliation_clean=final_reconciliation_clean,
         repeated_session_m39_eligible=repeated_session_m39_eligible,
+        frozen_validation_started=frozen_validation_started,
+        level4_ready=level4_ready,
+        blockers=(*raw_blockers, *blockers),
+    )
+
+
+def audit_m39_clean_controlled_session_packet(
+    clean_session_packet_path: str | Path,
+) -> M39CleanControlledSessionPacketAudit:
+    path = Path(clean_session_packet_path)
+    if not path.is_file():
+        return M39CleanControlledSessionPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            m38_incident_closure_accepted=False,
+            clean_success_or_resolved=False,
+            normal_stop_path_succeeded_without_recovery=False,
+            final_reconciliation_clean=False,
+            no_unresolved_incident=False,
+            repeated_batch_m40_eligible=False,
+            existing_aapl_position_quantity=None,
+            existing_aapl_protective_stop_verified=False,
+            existing_aapl_protective_stop_quantity=None,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m39_clean_controlled_session_packet_missing",),
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        result = payload["result"]
+        packet = payload["clean_controlled_session"]
+        m38_audit = packet["m38_corrected_cleanup_audit"]
+        post_state = packet["post_run_broker_state"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return M39CleanControlledSessionPacketAudit(
+            packet_path=str(path),
+            parseable=False,
+            milestone=None,
+            m38_incident_closure_accepted=False,
+            clean_success_or_resolved=False,
+            normal_stop_path_succeeded_without_recovery=False,
+            final_reconciliation_clean=False,
+            no_unresolved_incident=False,
+            repeated_batch_m40_eligible=False,
+            existing_aapl_position_quantity=None,
+            existing_aapl_protective_stop_verified=False,
+            existing_aapl_protective_stop_quantity=None,
+            frozen_validation_started=False,
+            level4_ready=False,
+            blockers=("m39_clean_controlled_session_packet_unparseable",),
+        )
+    aapl_position_quantity = _safe_float(
+        post_state.get("target_symbol_position_quantity"),
+        default=-1.0,
+    )
+    aapl_stop_quantity = _safe_float(
+        post_state.get("protective_stop_quantity"),
+        default=-1.0,
+    )
+    m38_incident_closure_accepted = not tuple(
+        str(blocker) for blocker in m38_audit.get("blockers", ())
+    )
+    clean_success_or_resolved = (
+        payload.get("milestone") == "39"
+        and bool(result.get("success"))
+        and result.get("go_no_go") == "go"
+        and not result.get("blockers")
+    )
+    filled_quantity = _safe_float(packet.get("filled_quantity"), default=0.0)
+    normal_stop_path_succeeded_without_recovery = (
+        filled_quantity <= 1e-9
+        or (
+            bool(packet.get("normal_stop_path_succeeded"))
+            and not bool(packet.get("recovery_stop_path_used"))
+        )
+    )
+    final_reconciliation_clean = packet.get("final_reconciliation") in {
+        "clean_protected_hold",
+        "flat_no_open_position",
+    }
+    no_unresolved_incident = not tuple(str(item) for item in packet.get("incidents", ()))
+    repeated_batch_m40_eligible = (
+        result.get("repeated_batch_readiness_recommendation")
+        == "M40_REPEATED_CONTROLLED_PAPER_BATCH_MAY_BE_CONSIDERED"
+        and packet.get("repeated_batch_readiness_recommendation")
+        == "M40_REPEATED_CONTROLLED_PAPER_BATCH_MAY_BE_CONSIDERED"
+    )
+    aapl_stop_verified = bool(post_state.get("protective_stop_verified"))
+    frozen_validation_started = bool(packet.get("frozen_validation_started"))
+    level4_ready = bool(packet.get("level4_ready"))
+    raw_blockers = tuple(str(blocker) for blocker in packet.get("blockers", ()))
+    checks = {
+        "m39_clean_controlled_session_milestone_is_39": payload.get("milestone") == "39",
+        "m39_m38_incident_closure_accepted": m38_incident_closure_accepted,
+        "m39_clean_success_or_resolved": clean_success_or_resolved,
+        "m39_normal_stop_path_succeeded_without_recovery": (
+            normal_stop_path_succeeded_without_recovery
+        ),
+        "m39_final_reconciliation_clean": final_reconciliation_clean,
+        "m39_no_unresolved_incident": no_unresolved_incident,
+        "m39_repeated_batch_m40_eligible": repeated_batch_m40_eligible,
+        "m39_frozen_validation_not_started": not frozen_validation_started,
+        "m39_level4_not_ready": not level4_ready,
+        "m39_blockers_absent": not raw_blockers,
+    }
+    blockers = tuple(name for name, passed in checks.items() if not passed)
+    return M39CleanControlledSessionPacketAudit(
+        packet_path=str(path),
+        parseable=True,
+        milestone=None if payload.get("milestone") is None else str(payload.get("milestone")),
+        m38_incident_closure_accepted=m38_incident_closure_accepted,
+        clean_success_or_resolved=clean_success_or_resolved,
+        normal_stop_path_succeeded_without_recovery=(
+            normal_stop_path_succeeded_without_recovery
+        ),
+        final_reconciliation_clean=final_reconciliation_clean,
+        no_unresolved_incident=no_unresolved_incident,
+        repeated_batch_m40_eligible=repeated_batch_m40_eligible,
+        existing_aapl_position_quantity=aapl_position_quantity,
+        existing_aapl_protective_stop_verified=aapl_stop_verified,
+        existing_aapl_protective_stop_quantity=aapl_stop_quantity,
         frozen_validation_started=frozen_validation_started,
         level4_ready=level4_ready,
         blockers=(*raw_blockers, *blockers),
@@ -1453,6 +1969,11 @@ def _pre_run_state(
     target_open = tuple(order for order in open_orders if order.symbol == target and order.is_open)
     target_positions = tuple(position for position in positions if position.symbol == target)
     target_quantity = sum(position.quantity for position in target_positions)
+    aapl_hold = _aapl_hold_status(
+        adapter=adapter,
+        open_orders=open_orders,
+        positions=positions,
+    )
     clean = not target_open and abs(target_quantity) <= 1e-9
     state = BrokerStateSummary(
         account_reachable=True,
@@ -1465,6 +1986,10 @@ def _pre_run_state(
         position_count=len(positions),
         target_symbol_position_quantity=target_quantity,
         reconciliation_clean=clean,
+        aapl_position_quantity=aapl_hold["position_quantity"],
+        aapl_protective_stop_verified=bool(aapl_hold["stop_verified"]),
+        aapl_protective_stop_quantity=aapl_hold["stop_quantity"],
+        aapl_hold_status=str(aapl_hold["status"]),
     )
     blockers: list[str] = []
     if not clock_snapshot.is_open:
@@ -1477,6 +2002,13 @@ def _pre_run_state(
         blockers.append("existing_target_symbol_position")
     if not clean:
         blockers.append("pre_run_reconciliation_not_clean")
+    if request.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+        if aapl_hold["status"] not in {"clean_protected_hold", "flat_no_open_position"}:
+            blockers.append("m40_existing_aapl_hold_not_clean")
+        if any(order.symbol != "AAPL" for order in open_orders):
+            blockers.append("m40_unexpected_open_order")
+        if any(position.symbol != "AAPL" for position in positions):
+            blockers.append("m40_unexpected_position")
     _ = account
     return state, _unique(tuple(blockers))
 
@@ -1496,6 +2028,11 @@ def _post_run_state(
         clock_snapshot = map_alpaca_clock(client.get_clock())
         open_orders = adapter.open_orders()
         positions = adapter.positions()
+        aapl_hold = _aapl_hold_status(
+            adapter=adapter,
+            open_orders=open_orders,
+            positions=positions,
+        )
         verification = (
             None
             if filled_quantity <= 1e-9
@@ -1519,6 +2056,10 @@ def _post_run_state(
             protective_stop_order_status=None,
             reconciliation_result="not_reached",
             read_only_calls_performed=read_only_calls_performed,
+            aapl_position_quantity=None,
+            aapl_protective_stop_verified=False,
+            aapl_protective_stop_quantity=None,
+            aapl_hold_status="not_reached",
         )
     target_open = tuple(order for order in open_orders if order.symbol == target and order.is_open)
     target_positions = tuple(position for position in positions if position.symbol == target)
@@ -1555,7 +2096,48 @@ def _post_run_state(
         protective_stop_order_status=stop_status,
         reconciliation_result=reconciliation,
         read_only_calls_performed=read_only_calls_performed,
+        aapl_position_quantity=aapl_hold["position_quantity"],
+        aapl_protective_stop_verified=bool(aapl_hold["stop_verified"]),
+        aapl_protective_stop_quantity=aapl_hold["stop_quantity"],
+        aapl_hold_status=str(aapl_hold["status"]),
     )
+
+
+def _aapl_hold_status(
+    *,
+    adapter: AlpacaPaperAdapter,
+    open_orders: tuple[BrokerOrder, ...],
+    positions: tuple[Any, ...],
+) -> dict[str, Any]:
+    aapl_orders = tuple(order for order in open_orders if order.symbol == "AAPL" and order.is_open)
+    aapl_positions = tuple(position for position in positions if position.symbol == "AAPL")
+    aapl_quantity = sum(position.quantity for position in aapl_positions)
+    if abs(aapl_quantity) <= 1e-9:
+        return {
+            "status": "flat_no_open_position" if not aapl_orders else "stale_aapl_order_open",
+            "position_quantity": 0.0,
+            "stop_verified": False,
+            "stop_quantity": None,
+        }
+    verification = adapter.verify_protective_stop(
+        symbol="AAPL",
+        required_quantity=aapl_quantity,
+        client_order_id=None,
+    )
+    stop_quantity = None if verification.stop is None else verification.stop.quantity
+    status = (
+        "clean_protected_hold"
+        if verification.protected
+        and stop_quantity is not None
+        and abs(stop_quantity - aapl_quantity) <= 1e-9
+        else "aapl_position_unprotected_or_ambiguous"
+    )
+    return {
+        "status": status,
+        "position_quantity": aapl_quantity,
+        "stop_verified": verification.protected,
+        "stop_quantity": stop_quantity,
+    }
 
 
 def _settings_from_request(

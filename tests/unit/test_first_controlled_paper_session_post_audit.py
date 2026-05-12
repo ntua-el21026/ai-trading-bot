@@ -16,6 +16,9 @@ from packages.paper import (
     M36_PROTECTED_POSITION_MONITORING_EVIDENCE_PATH,
     M37_CORRECTED_CLEANUP_EVIDENCE_PATH,
     M38_CORRECTED_CLEANUP_EVIDENCE_PATH,
+    M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH,
+    M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH,
+    M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH,
     MILESTONE_35F_CLEANUP_APPROVAL,
     MILESTONE_37_CORRECTED_CLEANUP_APPROVAL,
     MILESTONE_38_CORRECTED_CLEANUP_APPROVAL,
@@ -24,12 +27,15 @@ from packages.paper import (
     PostSessionAuditMode,
     PostSessionAuditRequest,
     ProtectedPositionMonitoringRequest,
+    SupervisedScheduleReadinessRequest,
     audit_m35c_result_packet,
     audit_m35d_post_session_audit_packet,
     audit_m35e_hold_decision_packet,
     audit_m35f_incident_closure_packet,
     audit_m36_protected_position_monitoring_packet,
     audit_m37_corrected_cleanup_packet,
+    audit_m40_read_only_preflight_packet,
+    audit_m40_repeated_controlled_batch_packet,
     classify_cleanup_rejection,
     default_first_paper_session_execution_request,
     run_corrected_aapl_cleanup,
@@ -37,11 +43,13 @@ from packages.paper import (
     run_first_controlled_paper_session_incident_closure,
     run_first_controlled_paper_session_post_session_audit,
     run_protected_position_monitoring,
+    run_supervised_schedule_readiness_review,
     write_corrected_cleanup_artifact,
     write_hold_decision_artifact,
     write_incident_closure_artifact,
     write_post_session_audit_artifact,
     write_protected_position_monitoring_artifact,
+    write_supervised_schedule_readiness_artifact,
 )
 from packages.paper.execution import (
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
@@ -655,6 +663,175 @@ def test_m38_corrected_cleanup_packet_contains_required_fields_and_excludes_secr
     assert M38_CORRECTED_CLEANUP_EVIDENCE_PATH.endswith("corrected_cleanup_m38.json")
 
 
+def test_m41_audits_m40_packets_and_approves_clean_fake_readiness() -> None:
+    m40_audit = audit_m40_repeated_controlled_batch_packet(
+        M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
+    )
+    preflight_audit = audit_m40_read_only_preflight_packet(
+        M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH
+    )
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="protected_position")
+    )
+
+    assert m40_audit.parseable is True
+    assert m40_audit.blockers == ()
+    assert preflight_audit.parseable is True
+    assert preflight_audit.blockers == ()
+    assert result.readiness_approved is True
+    assert result.go_no_go == "go"
+    assert result.packet.aapl_position_stop_status.protective_stop_verified is True
+    assert result.packet.msft_position_stop_status.protective_stop_verified is True
+    assert result.packet.reconciliation_summary == "clean_protected_holds"
+    assert result.packet.broker_writes_performed_in_m41 is False
+    assert result.packet.schedule_activation_performed is False
+    assert result.packet.temporal_schedules_created is False
+    assert result.packet.temporal_schedules_activated is False
+    assert result.packet.supervised_scheduled_paper_run_readiness_recommendation == (
+        "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED"
+    )
+
+
+def test_m41_refuses_if_m40_packet_missing(tmp_path: Path) -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(
+            mode="fake",
+            scenario_id="protected_position",
+            m40_repeated_batch_packet_path=str(tmp_path / "missing-m40.json"),
+        )
+    )
+
+    assert result.readiness_approved is False
+    assert result.go_no_go == "no_go"
+    assert "m40_repeated_controlled_batch_packet_missing" in result.blockers
+
+
+def test_m41_refuses_if_m40_packet_has_blockers(tmp_path: Path) -> None:
+    payload = json.loads(
+        Path(M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH).read_text(encoding="utf-8")
+    )
+    payload["repeated_controlled_batch"]["blockers"] = ["manual_review_required"]
+    packet_path = tmp_path / "m40-blocked.json"
+    packet_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(
+            mode="fake",
+            scenario_id="protected_position",
+            m40_repeated_batch_packet_path=str(packet_path),
+        )
+    )
+
+    assert result.readiness_approved is False
+    assert "m40_msft_attempt_clean_success" in result.blockers
+    assert "m40_no_unresolved_incidents" in result.blockers
+
+
+def test_m41_returns_no_go_if_aapl_stop_missing() -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="missing_stop")
+    )
+
+    assert result.readiness_approved is False
+    assert result.packet.aapl_position_stop_status.protective_stop_verified is False
+    assert "aapl_protective_stop_missing_or_unverified" in result.blockers
+
+
+def test_m41_returns_no_go_if_msft_stop_missing() -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="missing_msft_stop")
+    )
+
+    assert result.readiness_approved is False
+    assert result.packet.msft_position_stop_status.protective_stop_verified is False
+    assert "msft_protective_stop_missing_or_unverified" in result.blockers
+
+
+def test_m41_detects_unexpected_open_order() -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="unexpected_order")
+    )
+
+    assert result.readiness_approved is False
+    assert result.packet.open_orders_summary == "unexpected_open_orders_present"
+    assert "unexpected_open_orders_present" in result.blockers
+
+
+def test_m41_detects_unexpected_position() -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="unexpected_position")
+    )
+
+    assert result.readiness_approved is False
+    assert result.packet.positions_summary == "unexpected_positions_present"
+    assert "unexpected_positions_present" in result.blockers
+
+
+def test_m41_real_read_only_stub_never_calls_write_or_schedule_methods() -> None:
+    client = _M41ReadOnlyGuardClient()
+
+    def factory(*_args: Any, **_kwargs: Any) -> _M41ReadOnlyGuardClient:
+        return client
+
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(
+            mode="real-read-only",
+            scenario_id="protected_position",
+            confirm_paper_endpoint=True,
+            confirm_no_broker_writes=True,
+            confirm_no_live_trading=True,
+            confirm_no_autonomous_live=True,
+            confirm_no_schedules=True,
+            confirm_no_leverage=True,
+        ),
+        environ=_safe_broker_env(),
+        client_factory=factory,
+    )
+
+    assert result.readiness_approved is True
+    assert result.real_read_only_calls_performed is True
+    assert result.broker_writes_performed_in_m41 is False
+    assert result.schedules_created is False
+    assert result.schedules_activated is False
+    assert client.submit_order_calls == 0
+    assert client.cancel_order_calls == 0
+
+
+def test_m41_packet_contains_required_fields_and_excludes_secret_values(
+    tmp_path: Path,
+) -> None:
+    result = run_supervised_schedule_readiness_review(
+        SupervisedScheduleReadinessRequest(mode="fake", scenario_id="protected_position")
+    )
+    path = write_supervised_schedule_readiness_artifact(result, tmp_path / "m41.json")
+    payload_text = path.read_text(encoding="utf-8")
+    payload = json.loads(payload_text)
+    packet = payload["supervised_schedule_readiness"]
+
+    assert payload["milestone"] == "41"
+    assert packet["m40_packet_reference"] == M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
+    assert packet["m40_preflight_packet_reference"] == M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH
+    assert packet["broker_writes_performed_in_m41"] is False
+    assert packet["schedule_activation_performed"] is False
+    assert packet["temporal_schedules_created"] is False
+    assert packet["temporal_schedules_activated"] is False
+    assert packet["frozen_validation_started"] is False
+    assert packet["level4_ready"] is False
+    assert packet["live_trading_enabled"] is False
+    assert packet["autonomous_live_execution_enabled"] is False
+    assert packet["leverage_enabled"] is False
+    assert packet["supervised_scheduled_paper_run_readiness_recommendation"] == (
+        "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED"
+    )
+    assert M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH.endswith(
+        "supervised_scheduled_paper_readiness_m41.json"
+    )
+    assert "paper-secret" not in payload_text
+    assert "paper-key" not in payload_text
+    assert "postgres://" not in payload_text
+    assert "sk-" not in payload_text
+
+
 def test_incident_closure_validates_m35c_m35d_and_m35e_evidence() -> None:
     result = run_first_controlled_paper_session_incident_closure(
         _closure_request("flat")
@@ -1239,6 +1416,104 @@ class _ReadOnlyGuardClient:
         }
 
 
+class _M41ReadOnlyGuardClient:
+    def __init__(self) -> None:
+        self.submit_order_calls = 0
+        self.cancel_order_calls = 0
+        self._orders = {
+            "m39-aapl-stop": _m41_order_payload(
+                symbol="AAPL",
+                broker_order_id="m39-aapl-stop",
+                client_order_id="m39-aapl-stop-client",
+                order_type="stop",
+                status="new",
+                side="sell",
+                stop_price="165",
+            ),
+            "m40-msft-stop": _m41_order_payload(
+                symbol="MSFT",
+                broker_order_id="m40-msft-stop",
+                client_order_id="m40-msft-stop-client",
+                order_type="stop",
+                status="new",
+                side="sell",
+                stop_price="250",
+            ),
+        }
+
+    def get_account(self) -> Mapping[str, Any]:
+        return {
+            "id": "redacted-test-account",
+            "equity": "100000",
+            "cash": "90000",
+            "buying_power": "180000",
+            "currency": "USD",
+            "as_of": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+        }
+
+    def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
+        return tuple(self._orders.values())
+
+    def get_order_by_id(self, broker_order_id: str) -> Mapping[str, Any] | None:
+        return self._orders.get(broker_order_id)
+
+    def get_order_by_client_order_id(self, client_order_id: str) -> Mapping[str, Any] | None:
+        for order in self._orders.values():
+            if order["client_order_id"] == client_order_id:
+                return order
+        return None
+
+    def submit_order(self, _request: Mapping[str, Any]) -> Mapping[str, Any]:
+        self.submit_order_calls += 1
+        raise AssertionError("M41 readiness must not submit orders")
+
+    def cancel_order(self, _broker_order_id: str) -> Mapping[str, Any]:
+        self.cancel_order_calls += 1
+        raise AssertionError("M41 readiness must not cancel orders")
+
+    def list_fills(self) -> Sequence[Mapping[str, Any]]:
+        return ()
+
+    def list_positions(self) -> Sequence[Mapping[str, Any]]:
+        return (
+            {
+                "symbol": "AAPL",
+                "asset_class": "equity",
+                "qty": "1",
+                "avg_entry_price": "290.94",
+                "market_value": "290.94",
+                "opened_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            },
+            {
+                "symbol": "MSFT",
+                "asset_class": "equity",
+                "qty": "1",
+                "avg_entry_price": "499.00",
+                "market_value": "499.00",
+                "opened_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            },
+        )
+
+    def get_position(self, symbol: str) -> Mapping[str, Any] | None:
+        for position in self.list_positions():
+            if position["symbol"] == symbol:
+                return position
+        return None
+
+    def consume_trade_updates(self) -> Sequence[Mapping[str, Any]]:
+        return ()
+
+    def get_clock(self) -> Mapping[str, Any]:
+        return {
+            "is_open": True,
+            "timestamp": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            "next_open": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            "next_close": DEFAULT_AS_OF.replace(hour=21, minute=0)
+            .isoformat()
+            .replace("+00:00", "Z"),
+        }
+
+
 class _UnfilledCleanupClient(_ReadOnlyGuardClient):
     def list_open_orders(self) -> Sequence[Mapping[str, Any]]:
         return tuple(
@@ -1297,3 +1572,29 @@ def _order_payload(
     if stop_price is not None:
         payload["stop_price"] = stop_price
     return payload
+
+
+def _m41_order_payload(
+    *,
+    symbol: str,
+    broker_order_id: str,
+    client_order_id: str,
+    order_type: str,
+    status: str,
+    side: str,
+    stop_price: str,
+) -> dict[str, Any]:
+    return {
+        "id": broker_order_id,
+        "client_order_id": client_order_id,
+        "symbol": symbol,
+        "side": side,
+        "asset_class": "equity",
+        "qty": "1",
+        "filled_qty": "0",
+        "type": order_type,
+        "time_in_force": "gtc",
+        "status": status,
+        "stop_price": stop_price,
+        "submitted_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+    }
