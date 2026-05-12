@@ -10,12 +10,14 @@ from typing import cast
 from packages.paper import (
     FIRST_PAPER_SESSION_SCENARIO_IDS,
     M34_RESULT_EVIDENCE_PATH,
+    M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH,
     MILESTONE_30_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
+    MILESTONE_39_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
     audit_first_session_symbol_universe,
@@ -24,12 +26,13 @@ from packages.paper import (
     load_preflight_environment,
     run_first_controlled_paper_session_execution,
     run_real_first_controlled_paper_session_gate,
+    write_clean_controlled_session_m39_artifact,
     write_first_controlled_paper_session_result_artifact,
 )
 
 WARNING = (
     "First controlled paper-session command. Real Alpaca paper writes are allowed only in "
-    "Milestone 34 real-paper mode after every explicit gate passes."
+    "explicitly approved real-paper milestones after every explicit gate passes."
 )
 
 
@@ -47,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
             "audit-symbol-universe",
         ),
         default="real-gated",
-        help="Default real-gated mode refuses. M34 real-paper requires explicit gates.",
+        help="Default real-gated mode refuses. Real-paper milestones require explicit gates.",
     )
     parser.add_argument(
         "--scenario",
@@ -67,7 +70,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{MILESTONE_34_REAL_OPERATOR_APPROVAL}; for M35 real-paper use "
             f"{MILESTONE_35_REAL_OPERATOR_APPROVAL}; for M35B real-paper use "
             f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}; for M35C real-paper use "
-            f"{MILESTONE_35C_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_35C_REAL_OPERATOR_APPROVAL}; for M39 real-paper use "
+            f"{MILESTONE_39_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)
@@ -86,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--result-output",
         default=None,
-        help="Optional sanitized M34 result packet path. Real-paper defaults to docs/evidence.",
+        help="Optional sanitized result packet path. Real-paper defaults to docs/evidence.",
     )
     args = parser.parse_args(argv)
 
@@ -180,16 +184,29 @@ def main(argv: list[str] | None = None) -> int:
         )
         result_path = args.result_output
         if result_path is None and execution_mode == "real-paper":
-            result_path = M34_RESULT_EVIDENCE_PATH
+            result_path = (
+                M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
+                if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL
+                else M34_RESULT_EVIDENCE_PATH
+            )
         written_path = None
         if result_path:
-            written_path = str(
-                write_first_controlled_paper_session_result_artifact(
-                    execution_result,
-                    result_path,
+            if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL:
+                written_path = str(
+                    write_clean_controlled_session_m39_artifact(
+                        execution_result,
+                        result_path,
+                    )
                 )
-            )
+            else:
+                written_path = str(
+                    write_first_controlled_paper_session_result_artifact(
+                        execution_result,
+                        result_path,
+                    )
+                )
         packet = execution_result.result_packet
+        post_state = packet.post_run_broker_state
         summary = {
             "scenario_id": execution_result.scenario_id,
             "mode": execution_result.mode,
@@ -219,7 +236,18 @@ def main(argv: list[str] | None = None) -> int:
             "protective_stop_verification_result": (
                 packet.protective_stop_verification_result
             ),
+            "normal_stop_path_succeeded": packet.normal_stop_path_succeeded,
+            "recovery_stop_path_used": packet.recovery_stop_path_used,
             "cleanup_actions": packet.cleanup_actions,
+            "post_run_open_order_count": (
+                None if post_state is None else post_state.open_order_count
+            ),
+            "post_run_position_count": (
+                None if post_state is None else post_state.position_count
+            ),
+            "post_run_target_symbol_position_quantity": (
+                None if post_state is None else post_state.target_symbol_position_quantity
+            ),
             "post_run_reconciliation_result": packet.post_run_reconciliation_result,
             "actual_paper_trading_started": execution_result.actual_paper_trading_started,
             "real_broker_orders_submitted": execution_result.real_broker_orders_submitted,

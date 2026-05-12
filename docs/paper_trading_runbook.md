@@ -708,6 +708,31 @@ The sanitized packet is `docs/evidence/corrected_cleanup_m38.json`. The next rec
 is a compact M39 controlled paper session and audit consideration, gated by the usual operator
 approval and preflight checks. Do not treat this as schedule activation or unattended operation.
 
+## Milestone 39 Clean Controlled Session And Audit
+
+Milestone 39 ran exactly one clean controlled Alpaca paper session after the M38 incident-closure
+packet proved the prior AAPL cleanup finished flat with zero open orders and zero positions. The
+refreshed real read-only preflight returned GO before execution.
+
+M39 result:
+
+- target symbol was `AAPL`;
+- envelope was max quantity `1`, max notional `350`, limit price `330`;
+- entry order was submitted only after the M38 and preflight gates passed;
+- entry filled for quantity `1`;
+- the normal protective-stop path submitted and verified a protective stop for quantity `1`;
+- recovery stop handling was not used;
+- cleanup/flatten was not performed because the current cleanup policy is `verify_only`;
+- final broker state is `clean_protected_hold`: one AAPL paper position and one verified AAPL
+  protective stop;
+- broker writes performed in M39: `true`, limited to the approved AAPL entry and protective stop;
+- repeated controlled paper batch may be considered in M40, but no repeated session, schedule,
+  unattended operation, frozen validation, or Level 4 step started in M39.
+
+The sanitized packet is `docs/evidence/clean_controlled_session_m39.json`. Before any repeated
+controlled paper batch actually starts, the next milestone must explicitly account for the current
+protected AAPL hold and continue to require read-only reconciliation gates.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

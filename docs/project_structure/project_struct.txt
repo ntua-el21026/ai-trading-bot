@@ -82,6 +82,7 @@ AI_Trading_Bot/
 │   │   ├── paper_daily_checklist.md
 │   │   └── paper_weekly_review.md
 │   ├── evidence/
+│   │   ├── clean_controlled_session_m39.json
 │   │   ├── corrected_cleanup_m37.json
 │   │   ├── corrected_cleanup_m38.json
 │   │   ├── first_controlled_paper_session_hold_decision.json
@@ -119,6 +120,7 @@ AI_Trading_Bot/
 │   ├── alerting.md
 │   ├── architecture.md
 │   ├── broker_integration.md
+│   ├── clean_controlled_paper_session_m39.md
 │   ├── dashboard_control_plane.md
 │   ├── database_audit_ledger.md
 │   ├── database_runtime.md
@@ -338,4 +340,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 293
+Total directories: 46, Total files: 295

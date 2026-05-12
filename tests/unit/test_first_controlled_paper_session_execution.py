@@ -1,22 +1,30 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
+from packages.broker.alpaca import ALPACA_PAPER_BASE_URL
+from packages.broker.fakes import DEFAULT_AS_OF, FakeAlpacaClient
 from packages.core.config import load_app_config
 from packages.paper import (
+    M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH,
     MILESTONE_34_FAKE_OPERATOR_APPROVAL,
     MILESTONE_34_REAL_OPERATOR_APPROVAL,
     MILESTONE_35_REAL_OPERATOR_APPROVAL,
     MILESTONE_35B_REAL_OPERATOR_APPROVAL,
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
+    MILESTONE_39_REAL_OPERATOR_APPROVAL,
     FirstPaperSessionExecutionRequest,
     FirstPaperSessionExecutionResult,
     audit_first_session_symbol_universe,
+    audit_m38_corrected_cleanup_packet,
+    build_clean_controlled_session_m39_result,
     default_first_paper_session_execution_request,
     run_first_controlled_paper_session_execution,
+    write_clean_controlled_session_m39_artifact,
     write_first_controlled_paper_session_result_artifact,
 )
 from scripts.check_first_controlled_paper_session import main as m29_script_main
@@ -57,6 +65,130 @@ def _write_go_launch_packet(path: Path) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def _write_m38_corrected_cleanup_packet(
+    path: Path,
+    *,
+    incident_closed: bool = True,
+    target_position_quantity: float = 0.0,
+    open_orders_total: int = 0,
+    positions_total: int = 0,
+    final_reconciliation_summary: str = "flat_no_open_position",
+    repeated_session_go_no_go: str = "eligible_for_m39_consideration",
+    next_recommendation: str = (
+        "M39_COMPACT_CONTROLLED_SESSION_AND_AUDIT_MAY_BE_CONSIDERED"
+    ),
+    blockers: tuple[str, ...] = (),
+) -> Path:
+    path.write_text(
+        json.dumps(
+            {
+                "milestone": "38",
+                "result": {
+                    "incident_closed": incident_closed,
+                    "go_no_go": repeated_session_go_no_go,
+                    "blockers": list(blockers),
+                    "real_broker_writes_attempted": True,
+                    "schedules_activated": False,
+                    "live_trading_enabled": False,
+                    "autonomous_live_execution_enabled": False,
+                    "leverage_enabled": False,
+                    "level4_ready": False,
+                },
+                "corrected_cleanup": {
+                    "incident_closed": incident_closed,
+                    "aapl_position_status": (
+                        "flat" if abs(target_position_quantity) <= 1e-9 else "open"
+                    ),
+                    "aapl_protective_stop_status": (
+                        "none" if open_orders_total == 0 else "stale_session_stop_open"
+                    ),
+                    "final_broker_state": {
+                        "target_symbol": "AAPL",
+                        "target_position_quantity": target_position_quantity,
+                        "open_orders_total": open_orders_total,
+                        "positions_total": positions_total,
+                        "reconciliation_summary": final_reconciliation_summary,
+                    },
+                    "final_reconciliation_summary": final_reconciliation_summary,
+                    "repeated_session_go_no_go": repeated_session_go_no_go,
+                    "next_compact_milestone_recommendation": next_recommendation,
+                    "frozen_validation_started": False,
+                    "level4_ready": False,
+                    "blockers": list(blockers),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _m39_safe_broker_env() -> dict[str, str]:
+    return {
+        "ALPACA_API_KEY": "paper-key-placeholder",
+        "ALPACA_SECRET_KEY": "paper-secret-placeholder",
+        "ALPACA_BASE_URL": ALPACA_PAPER_BASE_URL,
+        "RUN_ALPACA_PAPER_SMOKE": "1",
+        "ALPACA_PAPER_SMOKE_CONFIRM": "READ_ONLY_PAPER_ACCOUNT",
+        "RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE": "",
+        "ALERT_ENABLE_REAL_DELIVERY": "false",
+        "AI_ENABLE_ESCALATION": "false",
+        "NEWS_ENABLE_OPENAI_WEB_FALLBACK": "false",
+        "DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS": "false",
+        "RUN_FIRST_CONTROLLED_PAPER_SESSION": "",
+        "RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION": "",
+        "RUN_TEMPORAL_CLOUD_SMOKE": "",
+        "RUN_DASHBOARD_CONTROL_PLANE_SMOKE": "",
+        "RUN_VERCEL_DASHBOARD_PREVIEW": "",
+        "RUN_TELEGRAM_ALERT_SMOKE": "",
+    }
+
+
+def _m39_request(
+    tmp_path: Path,
+    scenario_id: str = "happy_path",
+    *,
+    operator_approval_marker: str | None = MILESTONE_39_REAL_OPERATOR_APPROVAL,
+    target_symbol: str | None = "AAPL",
+    m38_packet: Path | None = None,
+) -> FirstPaperSessionExecutionRequest:
+    return _real_request(
+        scenario_id,
+        target_symbol=target_symbol,
+        max_quantity=1,
+        max_notional_usd=350.0,
+        limit_price=330.0,
+        operator_approval_marker=operator_approval_marker,
+    ).model_copy(
+        update={
+            "launch_packet_path": str(_write_go_launch_packet(tmp_path / "m33-go.json")),
+            "m38_corrected_cleanup_packet_path": str(
+                m38_packet
+                or _write_m38_corrected_cleanup_packet(tmp_path / "m38-clean.json")
+            ),
+        }
+    )
+
+
+def _m39_client_factory(
+    client: FakeAlpacaClient,
+) -> Callable[..., FakeAlpacaClient]:
+    def factory(*_args: object, **_kwargs: object) -> FakeAlpacaClient:
+        return client
+
+    return factory
+
+
+def _fast_clock() -> Callable[[], float]:
+    state = {"now": 0.0}
+
+    def clock() -> float:
+        state["now"] += 20.0
+        return state["now"]
+
+    return clock
 
 
 def _real_request(
@@ -637,3 +769,276 @@ def test_m34_script_fake_real_paper_happy_path(
     assert '"status": "executed"' in output
     assert '"estimated_entry_notional_usd": 330.0' in output
     assert '"real_broker_writes_attempted": false' in output
+
+
+def test_m39_audits_clean_m38_corrected_cleanup_packet(tmp_path: Path) -> None:
+    packet = _write_m38_corrected_cleanup_packet(tmp_path / "m38-clean.json")
+
+    audit = audit_m38_corrected_cleanup_packet(packet)
+
+    assert audit.parseable is True
+    assert audit.milestone == "38"
+    assert audit.incident_closed is True
+    assert audit.aapl_position_flat is True
+    assert audit.open_orders_clean is True
+    assert audit.positions_clean is True
+    assert audit.final_reconciliation_clean is True
+    assert audit.repeated_session_m39_eligible is True
+    assert audit.blockers == ()
+
+
+def test_m39_refuses_if_m38_corrected_cleanup_packet_is_missing(tmp_path: Path) -> None:
+    request = _m39_request(tmp_path).model_copy(
+        update={"m38_corrected_cleanup_packet_path": str(tmp_path / "missing-m38.json")}
+    )
+
+    result = run_first_controlled_paper_session_execution(
+        request,
+        environ=_m39_safe_broker_env(),
+    )
+
+    assert result.refused is True
+    assert "m38_corrected_cleanup_packet_missing" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_refuses_if_m38_incident_closure_is_not_clean_flat(tmp_path: Path) -> None:
+    packet = _write_m38_corrected_cleanup_packet(
+        tmp_path / "m38-dirty.json",
+        incident_closed=False,
+        target_position_quantity=1.0,
+        positions_total=1,
+        final_reconciliation_summary="protected_position_open",
+        repeated_session_go_no_go="no_go",
+        next_recommendation="M39_BLOCKED_MANUAL_REVIEW_REQUIRED",
+        blockers=("m38_manual_review_required",),
+    )
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path, m38_packet=packet),
+        environ=_m39_safe_broker_env(),
+    )
+
+    assert result.refused is True
+    assert "m38_incident_closed" in result.blockers
+    assert "m38_aapl_position_flat" in result.blockers
+    assert "m38_positions_clean" in result.blockers
+    assert "m38_final_reconciliation_clean" in result.blockers
+    assert "m38_repeated_session_m39_eligible" in result.blockers
+    assert "m38_manual_review_required" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_refuses_if_stale_aapl_stop_remains_after_m38(tmp_path: Path) -> None:
+    packet = _write_m38_corrected_cleanup_packet(
+        tmp_path / "m38-stale-stop.json",
+        open_orders_total=1,
+    )
+
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path, m38_packet=packet),
+        environ=_m39_safe_broker_env(),
+    )
+
+    assert result.refused is True
+    assert "m38_open_orders_clean" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_requires_operator_marker(tmp_path: Path) -> None:
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path, operator_approval_marker=None),
+        environ=_m39_safe_broker_env(),
+    )
+
+    assert result.refused is True
+    assert "operator_approval_missing" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_result_packet_refuses_non_aapl_target(tmp_path: Path) -> None:
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path, target_symbol="SPY"),
+        environ=_m39_safe_broker_env(),
+    )
+    m39 = build_clean_controlled_session_m39_result(
+        result,
+        m38_corrected_cleanup_packet_path=result.result_packet.launch_packet_reference.replace(
+            "m33-go.json",
+            "m38-clean.json",
+        ),
+    )
+
+    assert m39.success is False
+    assert "m39_target_symbol_must_be_aapl" in m39.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_refuses_if_unexpected_open_order_exists_before_entry(
+    tmp_path: Path,
+) -> None:
+    existing_order = {
+        "id": "paper-existing-order",
+        "client_order_id": "existing-aapl-stop",
+        "symbol": "AAPL",
+        "side": "sell",
+        "asset_class": "equity",
+        "qty": "1",
+        "filled_qty": "0",
+        "type": "stop",
+        "time_in_force": "gtc",
+        "status": "accepted",
+        "stop_price": "300",
+        "submitted_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+        "updated_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+    }
+    client = FakeAlpacaClient(orders=(existing_order,))
+
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path),
+        environ=_m39_safe_broker_env(),
+        client_factory=_m39_client_factory(client),
+    )
+
+    assert result.refused is True
+    assert "existing_target_symbol_open_order" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_refuses_if_unexpected_position_exists_before_entry(
+    tmp_path: Path,
+) -> None:
+    client = FakeAlpacaClient(
+        positions=(
+            {
+                "symbol": "AAPL",
+                "asset_class": "equity",
+                "qty": "1",
+                "avg_entry_price": "330",
+                "market_value": "330",
+                "opened_at": DEFAULT_AS_OF.isoformat().replace("+00:00", "Z"),
+            },
+        )
+    )
+
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path),
+        environ=_m39_safe_broker_env(),
+        client_factory=_m39_client_factory(client),
+    )
+
+    assert result.refused is True
+    assert "existing_target_symbol_position" in result.blockers
+    assert "pre_run_reconciliation_not_clean" in result.blockers
+    assert result.real_broker_writes_attempted is False
+
+
+def test_m39_fake_stub_success_verifies_normal_stop_without_recovery(
+    tmp_path: Path,
+) -> None:
+    client = FakeAlpacaClient(
+        submit_outcomes=(("filled", 1.0), ("accepted", 0.0)),
+        mutate_positions_on_submit=True,
+    )
+
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path),
+        environ=_m39_safe_broker_env(),
+        client_factory=_m39_client_factory(client),
+        sleeper=lambda _seconds: None,
+        clock=_fast_clock(),
+    )
+    m39 = build_clean_controlled_session_m39_result(
+        result,
+        m38_corrected_cleanup_packet_path=result.result_packet.launch_packet_reference.replace(
+            "m33-go.json",
+            "m38-clean.json",
+        ),
+    )
+
+    assert result.success is True
+    assert result.actual_paper_trading_started is True
+    assert result.real_broker_writes_attempted is True
+    assert result.result_packet.operator_approval_marker == MILESTONE_39_REAL_OPERATOR_APPROVAL
+    assert result.result_packet.normal_stop_path_succeeded is True
+    assert result.result_packet.recovery_stop_path_used is False
+    assert result.result_packet.protective_stop_verification_result == "verified"
+    assert result.result_packet.post_run_broker_state is not None
+    assert result.result_packet.post_run_broker_state.reconciliation_result == (
+        "clean_protected_hold"
+    )
+    assert m39.success is True
+    assert m39.repeated_batch_readiness_recommendation == (
+        "M40_REPEATED_CONTROLLED_PAPER_BATCH_MAY_BE_CONSIDERED"
+    )
+
+
+def test_m39_fake_stub_no_fill_path_is_audited(tmp_path: Path) -> None:
+    client = FakeAlpacaClient(submit_outcomes=(("accepted", 0.0),))
+
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path, "no_fill"),
+        environ=_m39_safe_broker_env(),
+        client_factory=_m39_client_factory(client),
+        sleeper=lambda _seconds: None,
+        clock=_fast_clock(),
+    )
+    m39 = build_clean_controlled_session_m39_result(
+        result,
+        m38_corrected_cleanup_packet_path=result.result_packet.launch_packet_reference.replace(
+            "m33-go.json",
+            "m38-clean.json",
+        ),
+    )
+
+    assert result.success is True
+    assert result.result_packet.fill_status == "not_filled"
+    assert result.result_packet.protective_stop_order_id is None
+    assert result.result_packet.protective_stop_verification_result == "not_required_no_fill"
+    assert result.result_packet.normal_stop_path_succeeded is False
+    assert result.result_packet.post_run_broker_state is not None
+    assert result.result_packet.post_run_broker_state.reconciliation_result == (
+        "flat_no_open_position"
+    )
+    assert "cancel_unfilled_entry" in result.result_packet.cleanup_actions
+    assert m39.success is True
+
+
+def test_m39_clean_session_artifact_contains_required_fields_and_excludes_secrets(
+    tmp_path: Path,
+) -> None:
+    client = FakeAlpacaClient(
+        submit_outcomes=(("filled", 1.0), ("accepted", 0.0)),
+        mutate_positions_on_submit=True,
+    )
+    result = run_first_controlled_paper_session_execution(
+        _m39_request(tmp_path),
+        environ=_m39_safe_broker_env(),
+        client_factory=_m39_client_factory(client),
+        sleeper=lambda _seconds: None,
+        clock=_fast_clock(),
+    )
+    output = write_clean_controlled_session_m39_artifact(
+        result,
+        tmp_path / M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH,
+        m38_corrected_cleanup_packet_path=result.result_packet.launch_packet_reference.replace(
+            "m33-go.json",
+            "m38-clean.json",
+        ),
+    )
+    serialized = output.read_text(encoding="utf-8")
+    payload = json.loads(serialized)
+
+    assert payload["milestone"] == "39"
+    assert payload["result"]["success"] is True
+    packet = payload["clean_controlled_session"]
+    assert packet["target_symbol"] == "AAPL"
+    assert packet["estimated_notional"] == 330.0
+    assert packet["normal_stop_path_succeeded"] is True
+    assert packet["recovery_stop_path_used"] is False
+    assert packet["repeated_batch_readiness_recommendation"] == (
+        "M40_REPEATED_CONTROLLED_PAPER_BATCH_MAY_BE_CONSIDERED"
+    )
+    assert "paper-secret-placeholder" not in serialized
+    assert "paper-key-placeholder" not in serialized
+    assert "DATABASE_URL=" not in serialized
+    assert "postgres://" not in serialized

@@ -503,3 +503,13 @@ Broker writes performed in M38 were limited to the approved AAPL stop cancellati
 risk-reducing cleanup sell. Frozen validation has not started, Level 4 remains not ready, and any
 compact M39 controlled paper session plus audit still requires the usual explicit approval and
 preflight gates.
+
+Milestone 39 ran one compact clean controlled AAPL paper session after M38 closure was verified and
+a refreshed read-only preflight returned GO. The AAPL entry filled for quantity `1`; the normal
+protective-stop path submitted and verified a protective stop for quantity `1`; no recovery stop
+path was used. Cleanup/flatten did not run because the active cleanup policy is `verify_only`.
+Final broker reconciliation is `clean_protected_hold` with one AAPL paper position and one verified
+protective stop. The M39 evidence packet is
+`docs/evidence/clean_controlled_session_m39.json`. Repeated controlled paper batch may be
+considered in M40, but M39 did not start repeated sessions, schedules, unattended operation, frozen
+validation, or Level 4.

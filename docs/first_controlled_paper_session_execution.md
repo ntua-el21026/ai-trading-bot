@@ -554,6 +554,40 @@ The sanitized M38 corrected cleanup retry packet is:
 docs/evidence/corrected_cleanup_m38.json
 ```
 
+## Milestone 39 Clean Controlled Session And Audit
+
+Milestone 39 ran one compact clean controlled Alpaca paper session after M38 proved the prior M35C
+incident was closed and the broker state was flat. The run used the explicit operator approval
+marker `MILESTONE_39_CLEAN_CONTROLLED_PAPER_SESSION_AND_AUDIT`, target symbol `AAPL`, max quantity
+`1`, max notional `350`, and entry limit price `330`. A refreshed real read-only preflight returned
+GO before any broker write, with paper endpoint confirmed, market/session open, zero open orders,
+and zero positions.
+
+M39 result:
+
+- one AAPL paper entry order was submitted after all gates passed;
+- the entry filled for quantity `1`;
+- the protective stop was submitted through the normal stop path for filled quantity `1`;
+- protective stop read-back verified the stop for quantity `1`;
+- recovery stop handling was not used;
+- cleanup/flatten did not run because the current cleanup policy is `verify_only`;
+- final broker state is a clean protected hold with one AAPL paper position and one verified AAPL
+  protective stop;
+- final reconciliation is `clean_protected_hold`;
+- broker writes performed in M39: `true`, limited to the approved AAPL entry and normal protective
+  stop;
+- no live endpoint, autonomous live execution, schedule activation, leverage, provider calls, or
+  recovery-stop path was used.
+
+The M39 evidence packet recommends that a repeated controlled paper batch may be considered in M40,
+but M39 did not start repeated sessions or frozen validation. Level 4 remains not ready.
+
+The sanitized M39 clean controlled session packet is:
+
+```text
+docs/evidence/clean_controlled_session_m39.json
+```
+
 ## Post-Session Policy
 
 If a future retry executes a real paper entry, protective stop verification is mandatory for any
