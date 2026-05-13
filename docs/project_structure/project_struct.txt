@@ -64,6 +64,8 @@ AI_Trading_Bot/
 │   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 1).md
 │   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (ChatGPT - 2).md
 │   │   ├── Autonomous Trading Bot Technical Recommendation - 2 (Gemini).md
+│   │   ├── Autonomous Trading Bot Technical Recommendation - 3 (Shorts).md
+│   │   ├── Autonomous Trading Bot Technical Recommendation - 4 (Core Audit).md
 │   │   └── Trading Bot Deep Research - 1 (ChatGPT).md
 │   ├── alpaca/
 │   │   ├── Alpaca Customer Agreement.pdf
@@ -355,4 +357,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 310
+Total directories: 46, Total files: 312
