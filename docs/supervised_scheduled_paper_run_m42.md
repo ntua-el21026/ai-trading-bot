@@ -62,3 +62,9 @@ add-on signal and all risk/execution/reconciliation gates pass.
 Frozen validation must not start until a later explicit freeze milestone approves the frozen
 strategy, risk, execution, AI prompt/schema, config versions, evidence collection rules, and
 operator monitoring policy.
+
+## M44 Supersession Note
+
+M44 supersedes the M42 carry-in protected-hold state for frozen start planning. AAPL, MSFT, and XLK
+were closed through approved flat-start cleanup, the broker baseline is flat, and v0.5 disables
+scale-ins at validation T0.

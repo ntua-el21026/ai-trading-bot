@@ -5,17 +5,19 @@ Spec-governed autonomous AI-assisted trading bot repository.
 The latest identified source-of-truth spec is:
 
 ```text
-docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md
+docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md
 ```
 
 ## Current Status
 
-This repository is at Milestone 43 deterministic scale-in policy support before frozen paper
-validation. Milestones 39-42 produced controlled paper evidence with protected AAPL, MSFT, and XLK
-paper holds. Milestone 43 adds config-backed scale-in eligibility, open-order role classification,
-aggregate protective-stop coverage, and fake/stub tests only. It does not start frozen validation,
-activate schedules, perform real broker writes, enable live trading, enable autonomous live
-execution, enable leverage, or claim Level 4 readiness.
+This repository is at Milestone 44 v0.5 frozen-readiness preparation. Milestones 39-43 proved
+controlled paper entry/stop paths, supervised scheduled one-shot behavior, and scale-in policy
+helpers. Milestone 44 creates the v0.5 frozen-validation spec, adds default-disabled paper-only
+short-side architecture, freezes validation-start policy as long-only/flat-start, and supports
+operator-approved risk-reducing cleanup of the existing AAPL/MSFT/XLK paper holds. It does not
+start frozen validation, activate unattended schedules, enable live trading, enable autonomous
+live execution, enable leverage, enable shorts, perform real short orders, or claim Level 4
+readiness.
 
 Implemented pieces:
 

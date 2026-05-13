@@ -16,6 +16,7 @@ REST_FALLBACK_INTERVAL_SECONDS = 30
 
 BrokerEnvironment = Literal["paper", "live"]
 BrokerSide = Literal["buy", "sell"]
+PositionSide = Literal["long", "short", "flat"]
 BrokerOrderType = Literal["market", "limit", "stop", "stop_limit"]
 BrokerTimeInForce = Literal["day", "gtc", "ioc", "fok"]
 BrokerOrderStatus = Literal[
@@ -32,7 +33,35 @@ BrokerOrderStatus = Literal[
     "stopped",
     "unknown",
 ]
-BrokerOrderPurpose = Literal["entry", "protective_stop", "risk_reducing_exit", "unknown"]
+BrokerOrderRole = Literal[
+    "initial_entry",
+    "scale_in_entry",
+    "initial_protective_stop",
+    "add_on_protective_stop",
+    "strategy_exit",
+    "cleanup",
+    "incident_repair",
+    "short_entry",
+    "short_protective_stop",
+    "short_cover",
+    "cancel",
+    "noop",
+    "pending_entry",
+    "pending_exit",
+    "stale_session_order",
+    "unknown_or_ambiguous",
+]
+BrokerOrderPurpose = Literal[
+    "entry",
+    "protective_stop",
+    "risk_reducing_exit",
+    "unknown",
+    "short_entry",
+    "short_protective_stop",
+    "short_cover",
+    "cleanup",
+    "incident_repair",
+]
 BrokerStreamEventType = Literal[
     "order_acknowledged",
     "partial_fill",
@@ -79,6 +108,12 @@ class BrokerAccountSnapshot(BrokerModel):
     equity: float = Field(gt=0)
     cash: float = Field(ge=0)
     buying_power: float | None = Field(default=None, ge=0)
+    shorting_enabled: bool | None = None
+    multiplier: float | None = Field(default=None, ge=0)
+    long_market_value: float | None = None
+    short_market_value: float | None = None
+    initial_margin: float | None = None
+    maintenance_margin: float | None = None
     currency: str = "USD"
     as_of: datetime
     raw_payload_hash: str | None = None
@@ -129,6 +164,9 @@ class BrokerOrder(BrokerModel):
     limit_price: float | None = Field(default=None, gt=0)
     stop_price: float | None = Field(default=None, gt=0)
     purpose: BrokerOrderPurpose = "unknown"
+    role: BrokerOrderRole = "unknown_or_ambiguous"
+    opening_effect: Literal["open_long", "open_short", "none"] = "none"
+    closing_effect: Literal["close_long", "close_short", "none"] = "none"
     raw_payload_hash: str | None = None
 
     @field_validator("symbol")
@@ -202,11 +240,44 @@ class BrokerPosition(BrokerModel):
             raise ValueError("opened_at must be timezone-aware")
         return self
 
+    @property
+    def signed_qty(self) -> float:
+        return self.quantity
+
+    @property
+    def position_side(self) -> PositionSide:
+        if self.quantity > 0:
+            return "long"
+        if self.quantity < 0:
+            return "short"
+        return "flat"
+
+    @property
+    def gross_exposure(self) -> float:
+        if self.market_value is not None:
+            return abs(self.market_value)
+        return abs(self.quantity * self.avg_entry_price)
+
+    @property
+    def net_exposure(self) -> float:
+        if self.market_value is not None:
+            return self.market_value
+        return self.quantity * self.avg_entry_price
+
+    @property
+    def long_exposure(self) -> float:
+        return self.gross_exposure if self.position_side == "long" else 0.0
+
+    @property
+    def short_exposure(self) -> float:
+        return self.gross_exposure if self.position_side == "short" else 0.0
+
 
 class BrokerProtectiveStop(BrokerModel):
     broker_order_id: str
     client_order_id: str
     symbol: str
+    side: BrokerSide = "sell"
     quantity: float = Field(gt=0)
     stop_price: float = Field(gt=0)
     status: BrokerOrderStatus
@@ -233,6 +304,10 @@ class BrokerProtectiveStop(BrokerModel):
     @property
     def is_open(self) -> bool:
         return self.status in OPEN_ORDER_STATUSES
+
+    @property
+    def protects_position_side(self) -> PositionSide:
+        return "long" if self.side == "sell" else "short"
 
 
 class BrokerStreamEvent(BrokerModel):

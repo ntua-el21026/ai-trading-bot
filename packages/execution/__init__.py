@@ -37,6 +37,12 @@ from packages.execution.scale_in import (
     evaluate_scale_in_eligibility,
     scale_in_evidence_from_result,
 )
+from packages.execution.side import (
+    SideOrderSemantics,
+    build_side_order_semantics,
+    can_open_position_side,
+    classify_position_side,
+)
 
 __all__ = [
     "DuplicateIntentKey",
@@ -54,12 +60,16 @@ __all__ = [
     "ScaleInIncident",
     "ScaleInStopAction",
     "ScaleInStopOutcome",
+    "SideOrderSemantics",
     "SymbolExposureState",
     "build_client_order_id_root",
+    "build_side_order_semantics",
     "build_add_on_stop_action",
     "check_aggregate_protection",
     "classify_open_order_role",
     "classify_symbol_open_orders",
+    "can_open_position_side",
+    "classify_position_side",
     "create_execution_intent",
     "create_scale_in_execution_intent",
     "duplicate_intent_key",

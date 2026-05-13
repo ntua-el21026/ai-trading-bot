@@ -42,3 +42,77 @@ scale_in:
   allow_stop_replacement: false
   allow_stop_cancel_before_scale_in: false
   block_if_protected_quantity_below_position_quantity: true
+
+validation:
+  frozen_validation_enabled: false
+  frozen_validation_start_allowed: false
+  flat_start_required: true
+  carry_in_positions_allowed: false
+  validation_clock_started: false
+  validation_window_weeks: 8
+  active_spec_version: "v0.5"
+  active_mode: "paper"
+  live_trading_enabled: false
+  autonomous_live_execution_enabled: false
+  level4_ready: false
+
+  universe:
+    include_full_allowed_universe: true
+    force_trades: false
+
+  long_policy:
+    enabled: true
+    active_breakout_lookback: 20
+    research_breakout_lookbacks:
+      - 55
+    same_day_reentry_forbidden: true
+    early_close_new_entries_allowed: false
+
+  short_policy:
+    enabled_at_validation_start: false
+    implementation_present: true
+    activation_requires_future_rehearsal: true
+
+  scale_in_policy:
+    implementation_present: true
+    enabled_at_validation_start: false
+    stage_gate_required: true
+    required_clean_scheduled_runs_before_enable: 10
+    require_real_broker_additive_stop_proof: true
+
+  ai_policy:
+    enabled: true
+    negative_only: true
+    ai_positive_ranking_enabled: false
+    ai_may_hard_block: true
+    ai_may_reduce_size: true
+    ai_may_increase_size: false
+    ai_may_authorize_trade: false
+    neutral_fallback_on_error: true
+    max_ai_runs_per_day: 2
+    max_ai_calls_per_day: 10
+    max_symbols_per_run: 5
+    max_articles_per_symbol: 3
+
+  exits:
+    protective_stop: true
+    fail_fast_exit: true
+    technical_exit_ema10: true
+    time_stop: true
+    app_level_trailing_stop: false
+
+  schedule:
+    data_refresh_et: "08:25"
+    bod_reconciliation_et: "09:20"
+    plan_build_et: "09:35"
+    entry_window_start_et: "09:45"
+    entry_window_end_et: "10:30"
+    unfilled_entry_cancel_et: "11:00"
+    eod_signal_et: "16:10"
+    ai_research_et: "16:30"
+    trade_plan_snapshot_et: "17:00"
+    eod_reconciliation_et: "20:00"
+    daily_report_et: "20:10"
+    weekly_report_day: "FRI"
+    weekly_report_et: "20:20"
+    skip_early_close_new_entries: true

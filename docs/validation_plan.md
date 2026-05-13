@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`. Milestones 17-27
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`. Milestones 17-27
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -26,7 +26,10 @@ aggregate existing evidence only; they do not start paper trading, activate sche
 orders, call providers, send alerts, or deploy.
 Milestone 43 adds deterministic scale-in policy coverage with fake/stub clients only. It does not
 start frozen validation, activate schedules, perform broker writes, call providers, or claim Level 4
-readiness.
+readiness. Milestone 44 creates the v0.5 frozen-validation spec, adds dormant paper-only short-side
+architecture, disables scale-ins at validation T0, requires a flat broker baseline before M45, and
+keeps M45 blocked until the non-IEX primary signal-data gate is verified or explicitly waived by
+governance.
 
 ## Foundation Checks
 
@@ -308,6 +311,22 @@ Later milestones must add production managed database activity wiring, real prov
 integration, controlled paper trading execution, paper trading evidence, and Level 4 readiness
 review required by the latest spec. Backtests and paper trading must not be represented as proof of
 live profitability.
+
+## Milestone 44 Frozen Readiness
+
+M44 prepares the frozen validation configuration but does not start the validation clock. The M44
+baseline packet records zero open positions, zero open orders, and clean reconciliation after
+approved risk-reducing cleanup of AAPL, MSFT, and XLK paper holds.
+
+Frozen validation under v0.5 starts long-only. The full configured long universe remains eligible,
+short-side architecture is present but disabled, and the short-eligible paper subset is limited to
+SPY, QQQ, DIA, and IWM for any future separately approved rehearsal. Scale-ins are implemented but
+disabled at validation start until the stage gate records at least 10 clean scheduled runs and real
+broker additive-stop proof.
+
+M45 remains NO-GO until the non-IEX primary signal-data gate is verified or explicitly waived. M44
+also freezes negative-only AI/news behavior for the first window: AI may block, reduce, and report,
+but may not authorize trades, shorts, scale-ins, or larger sizing.
 
 ## Current Assumptions
 

@@ -1,6 +1,6 @@
 # Level 4 Micro-Live Readiness
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 27 adds a controlled paper operations readiness harness while preserving the readiness boundary.
 It does not enable live trading, autonomous live execution, live credentials, real Alpaca calls in

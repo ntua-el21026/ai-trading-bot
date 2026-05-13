@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`. Milestone 27 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`. Milestone 27 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does

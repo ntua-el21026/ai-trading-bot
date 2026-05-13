@@ -37,3 +37,59 @@ risk_level_4_expanded:
   allow_crypto: false
   allow_prediction_markets: false
   require_protective_stop: true
+
+shorts:
+  enabled: false
+  paper_only_short_exposure: true
+  allow_live_shorting: false
+  require_explicit_short_activation: true
+  eligible_symbols:
+    - SPY
+    - QQQ
+    - DIA
+    - IWM
+  allow_individual_stock_shorts: false
+  allow_sector_etf_shorts: false
+  allow_leveraged_etf_shorts: false
+  allow_inverse_etf_shorts: false
+  require_shortable: true
+  require_easy_to_borrow: true
+  require_marginable: true
+  require_account_shorting_enabled: true
+  require_whole_shares: true
+  max_open_short_symbols: 1
+  max_entries_per_symbol: 1
+  max_add_entries_per_symbol: 0
+  max_total_symbol_qty: 1
+  max_symbol_notional_usd: 1000
+  max_portfolio_short_notional_usd: 1000
+  max_portfolio_short_exposure_pct: 0.01
+  max_net_short_exposure_pct: 0.01
+  max_short_risk_per_trade_pct: 0.0025
+  max_portfolio_short_risk_at_stop_pct: 0.005
+  allow_stop_replacement: false
+  allow_partial_discretionary_cover: false
+  require_buy_stop_for_filled_short_qty: true
+
+validation_risk:
+  max_gross_exposure_pct: 0.20
+  max_net_exposure_pct: 0.20
+  max_deployable_capital_pct: 0.20
+  max_open_positions: 4
+  max_position_size_pct_etf: 0.04
+  max_position_size_pct_stock: 0.03
+  max_risk_per_trade_pct: 0.0035
+  max_symbol_risk_at_stop_pct_after_scalein: 0.005
+  max_portfolio_risk_at_stop_pct: 0.01
+  max_sector_exposure_pct: 0.08
+  max_tech_complex_exposure_pct: 0.10
+  max_broad_beta_overlap_pct: 0.08
+  max_new_entries_per_day: 2
+  max_scale_ins_per_day_at_start: 0
+  max_broker_writes_per_day: 10
+  max_unresolved_critical_incidents: 0
+  max_daily_loss_pct: 0.01
+  max_weekly_loss_pct: 0.02
+  max_monthly_loss_pct: 0.04
+  soft_drawdown_review_pct: 0.04
+  hard_drawdown_fail_pct: 0.06

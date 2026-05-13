@@ -229,6 +229,20 @@ def _append_position_mismatches(
     for stop in protective_stops:
         stops_by_symbol[stop.symbol].append(stop)
 
+    for stop in protective_stops:
+        if stop.is_open and stop.symbol not in broker_by_symbol:
+            mismatches.append(
+                _mismatch(
+                    "orphan_protective_stop_without_position",
+                    "critical",
+                    "open protective stop exists without a broker position",
+                    symbol=stop.symbol,
+                    client_order_id=stop.client_order_id,
+                    broker_order_id=stop.broker_order_id,
+                    details={"stop_quantity": f"{stop.quantity:.6f}", "stop_side": stop.side},
+                )
+            )
+
     for symbol, broker_position in broker_by_symbol.items():
         if broker_position.asset_class not in SUPPORTED_BROKER_ASSET_CLASSES:
             mismatches.append(
@@ -249,6 +263,12 @@ def _append_position_mismatches(
                     symbol=symbol,
                     details={"broker_quantity": f"{broker_position.quantity:.6f}"},
                 )
+            )
+            _append_short_protective_stop_mismatch(
+                mismatches,
+                broker_position=broker_position,
+                protective_stops=tuple(stops_by_symbol.get(symbol, ())),
+                quantity_tolerance=quantity_tolerance,
             )
         internal_position = internal_by_symbol.get(symbol)
         if internal_position is None and broker_position.quantity != 0:
@@ -344,9 +364,22 @@ def _append_protective_stop_mismatch(
     confirmed_stops = [
         stop
         for stop in protective_stops
-        if stop.confirmed and stop.is_open
+        if stop.confirmed and stop.is_open and stop.side == "sell"
     ]
     protected_quantity_sum = sum(stop.quantity for stop in confirmed_stops)
+    if broker_position.quantity > 0 and protected_quantity_sum > broker_position.quantity + 1e-6:
+        mismatches.append(
+            _mismatch(
+                "oversubscribed_protective_stop_quantity",
+                "critical",
+                "open protective stop quantity exceeds the open long position quantity",
+                symbol=broker_position.symbol,
+                details={
+                    "broker_position_quantity": f"{broker_position.quantity:.6f}",
+                    "protected_quantity_sum": f"{protected_quantity_sum:.6f}",
+                },
+            )
+        )
     if protected_quantity_sum >= broker_position.quantity:
         return
     opened_at = internal_position.opened_at or broker_position.opened_at
@@ -368,6 +401,36 @@ def _append_protective_stop_mismatch(
             message,
             symbol=broker_position.symbol,
             details=details,
+        )
+    )
+
+
+def _append_short_protective_stop_mismatch(
+    mismatches: list[ReconciliationMismatch],
+    *,
+    broker_position: BrokerPosition,
+    protective_stops: tuple[BrokerProtectiveStop, ...],
+    quantity_tolerance: float,
+) -> None:
+    confirmed_buy_stops = [
+        stop
+        for stop in protective_stops
+        if stop.confirmed and stop.is_open and stop.side == "buy"
+    ]
+    protected_quantity_sum = sum(stop.quantity for stop in confirmed_buy_stops)
+    required_quantity = abs(broker_position.quantity)
+    if protected_quantity_sum + quantity_tolerance >= required_quantity:
+        return
+    mismatches.append(
+        _mismatch(
+            "short_protective_stop_missing",
+            "critical",
+            "open short position lacks sufficient verified protective buy-stop quantity",
+            symbol=broker_position.symbol,
+            details={
+                "open_short_quantity": f"{required_quantity:.6f}",
+                "protected_buy_stop_quantity_sum": f"{protected_quantity_sum:.6f}",
+            },
         )
     )
 
@@ -456,7 +519,7 @@ def _incident_from_mismatch(mismatch: ReconciliationMismatch) -> ReconciliationI
 
 
 def _recommended_action(mismatch: ReconciliationMismatch) -> IncidentActionRecommendation:
-    if mismatch.mismatch_type == "missing_protective_stop":
+    if mismatch.mismatch_type in {"missing_protective_stop", "short_protective_stop_missing"}:
         age_seconds = mismatch.details.get("age_seconds")
         if age_seconds is not None:
             flatten_after_seconds = float(mismatch.details.get("flatten_after_seconds", "60"))

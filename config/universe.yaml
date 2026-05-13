@@ -33,3 +33,27 @@ research_universe:
   include_major_etfs: true
   survivorship_bias_warning_required: true
   point_in_time_universe_preferred: true
+
+universe_buckets:
+  broad_etfs:
+    - SPY
+    - QQQ
+    - DIA
+    - IWM
+  sector_etfs:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+  single_name_mega_caps:
+    - AAPL
+    - MSFT
+    - NVDA
+    - AMZN
+    - META
+    - GOOGL
+  short_eligible_broad_etfs:
+    - SPY
+    - QQQ
+    - DIA
+    - IWM

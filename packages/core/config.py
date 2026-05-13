@@ -178,6 +178,174 @@ class ScaleInConfig(StrictModel):
         return self
 
 
+class ValidationUniversePolicy(StrictModel):
+    include_full_allowed_universe: bool
+    force_trades: bool
+
+
+class ValidationLongPolicy(StrictModel):
+    enabled: bool
+    active_breakout_lookback: int = Field(gt=0)
+    research_breakout_lookbacks: tuple[int, ...]
+    same_day_reentry_forbidden: bool
+    early_close_new_entries_allowed: bool
+
+    @model_validator(mode="after")
+    def validate_long_policy(self) -> Self:
+        if not self.enabled:
+            raise ValueError("v0.5 frozen validation starts with long policy enabled")
+        if self.active_breakout_lookback != 20:
+            raise ValueError("v0.5 frozen validation active breakout must be 20D")
+        if 55 not in self.research_breakout_lookbacks:
+            raise ValueError("v0.5 must keep 55D breakout research-only")
+        if not self.same_day_reentry_forbidden:
+            raise ValueError("same-day re-entry must be forbidden at validation start")
+        if self.early_close_new_entries_allowed:
+            raise ValueError("early-close new entries must be disabled at validation start")
+        return self
+
+
+class ValidationShortPolicy(StrictModel):
+    enabled_at_validation_start: bool
+    implementation_present: bool
+    activation_requires_future_rehearsal: bool
+
+    @model_validator(mode="after")
+    def validate_short_policy(self) -> Self:
+        if self.enabled_at_validation_start:
+            raise ValueError("shorts must remain disabled at validation start")
+        if not self.implementation_present:
+            raise ValueError("v0.5 requires dormant short-side implementation")
+        if not self.activation_requires_future_rehearsal:
+            raise ValueError("short activation requires a future rehearsal milestone")
+        return self
+
+
+class ValidationScaleInPolicy(StrictModel):
+    implementation_present: bool
+    enabled_at_validation_start: bool
+    stage_gate_required: bool
+    required_clean_scheduled_runs_before_enable: int = Field(ge=0)
+    require_real_broker_additive_stop_proof: bool
+
+    @model_validator(mode="after")
+    def validate_scale_in_policy(self) -> Self:
+        if not self.implementation_present:
+            raise ValueError("scale-in implementation must remain present")
+        if self.enabled_at_validation_start:
+            raise ValueError("scale-ins must be disabled at validation start")
+        if not self.stage_gate_required:
+            raise ValueError("scale-in enablement requires a stage gate")
+        if self.required_clean_scheduled_runs_before_enable < 10:
+            raise ValueError("scale-in stage gate requires at least 10 clean scheduled runs")
+        if not self.require_real_broker_additive_stop_proof:
+            raise ValueError("scale-in stage gate requires real broker additive-stop proof")
+        return self
+
+
+class ValidationAiPolicy(StrictModel):
+    enabled: bool
+    negative_only: bool
+    ai_positive_ranking_enabled: bool
+    ai_may_hard_block: bool
+    ai_may_reduce_size: bool
+    ai_may_increase_size: bool
+    ai_may_authorize_trade: bool
+    neutral_fallback_on_error: bool
+    max_ai_runs_per_day: int = Field(ge=0)
+    max_ai_calls_per_day: int = Field(ge=0)
+    max_symbols_per_run: int = Field(gt=0)
+    max_articles_per_symbol: int = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_validation_ai(self) -> Self:
+        if not self.enabled:
+            raise ValueError("validation AI policy must be enabled as a risk overlay")
+        if not self.negative_only:
+            raise ValueError("validation AI must be negative-only")
+        if self.ai_positive_ranking_enabled:
+            raise ValueError("AI positive ranking must be disabled in the frozen window")
+        if not self.ai_may_hard_block or not self.ai_may_reduce_size:
+            raise ValueError("AI must be able to block or reduce risk")
+        if self.ai_may_increase_size or self.ai_may_authorize_trade:
+            raise ValueError("AI cannot increase size or authorize trades")
+        if not self.neutral_fallback_on_error:
+            raise ValueError("AI provider failures must fall back to neutral behavior")
+        return self
+
+
+class ValidationExitPolicy(StrictModel):
+    protective_stop: bool
+    fail_fast_exit: bool
+    technical_exit_ema10: bool
+    time_stop: bool
+    app_level_trailing_stop: bool
+
+    @model_validator(mode="after")
+    def validate_exits(self) -> Self:
+        if not self.protective_stop:
+            raise ValueError("protective stops are mandatory")
+        if not self.fail_fast_exit or not self.technical_exit_ema10 or not self.time_stop:
+            raise ValueError("fail-fast, EMA10 technical, and time-stop exits must be active")
+        if self.app_level_trailing_stop:
+            raise ValueError("app-level trailing stop is disabled at validation start")
+        return self
+
+
+class ValidationSchedulePolicy(StrictModel):
+    data_refresh_et: str
+    bod_reconciliation_et: str
+    plan_build_et: str
+    entry_window_start_et: str
+    entry_window_end_et: str
+    unfilled_entry_cancel_et: str
+    eod_signal_et: str
+    ai_research_et: str
+    trade_plan_snapshot_et: str
+    eod_reconciliation_et: str
+    daily_report_et: str
+    weekly_report_day: Literal["MON", "TUE", "WED", "THU", "FRI"]
+    weekly_report_et: str
+    skip_early_close_new_entries: bool
+
+
+class ValidationConfig(StrictModel):
+    frozen_validation_enabled: bool
+    frozen_validation_start_allowed: bool
+    flat_start_required: bool
+    carry_in_positions_allowed: bool
+    validation_clock_started: bool
+    validation_window_weeks: int = Field(gt=0)
+    active_spec_version: Literal["v0.5"]
+    active_mode: Literal["paper"]
+    live_trading_enabled: bool
+    autonomous_live_execution_enabled: bool
+    level4_ready: bool
+    universe: ValidationUniversePolicy
+    long_policy: ValidationLongPolicy
+    short_policy: ValidationShortPolicy
+    scale_in_policy: ValidationScaleInPolicy
+    ai_policy: ValidationAiPolicy
+    exits: ValidationExitPolicy
+    schedule: ValidationSchedulePolicy
+
+    @model_validator(mode="after")
+    def validate_frozen_start_boundaries(self) -> Self:
+        if self.frozen_validation_enabled or self.frozen_validation_start_allowed:
+            raise ValueError("M44 must not enable or allow frozen validation start")
+        if not self.flat_start_required:
+            raise ValueError("v0.5 requires a flat broker baseline before validation")
+        if self.carry_in_positions_allowed:
+            raise ValueError("carry-in positions are not allowed at validation start")
+        if self.validation_clock_started:
+            raise ValueError("M44 must not start the validation clock")
+        if self.live_trading_enabled or self.autonomous_live_execution_enabled:
+            raise ValueError("validation config cannot enable live or autonomous live execution")
+        if self.level4_ready:
+            raise ValueError("Level 4 readiness cannot be claimed before frozen validation")
+        return self
+
+
 class LiveUniverseConfig(StrictModel):
     symbols: tuple[str, ...]
     min_price: float = Field(gt=0)
@@ -227,6 +395,23 @@ class ResearchUniverseConfig(StrictModel):
     point_in_time_universe_preferred: bool
 
 
+class UniverseBucketsConfig(StrictModel):
+    broad_etfs: tuple[str, ...]
+    sector_etfs: tuple[str, ...]
+    single_name_mega_caps: tuple[str, ...]
+    short_eligible_broad_etfs: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def validate_buckets(self) -> Self:
+        expected_short = ("SPY", "QQQ", "DIA", "IWM")
+        if self.short_eligible_broad_etfs != expected_short:
+            raise ValueError("v0.5 short-eligible universe must be SPY/QQQ/DIA/IWM only")
+        for symbol in (*self.broad_etfs, *self.sector_etfs, *self.single_name_mega_caps):
+            if symbol != symbol.upper():
+                raise ValueError("universe bucket symbols must be uppercase")
+        return self
+
+
 class StrategyConfig(StrictModel):
     name: str
     trend_fast_ma: int = Field(gt=0)
@@ -259,6 +444,44 @@ class StrategyConfig(StrictModel):
         if self.atr_pct_min >= self.atr_pct_max:
             raise ValueError("atr_pct_min must be less than atr_pct_max")
         return self
+
+
+class ValidationStrategyConfig(StrictModel):
+    active_breakout_lookback: int = Field(gt=0)
+    research_breakout_lookbacks: tuple[int, ...]
+    same_day_reentry_forbidden: bool
+    early_close_new_entries_allowed: bool
+    force_trades: bool
+    active_long_filters: tuple[str, ...]
+    rejection_reasons: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def validate_validation_strategy(self) -> Self:
+        required_rejections = {
+            "early_close_session",
+            "execution_budget_exhausted",
+            "correlation_cluster_cap",
+            "same_day_reentry_forbidden",
+            "scale_in_stage_gate_not_met",
+        }
+        if self.active_breakout_lookback != 20:
+            raise ValueError("20D breakout must be the active frozen validation breakout")
+        if 55 not in self.research_breakout_lookbacks:
+            raise ValueError("55D breakout must remain research-only")
+        if not self.same_day_reentry_forbidden:
+            raise ValueError("same-day re-entry must be forbidden")
+        if self.early_close_new_entries_allowed:
+            raise ValueError("early-close new entries must be disabled")
+        if self.force_trades:
+            raise ValueError("frozen validation must not force trades")
+        missing = required_rejections.difference(self.rejection_reasons)
+        if missing:
+            raise ValueError(f"missing validation rejection reasons: {sorted(missing)}")
+        return self
+
+
+class ValidationExitsConfig(ValidationExitPolicy):
+    pass
 
 
 class RegimeConfig(StrictModel):
@@ -312,6 +535,108 @@ class RiskLevelConfig(StrictModel):
             raise ValueError(f"v0.1 forbidden risk flags enabled: {enabled}")
         if not self.require_protective_stop:
             raise ValueError("protective stops are required")
+        return self
+
+
+class ShortsConfig(StrictModel):
+    enabled: bool
+    paper_only_short_exposure: bool
+    allow_live_shorting: bool
+    require_explicit_short_activation: bool
+    eligible_symbols: tuple[str, ...]
+    allow_individual_stock_shorts: bool
+    allow_sector_etf_shorts: bool
+    allow_leveraged_etf_shorts: bool
+    allow_inverse_etf_shorts: bool
+    require_shortable: bool
+    require_easy_to_borrow: bool
+    require_marginable: bool
+    require_account_shorting_enabled: bool
+    require_whole_shares: bool
+    max_open_short_symbols: int = Field(ge=0)
+    max_entries_per_symbol: int = Field(ge=0)
+    max_add_entries_per_symbol: int = Field(ge=0)
+    max_total_symbol_qty: int = Field(ge=0)
+    max_symbol_notional_usd: float = Field(gt=0)
+    max_portfolio_short_notional_usd: float = Field(gt=0)
+    max_portfolio_short_exposure_pct: float = Field(gt=0, le=1)
+    max_net_short_exposure_pct: float = Field(gt=0, le=1)
+    max_short_risk_per_trade_pct: float = Field(gt=0, le=1)
+    max_portfolio_short_risk_at_stop_pct: float = Field(gt=0, le=1)
+    allow_stop_replacement: bool
+    allow_partial_discretionary_cover: bool
+    require_buy_stop_for_filled_short_qty: bool
+
+    @model_validator(mode="after")
+    def validate_short_safety(self) -> Self:
+        if not self.paper_only_short_exposure:
+            raise ValueError("short capability must be paper-only")
+        if self.allow_live_shorting:
+            raise ValueError("live shorting is not allowed")
+        if not self.require_explicit_short_activation:
+            raise ValueError("short activation requires explicit future approval")
+        if self.eligible_symbols != ("SPY", "QQQ", "DIA", "IWM"):
+            raise ValueError("initial short universe must be SPY/QQQ/DIA/IWM only")
+        forbidden = {
+            "allow_individual_stock_shorts": self.allow_individual_stock_shorts,
+            "allow_sector_etf_shorts": self.allow_sector_etf_shorts,
+            "allow_leveraged_etf_shorts": self.allow_leveraged_etf_shorts,
+            "allow_inverse_etf_shorts": self.allow_inverse_etf_shorts,
+            "allow_stop_replacement": self.allow_stop_replacement,
+            "allow_partial_discretionary_cover": self.allow_partial_discretionary_cover,
+        }
+        enabled = [name for name, value in forbidden.items() if value]
+        if enabled:
+            raise ValueError(f"forbidden short flags enabled: {enabled}")
+        required = {
+            "require_shortable": self.require_shortable,
+            "require_easy_to_borrow": self.require_easy_to_borrow,
+            "require_marginable": self.require_marginable,
+            "require_account_shorting_enabled": self.require_account_shorting_enabled,
+            "require_whole_shares": self.require_whole_shares,
+            "require_buy_stop_for_filled_short_qty": self.require_buy_stop_for_filled_short_qty,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise ValueError(f"required short gates disabled: {missing}")
+        if self.max_add_entries_per_symbol != 0:
+            raise ValueError("short add-on entries are disabled in v0.5")
+        if self.max_total_symbol_qty != 1:
+            raise ValueError("short total symbol quantity cap must be one share")
+        return self
+
+
+class ValidationRiskConfig(StrictModel):
+    max_gross_exposure_pct: float = Field(gt=0, le=1)
+    max_net_exposure_pct: float = Field(gt=0, le=1)
+    max_deployable_capital_pct: float = Field(gt=0, le=1)
+    max_open_positions: int = Field(gt=0)
+    max_position_size_pct_etf: float = Field(gt=0, le=1)
+    max_position_size_pct_stock: float = Field(gt=0, le=1)
+    max_risk_per_trade_pct: float = Field(gt=0, le=1)
+    max_symbol_risk_at_stop_pct_after_scalein: float = Field(gt=0, le=1)
+    max_portfolio_risk_at_stop_pct: float = Field(gt=0, le=1)
+    max_sector_exposure_pct: float = Field(gt=0, le=1)
+    max_tech_complex_exposure_pct: float = Field(gt=0, le=1)
+    max_broad_beta_overlap_pct: float = Field(gt=0, le=1)
+    max_new_entries_per_day: int = Field(ge=0)
+    max_scale_ins_per_day_at_start: int = Field(ge=0)
+    max_broker_writes_per_day: int = Field(ge=0)
+    max_unresolved_critical_incidents: int = Field(ge=0)
+    max_daily_loss_pct: float = Field(gt=0, le=1)
+    max_weekly_loss_pct: float = Field(gt=0, le=1)
+    max_monthly_loss_pct: float = Field(gt=0, le=1)
+    soft_drawdown_review_pct: float = Field(gt=0, le=1)
+    hard_drawdown_fail_pct: float = Field(gt=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_validation_risk(self) -> Self:
+        if self.max_scale_ins_per_day_at_start != 0:
+            raise ValueError("scale-ins are disabled at validation start")
+        if self.max_unresolved_critical_incidents != 0:
+            raise ValueError("validation start requires zero unresolved critical incidents")
+        if self.soft_drawdown_review_pct >= self.hard_drawdown_fail_pct:
+            raise ValueError("soft drawdown review threshold must be below hard fail threshold")
         return self
 
 
@@ -395,19 +720,49 @@ class AiConfig(StrictModel):
         return self
 
 
+class ValidationAiConfig(ValidationAiPolicy):
+    ai_may_authorize_scale_in: bool
+    ai_may_authorize_shorts: bool
+
+    @model_validator(mode="after")
+    def validate_ai_extensions(self) -> Self:
+        if not self.enabled:
+            raise ValueError("validation AI policy must be enabled as a risk overlay")
+        if not self.negative_only:
+            raise ValueError("validation AI must be negative-only")
+        if self.ai_positive_ranking_enabled:
+            raise ValueError("AI positive ranking must be disabled in the frozen window")
+        if not self.ai_may_hard_block or not self.ai_may_reduce_size:
+            raise ValueError("AI must be able to block or reduce risk")
+        if self.ai_may_increase_size or self.ai_may_authorize_trade:
+            raise ValueError("AI cannot increase size or authorize trades")
+        if not self.neutral_fallback_on_error:
+            raise ValueError("AI provider failures must fall back to neutral behavior")
+        if self.ai_may_authorize_scale_in or self.ai_may_authorize_shorts:
+            raise ValueError("AI cannot authorize scale-ins or shorts")
+        return self
+
+
 class AppConfig(StrictModel):
     system: SystemConfig
     temporal: TemporalConfig
     execution: ExecutionConfig
     protective_stop: ProtectiveStopConfig
     scale_in: ScaleInConfig
+    validation: ValidationConfig
     live_universe: LiveUniverseConfig
     research_universe: ResearchUniverseConfig
+    universe_buckets: UniverseBucketsConfig
     strategy: StrategyConfig
+    validation_strategy: ValidationStrategyConfig
+    validation_exits: ValidationExitsConfig
     regime: RegimeConfig
     risk_level_4_micro_live: RiskLevelConfig
     risk_level_4_expanded: RiskLevelConfig
+    shorts: ShortsConfig
+    validation_risk: ValidationRiskConfig
     ai: AiConfig
+    validation_ai: ValidationAiConfig
 
 
 def load_app_config(config_dir: str | Path = "config") -> AppConfig:

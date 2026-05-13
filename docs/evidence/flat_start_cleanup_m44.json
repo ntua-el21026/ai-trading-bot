@@ -1,0 +1,307 @@
+{
+  "flat_start_cleanup": {
+    "autonomous_live_execution_enabled": false,
+    "baseline_paper_equity": null,
+    "blockers": [],
+    "broker_writes": [
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "cancel_session_protective_stop",
+        "order_type": "stop",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "cancelled",
+        "symbol": "AAPL"
+      },
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "submit_cleanup_sell",
+        "order_type": "market",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "filled",
+        "symbol": "AAPL"
+      },
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "cancel_session_protective_stop",
+        "order_type": "stop",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "cancelled",
+        "symbol": "MSFT"
+      },
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "submit_cleanup_sell",
+        "order_type": "market",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "filled",
+        "symbol": "MSFT"
+      },
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "cancel_session_protective_stop",
+        "order_type": "stop",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "cancelled",
+        "symbol": "XLK"
+      },
+      {
+        "attempted": true,
+        "broker_order_id_present": true,
+        "client_order_id_present": true,
+        "fake_only": false,
+        "operation": "submit_cleanup_sell",
+        "order_type": "market",
+        "quantity": 1.0,
+        "side": "sell",
+        "status": "filled",
+        "symbol": "XLK"
+      }
+    ],
+    "broker_writes_performed": true,
+    "emergency_reprotection_results": [],
+    "final_broker_state": {
+      "account_reachable": true,
+      "baseline_paper_equity": null,
+      "clock_is_open": true,
+      "clock_reachable": true,
+      "expected_stop_order_count": 0,
+      "open_orders_count": 0,
+      "paper_endpoint_proven": true,
+      "positions_count": 0,
+      "symbol_states": [
+        {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "AAPL"
+        },
+        {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "MSFT"
+        },
+        {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "XLK"
+        }
+      ],
+      "unexpected_open_order_symbols": [],
+      "unexpected_position_symbols": []
+    },
+    "final_open_orders_count": 0,
+    "final_positions_count": 0,
+    "final_reconciliation": "flat_zero_positions_zero_open_orders",
+    "frozen_validation_started": false,
+    "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md",
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "m45_flat_start_ready": true,
+    "operator_approval_marker": "MILESTONE_44_FLAT_START_CLEANUP_AND_BASELINE",
+    "packet_id": "6e7168f4-a696-5eea-9564-d85012d59a58",
+    "per_symbol_cleanup_actions": [
+      {
+        "blockers": [],
+        "emergency_reprotection_result": null,
+        "final_state": {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "AAPL"
+        },
+        "pre_state": {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "AAPL"
+        },
+        "sell_result": "filled",
+        "stop_cancellation_result": "cancelled",
+        "strategy": "cancel_verified_stop_then_sell_current_long_quantity",
+        "symbol": "AAPL"
+      },
+      {
+        "blockers": [],
+        "emergency_reprotection_result": null,
+        "final_state": {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "MSFT"
+        },
+        "pre_state": {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "MSFT"
+        },
+        "sell_result": "filled",
+        "stop_cancellation_result": "cancelled",
+        "strategy": "cancel_verified_stop_then_sell_current_long_quantity",
+        "symbol": "MSFT"
+      },
+      {
+        "blockers": [],
+        "emergency_reprotection_result": null,
+        "final_state": {
+          "position_quantity": 0.0,
+          "position_status": "flat",
+          "protective_stop_broker_order_id_present": false,
+          "protective_stop_client_order_id_present": false,
+          "protective_stop_quantity": null,
+          "protective_stop_status": null,
+          "protective_stop_verified": false,
+          "symbol": "XLK"
+        },
+        "pre_state": {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "XLK"
+        },
+        "sell_result": "filled",
+        "stop_cancellation_result": "cancelled",
+        "strategy": "cancel_verified_stop_then_sell_current_long_quantity",
+        "symbol": "XLK"
+      }
+    ],
+    "pre_cleanup_broker_state": {
+      "account_reachable": true,
+      "baseline_paper_equity": null,
+      "clock_is_open": true,
+      "clock_reachable": true,
+      "expected_stop_order_count": 3,
+      "open_orders_count": 3,
+      "paper_endpoint_proven": true,
+      "positions_count": 3,
+      "symbol_states": [
+        {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "AAPL"
+        },
+        {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "MSFT"
+        },
+        {
+          "position_quantity": 1.0,
+          "position_status": "open_long",
+          "protective_stop_broker_order_id_present": true,
+          "protective_stop_client_order_id_present": true,
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "new",
+          "protective_stop_verified": true,
+          "symbol": "XLK"
+        }
+      ],
+      "unexpected_open_order_symbols": [],
+      "unexpected_position_symbols": []
+    },
+    "schedules_activated": false,
+    "sell_results": [
+      "filled",
+      "filled",
+      "filled"
+    ],
+    "short_orders_performed": false,
+    "spec_version": "v0.5",
+    "stop_cancellation_results": [
+      "cancelled",
+      "cancelled",
+      "cancelled"
+    ],
+    "timestamp": "2026-05-13T18:56:29.351166Z"
+  },
+  "milestone": "44",
+  "result": {
+    "blockers": [],
+    "broker_writes_performed": true,
+    "frozen_validation_started": false,
+    "go_no_go": "go",
+    "real_broker_writes_performed": true,
+    "real_read_only_calls_performed": true,
+    "schedules_activated": false,
+    "short_orders_performed": false,
+    "success": true
+  },
+  "_publication_redaction": {
+    "schema_version": 1,
+    "artifact_kind": "sanitized_historical_paper_operation_record",
+    "private_original": "Preserved in owner-controlled private backup outside the public repository.",
+    "identifier_scope": "Operational broker UUIDs and client-order identifiers are consistently synthetic; timestamps and digests inside these identifiers are synthetic.",
+    "financial_snapshot_scope": "Account equity, buying power and baseline paper equity are redacted to null where present.",
+    "financial_snapshot_json_pointers": [
+      "/flat_start_cleanup/baseline_paper_equity",
+      "/flat_start_cleanup/final_broker_state/baseline_paper_equity",
+      "/flat_start_cleanup/pre_cleanup_broker_state/baseline_paper_equity"
+    ],
+    "historical_status_scope": "Original result, incident, refusal, readiness and gate fields are retained; no new broker call, experiment or acceptance observation was performed.",
+    "qualification_scope": "This redacted historical record is not current broker state, current operational qualification, authorization to trade, or proof of profitability."
+  }
+}

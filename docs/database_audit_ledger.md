@@ -1,7 +1,7 @@
 # Database Audit Ledger
 
 Milestone 12 added the database/audit-ledger foundation required by
-`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 13 connects safe Temporal activity boundaries to the local/fake ledger repository layer.
 Workflow code still does not import repositories or database sessions directly.

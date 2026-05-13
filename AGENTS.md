@@ -18,7 +18,7 @@ The latest specification file is the source of truth for product behavior, syste
 At the time of writing, the latest expected spec is:
 
 ```text
-Autonomous_AI_Trading_Bot_SPEC_v0.4.md
+Autonomous_AI_Trading_Bot_SPEC_v0.5.md
 ```
 
 If a newer spec exists, use the newest versioned spec file instead.

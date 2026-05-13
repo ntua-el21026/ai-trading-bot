@@ -1,6 +1,6 @@
 # Level 4 Micro-Live Go/No-Go Template
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 This template is documentation-only. Completing it does not enable live trading.
 

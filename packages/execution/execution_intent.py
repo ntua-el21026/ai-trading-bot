@@ -8,7 +8,12 @@ from uuid import UUID
 from packages.core.config import ExecutionConfig, SystemConfig
 from packages.data.models import AssetClass
 from packages.execution.idempotency import build_client_order_id_root
-from packages.execution.models import ExecutionIntent, ExecutionSide
+from packages.execution.models import (
+    ExecutionIntent,
+    ExecutionOrderRole,
+    ExecutionSide,
+    PositionSide,
+)
 from packages.risk.models import RiskAssessment
 
 
@@ -29,6 +34,8 @@ def create_execution_intent(
     risk_assessment: RiskAssessment,
     system_config: SystemConfig,
     execution_config: ExecutionConfig,
+    position_side: PositionSide = "long",
+    order_role: ExecutionOrderRole = "initial_entry",
     temporal_workflow_id: str | None = None,
 ) -> ExecutionIntent:
     if not risk_assessment.approved:
@@ -47,8 +54,13 @@ def create_execution_intent(
         decision_id=decision_id,
         symbol=symbol,
         side=side,
+        position_side=position_side,
         asset_class=asset_class,
         quantity=quantity,
+        signed_quantity=-quantity if position_side == "short" else quantity,
+        order_role=order_role,
+        opening_effect="open_short" if position_side == "short" else "open_long",
+        protective_side="buy" if position_side == "short" else "sell",
         entry_order_type=execution_config.entry_order_type,
         limit_price=limit_price,
         stop_loss_price=stop_loss_price,

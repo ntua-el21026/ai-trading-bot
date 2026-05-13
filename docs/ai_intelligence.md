@@ -1,6 +1,6 @@
 # AI Intelligence
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 22 implements provider-first news and OpenAI structured-analysis boundaries while
 preserving offline defaults. AI is advisory and may analyze deterministic shortlist candidates,
@@ -130,6 +130,11 @@ It may not:
 - enable live trading;
 - override kill switches;
 - call broker APIs.
+
+Under v0.5 frozen-validation readiness, AI/news is negative-only for the first frozen window. AI
+may hard-block, reduce size, explain risk, and report evidence. It may not positively increase
+ranking, increase size, authorize entries, authorize scale-ins, authorize shorts, mutate strategy or
+risk policy, or gain broker authority.
 
 ## Fallback Policy
 

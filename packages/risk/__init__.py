@@ -18,6 +18,13 @@ from packages.risk.models import (
     RiskAssessment,
     RiskCheckResult,
 )
+from packages.risk.shorts import (
+    ShortAccountSnapshot,
+    ShortAssetSnapshot,
+    ShortEntryRiskInput,
+    ShortEntryRiskResult,
+    evaluate_short_entry_risk,
+)
 from packages.risk.sizing import calculate_position_size
 
 __all__ = [
@@ -27,8 +34,13 @@ __all__ = [
     "PositionSizingResult",
     "RiskAssessment",
     "RiskCheckResult",
+    "ShortAccountSnapshot",
+    "ShortAssetSnapshot",
+    "ShortEntryRiskInput",
+    "ShortEntryRiskResult",
     "calculate_position_size",
     "evaluate_new_risk_order",
+    "evaluate_short_entry_risk",
     "new_risk_allowed",
     "pause_all_autonomous_actions",
     "pause_new_risk",

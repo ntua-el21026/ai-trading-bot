@@ -1,6 +1,6 @@
 # Dashboard Control Plane
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 15 implements dashboard/control-plane contracts plus a ledger-backed backend read-model
 provider. Vercel is dashboard-only; autonomous execution workers must run outside Vercel.
@@ -35,6 +35,11 @@ explicit approval/gates.
 Milestone 43 does not add dashboard order-entry controls. Scale-in remains a deterministic
 server-side policy boundary only; the dashboard may report scale-in evidence in future read models
 but must not expose controls that submit add-on orders, cancel/replace stops, or bypass risk gates.
+
+Milestone 44 adds v0.5 frozen-readiness dashboard expectations. Dashboard/read-model surfaces may
+display frozen baseline, M45 blockers, validation-clock status, negative-only AI status, scale-in
+stage-gate status, shorts-enabled status, and signed exposure summaries. They remain read-only and
+must not expose broker, AI/news, Temporal, database, or alerting credentials.
 
 ## Implemented Contracts
 

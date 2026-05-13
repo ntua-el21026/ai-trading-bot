@@ -1,0 +1,94 @@
+{
+  "frozen_readiness": {
+    "active_exits": [
+      "protective_stop",
+      "fail_fast_exit",
+      "technical_exit_ema10",
+      "time_stop"
+    ],
+    "ai_negative_only_policy": {
+      "ai_may_authorize_trade": false,
+      "ai_may_hard_block": true,
+      "ai_may_increase_size": false,
+      "ai_may_reduce_size": true,
+      "ai_positive_ranking_enabled": false,
+      "enabled": true,
+      "max_ai_calls_per_day": 10,
+      "max_ai_runs_per_day": 2,
+      "max_articles_per_symbol": 3,
+      "max_symbols_per_run": 5,
+      "negative_only": true,
+      "neutral_fallback_on_error": true
+    },
+    "ai_news_policy_hash": "6502c1add95c31fb9d90af413f40f3956632b567c241d42d023177f63ae77143",
+    "autonomous_live_execution_enabled": false,
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified"
+    ],
+    "broker_baseline_packet_reference": "docs/evidence/flat_start_cleanup_m44.json",
+    "config_hash": "27313549d45a49fac04c0d4e8edc72cdbee0a7d743dedd5e11548ca6da235b39",
+    "dashboard_validation_view_status": "documented_not_frozen_started",
+    "data_provider_status": "non_iex_primary_signal_data_not_verified",
+    "execution_policy_hash": "8f8ca38df0e7d92acc7c7fa877a0cb5db9082c085ea2bbc016c8b99ab142314f",
+    "flat_start_achieved": true,
+    "flat_start_required": true,
+    "frozen_validation_started": false,
+    "git_commit_hash": "6197697",
+    "incident_rules": [
+      "No blind retry after ambiguous submit; reconcile by client_order_id first.",
+      "Missing protective stop pauses new risk and requires incident handling.",
+      "Same-day re-entry is forbidden after stop, exit, or cleanup.",
+      "Unexpected short position is a critical incident while shorts are disabled."
+    ],
+    "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md",
+    "latest_spec_version": "v0.5",
+    "level4_ready": false,
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "m45_readiness": false,
+    "non_iex_data_gate_status": "not_verified",
+    "open_orders_count": 0,
+    "operator_intervention_policy": [
+      "Operator approval required to start M45 frozen validation.",
+      "Risk-reducing cleanup remains separate from new-risk execution.",
+      "Manual broker review required for ambiguous broker state or missing stops."
+    ],
+    "packet_id": "0eedb606-6d88-5f56-bc98-fcfb779851e9",
+    "positions_count": 0,
+    "reconciliation_policy_hash": "ab133a21f1f74c14d6027cea51f3953a2697a3e60ed624a7fa8a7c052cbfc452",
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "reporting_schema_version_hash": "d80fc0614d0aaad44d57c4ccd66542e647015ff20dcece3c0d46aad420ac8177",
+    "risk_policy_hash": "82f0bf821cb45732e67e8b91a7eafa091623f11e972a952e6e6d092ca5d824da",
+    "scale_in_enabled_at_validation_start": false,
+    "scale_in_implementation_present": true,
+    "scale_in_stage_gate": {
+      "require_real_broker_additive_stop_proof": true,
+      "required_clean_scheduled_runs_before_enable": 10,
+      "stage_gate_required": true
+    },
+    "schedule_hash": "78adddf8cb51530b5d798b11886f8ea6ea3f39ba7f69000fe2ffc2d359ee773d",
+    "schedules_activated": false,
+    "short_universe": [
+      "SPY",
+      "QQQ",
+      "DIA",
+      "IWM"
+    ],
+    "shorts_enabled": false,
+    "shorts_implementation_present": true,
+    "strategy_policy_hash": "589283cab94b631f8ce5214dad842d1eb6dcdb483cda06fedf8a1e74b0ce7334",
+    "timestamp": "2026-05-13T18:56:53.624429Z",
+    "universe_hash": "6e0b629f03ad927e2b59a87ecd042d04adde08f1610288a5a258525a212495a9"
+  },
+  "milestone": "44",
+  "result": {
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified"
+    ],
+    "flat_start_achieved": true,
+    "frozen_validation_started": false,
+    "m45_readiness": false,
+    "schedules_activated": false,
+    "shorts_enabled": false
+  }
+}

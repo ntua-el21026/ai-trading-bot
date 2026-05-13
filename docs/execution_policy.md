@@ -1,6 +1,6 @@
 # Execution Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 06 implements passive execution-core and broker-reconciliation contracts:
 `ExecutionIntent`, client-order idempotency helpers, order lifecycle transition validation,
@@ -19,6 +19,9 @@ write-smoke gates are present. It is harness-only preparation unless separately 
 gates, and it is not actual paper trading, frozen paper evidence, or Level 4 readiness. Milestone
 43 adds deterministic paper-validation scale-in policy helpers and fake/stub coverage only. It
 performs no real broker writes, activates no schedules, and does not start frozen validation.
+Milestone 44 adds signed-position and side-aware order-role architecture, freezes validation-start
+scale-ins disabled, and records a flat-start cleanup baseline. It does not start frozen validation,
+enable live trading, enable autonomous execution, enable leverage, or perform real short orders.
 
 ## Foundation Defaults
 
@@ -51,8 +54,15 @@ performs no real broker writes, activates no schedules, and does not start froze
 - client order ID root;
 - status;
 - optional Temporal workflow ID.
+- side-aware metadata for v0.5 validation: position side, signed quantity, opening/closing effect,
+  order role, and protective side.
 
 `packages/execution/execution_intent.py` only creates an intent after an approved risk assessment.
+
+Long entries map to broker buy orders, long protective stops map to broker sell stops, and long
+exits/cleanup map to broker sells. Dormant short architecture maps short entries to broker sells,
+short protective stops to broker buy stops, and short covers to broker buys, but shorts are disabled
+by default and no real short broker writes are authorized in M44 or M45 start config.
 
 ## Idempotency
 
@@ -74,6 +84,10 @@ default tests.
 Milestone 16 exercises this idempotent client-order path through `FakeAlpacaClient` in the
 fake/local dry run only. It is not actual paper broker execution.
 
+The v0.5 broker submit path must not blindly retry after a timeout or ambiguous submit failure. It
+must query broker state by `client_order_id` and internal state by `execution_intent_id` before any
+resubmission decision. Ambiguity pauses new risk and produces incident evidence.
+
 ## Deterministic Scale-In Boundary
 
 `packages/execution/scale_in.py` defines the M43 scale-in policy boundary for paper validation.
@@ -94,6 +108,16 @@ The M43 stop policy is additive only. The existing protective stop remains intac
 fill, the execution path must submit and verify a separate protective stop for only the added
 quantity. The scale-in path must not cancel or replace existing stops unless a future spec version
 explicitly approves a separate stop-management policy.
+
+Under v0.5 frozen validation, scale-in implementation is retained but disabled at validation T0
+until a later stage gate proves clean scheduled runs and real additive-stop behavior.
+
+## v0.5 Frozen Exit Rules
+
+Frozen validation day 1 uses broker protective stops plus deterministic non-stop exits:
+fail-fast exit, EMA10 technical exit, and time stop. App-level trailing stops remain disabled
+initially. A stopped, exited, or cleaned symbol cannot be re-entered on the same trading day.
+Unfilled DAY entries must be cancelled or marked expired by the configured 11:00 ET policy.
 
 ## Order Lifecycle Abstractions
 

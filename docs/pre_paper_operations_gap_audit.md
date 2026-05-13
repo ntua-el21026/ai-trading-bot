@@ -1,6 +1,6 @@
 # Pre-Paper Operations Gap Audit
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 ## 1. Purpose
 
@@ -85,6 +85,11 @@ skips, but only under strict deterministic gates. Pending entries, ambiguous ord
 incidents, unprotected positions, missing add-on signals, and exceeded risk/exposure caps still
 block new risk. M43 performs no broker writes and starts no frozen validation.
 
+Milestone 44 creates v0.5 as the frozen-readiness source of truth, closes AAPL/MSFT/XLK through
+approved risk-reducing flat-start cleanup, keeps shorts default-disabled, disables scale-ins at
+validation T0, and leaves M45 blocked until non-IEX primary signal data is verified or explicitly
+waived.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:
@@ -99,7 +104,7 @@ Source-of-truth hierarchy confirmed:
 Primary governance, spec, docs, config, and implementation areas reviewed:
 
 - `AGENTS.md`
-- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`
+- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`
 - `README.md`
 - `.env.example`
 - `pyproject.toml`
@@ -328,7 +333,7 @@ Required closeout:
 ### A. Pre-Run Go/No-Go
 
 - [ ] Correct branch and commit recorded.
-- [ ] Latest spec identified as `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`, unless a newer
+- [ ] Latest spec identified as `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`, unless a newer
   versioned spec exists.
 - [ ] `.env` present locally if needed, untracked, and not printed.
 - [ ] Secrets not printed.
@@ -467,9 +472,9 @@ Leverage remains out of scope for v0.1 active validation:
 
 Milestone 28 is documentation, audit, and protocol only.
 
-No blocking spec contradiction was found during this audit. The repository remains aligned with
-`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md` and remains ready to proceed to a future
-implementation/wiring milestone for the first controlled paper session.
+No blocking spec contradiction was found during this audit. The repository now aligns to
+`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`; M45 remains blocked until the non-IEX primary
+signal-data gate is verified or explicitly waived.
 
 At Milestone 28, actual paper trading had not started. Current M35C evidence records that actual
 paper trading has now started through one controlled AAPL paper entry and verified protective stop.

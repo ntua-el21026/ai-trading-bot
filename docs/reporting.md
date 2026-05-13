@@ -1,6 +1,6 @@
 # Reporting
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 15 adds local/fake-safe reporting foundations. Reports are generated from supplied
 ledger/read-model snapshots, rendered deterministically, and persisted through the ledger repository.
@@ -30,6 +30,12 @@ Milestone 43 requires scale-in evidence and future frozen validation reports to 
 `cleanup`, and `incident_repair`. Reports must be able to record scale-in count, success/failure,
 total symbol quantity, protected quantity, scale-in incidents, and attribution notes when partial
 scale-in exists.
+
+Milestone 44 extends frozen-readiness reporting for v0.5. Frozen validation reports must include
+validation-clock fields, flat-start baseline reference, signed quantity/position side, gross/net
+long and short exposure, active exits, negative-only AI/news status, scale-in stage-gate status,
+shorts-enabled status, and M45 blocker status. Carry-in fields may exist for historical reporting,
+but the v0.5 validation start requires zero carry-in positions and zero open orders.
 
 ## Implemented
 

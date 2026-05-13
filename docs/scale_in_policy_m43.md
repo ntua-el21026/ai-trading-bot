@@ -1,10 +1,14 @@
 # Milestone 43 Scale-In Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 43 adds deterministic paper-validation scale-in support before the 8-week frozen paper
 validation starts. It does not start frozen validation, activate schedules, enable live trading,
 enable autonomous live execution, enable leverage, or grant AI broker authority.
+
+Milestone 44 keeps the scale-in implementation but disables scale-ins at v0.5 validation T0. A
+later stage gate must prove 10 clean scheduled runs, real broker additive-stop behavior, and no
+missing-stop, duplicate-order, or unresolved mismatch incident before scale-ins can be considered.
 
 ## Scope
 

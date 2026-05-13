@@ -1,6 +1,6 @@
 # Risk Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 06 implements deterministic risk-check contracts, position sizing, kill-switch state
 models, and passive broker reconciliation inputs. The implementation is passive: it approves or
@@ -17,6 +17,12 @@ live-disabled, autonomy-disabled, reconciliation-required, and protective-stop-r
 invariants before any broker write-capable path can be reached. Milestone 43 adds deterministic
 paper-validation scale-in caps and eligibility checks without weakening initial-entry safety or
 performing broker writes.
+
+Milestone 44 adds v0.5 frozen-validation risk defaults. Frozen validation starts long-only and flat,
+with scale-ins disabled at validation T0. Dormant short-side paper architecture exists, but
+`shorts.enabled=false` and real short broker writes remain forbidden in M44 and M45 start config.
+M45 readiness is blocked until non-IEX primary signal data is verified or explicitly waived by
+governance.
 
 ## Foundation Defaults
 
@@ -72,6 +78,24 @@ exposure, aggregate risk-at-stop, or portfolio risk-at-stop would exceed configu
 
 Scale-in also refuses when no deterministic add-on signal exists. AI/news output cannot authorize
 scale-in and cannot increase position size, alter stops, mutate risk limits, or bypass any gate.
+
+Under v0.5, scale-in implementation remains present but frozen validation starts with scale-ins
+disabled. Enabling scale-ins in a later paper stage requires at least 10 clean scheduled runs, real
+broker additive-stop proof, and no missing-stop, duplicate-order, or unresolved reconciliation
+incident.
+
+## Dormant Short-Side Risk Gates
+
+Short-side support is architecture-only at v0.5 validation start. A future short rehearsal must be
+paper-only, explicitly approved, and limited to the configured broad ETF subset: SPY, QQQ, DIA, and
+IWM. Individual-stock shorts, sector ETF shorts, leveraged ETF shorts, inverse ETF shorts, live
+shorting, leverage, and margin borrowing remain disabled.
+
+If shorts are enabled by a future milestone, every short candidate must pass side-aware gates:
+paper mode, eligible symbol, tradable/marginable/shortable/easy-to-borrow asset status, account
+shorting permission, whole-share quantity, no same-symbol long or pending entry, no ambiguous
+broker state, deterministic bearish signal, valid `ExecutionIntent`, and a protective buy-stop plan.
+An open short without aggregate verified buy-stop coverage is a critical incident.
 
 ## Broker Reconciliation Input
 

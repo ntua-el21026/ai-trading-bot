@@ -77,7 +77,8 @@ AI_Trading_Bot/
 │   │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
-│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.4.md
+│   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.4.md
+│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.5.md
 │   ├── checklists/
 │   │   ├── credential_separation_checklist.md
 │   │   ├── kill_switch_rearm_checklist.md
@@ -93,6 +94,8 @@ AI_Trading_Bot/
 │   │   ├── first_controlled_paper_session_launch_packet.json
 │   │   ├── first_controlled_paper_session_post_session_audit.json
 │   │   ├── first_controlled_paper_session_result.json
+│   │   ├── flat_start_cleanup_m44.json
+│   │   ├── frozen_readiness_m44.json
 │   │   ├── protected_position_monitoring_m36.json
 │   │   ├── repeated_controlled_batch_m40.json
 │   │   ├── repeated_controlled_batch_m40_preflight.json
@@ -137,6 +140,7 @@ AI_Trading_Bot/
 │   ├── first_controlled_paper_session_preflight.md
 │   ├── first_controlled_paper_session_real_gate_wiring.md
 │   ├── first_controlled_paper_session_wiring.md
+│   ├── frozen_validation_readiness_m44.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
 │   ├── paper_dry_run_orchestration.md
@@ -205,7 +209,8 @@ AI_Trading_Bot/
 │   │   ├── models.py
 │   │   ├── order_lifecycle.py
 │   │   ├── rejections.py
-│   │   └── scale_in.py
+│   │   ├── scale_in.py
+│   │   └── side.py
 │   ├── ledger/
 │   │   ├── __init__.py
 │   │   ├── connection.py
@@ -220,6 +225,7 @@ AI_Trading_Bot/
 │   │   ├── execution.py
 │   │   ├── first_session.py
 │   │   ├── fixtures.py
+│   │   ├── frozen_readiness.py
 │   │   ├── models.py
 │   │   ├── post_session_audit.py
 │   │   ├── preflight.py
@@ -241,6 +247,7 @@ AI_Trading_Bot/
 │   │   ├── checks.py
 │   │   ├── kill_switch.py
 │   │   ├── models.py
+│   │   ├── shorts.py
 │   │   └── sizing.py
 │   ├── strategy/
 │   │   ├── __init__.py
@@ -269,6 +276,7 @@ AI_Trading_Bot/
 │   ├── check_temporal_cloud_runtime.py
 │   ├── check_vercel_dashboard_preview.py
 │   ├── run_first_controlled_paper_session.py
+│   ├── run_flat_start_cleanup_m44.py
 │   ├── run_paper_dry_run.py
 │   ├── run_supervised_scheduled_paper_once.py
 │   ├── seed_temporal_schedules.py
@@ -321,6 +329,7 @@ AI_Trading_Bot/
 │       ├── test_ledger_connection_runtime.py
 │       ├── test_ledger_repositories.py
 │       ├── test_ledger_schema.py
+│       ├── test_m44_frozen_readiness.py
 │       ├── test_migration_runtime.py
 │       ├── test_news_provider_integration.py
 │       ├── test_openai_structured_analysis.py
@@ -357,4 +366,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 312
+Total directories: 46, Total files: 321

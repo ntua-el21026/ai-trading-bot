@@ -1,6 +1,6 @@
 # Paper Daily Report Template
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 This template is documentation-only. Paper trading is operational rehearsal and does not prove live
 profitability.

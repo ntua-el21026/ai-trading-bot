@@ -1,6 +1,6 @@
 # Paper Trading Runbook
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 27 adds a controlled paper operations readiness harness while paper trading remains disabled. The
 repository still does not implement actual paper trading operations, production dashboard
@@ -279,7 +279,7 @@ Environment rules:
 
 Complete this checklist before every paper session:
 
-- Confirm the latest spec version: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+- Confirm the latest spec version: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 - Confirm `git status --short` is clean or every dirty file is known and documented.
 - Confirm required tests pass:
   `uv run --group dev pytest tests/unit tests/temporal`.
@@ -841,6 +841,41 @@ M43 result:
 
 The M43 evidence packet is `docs/evidence/scale_in_policy_m43.json`. M44 must separately freeze the
 version set and explicitly start the 8-week validation clock if accepted.
+
+## Milestone 44 v0.5 Flat-Start Readiness
+
+Milestone 44 creates `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md` as the latest source of
+truth for the M45 frozen paper validation start gate. M44 does not start frozen validation,
+activate schedules, enable unattended operation, enable live trading, enable autonomous live
+execution, enable leverage, or claim Level 4 readiness.
+
+M44 flat-start cleanup result:
+
+- AAPL, MSFT, and XLK protected long paper holds were verified before cleanup.
+- The expected protective stop for each symbol was cancelled before selling that symbol.
+- One risk-reducing sell for the current long quantity was submitted for each symbol.
+- All three cleanup sells filled.
+- No emergency re-protection was required.
+- Final broker baseline is zero open orders, zero positions, and
+  `flat_zero_positions_zero_open_orders`.
+
+M44 frozen readiness result:
+
+- short-side architecture is implemented as paper-only, default-disabled capability;
+- M45 frozen validation starts long-only if later approved;
+- short-eligible paper subset for future rehearsal is SPY, QQQ, DIA, and IWM only;
+- scale-ins are implemented but disabled at validation T0;
+- AI/news is negative-only for the first frozen window;
+- 20D breakout is active and 55D remains research-only;
+- fail-fast, EMA10 technical exit, and time-stop exits are active;
+- app-level trailing remains disabled initially;
+- M45 remains blocked until the non-IEX primary signal-data gate is verified or explicitly waived.
+
+Evidence:
+
+- flat baseline: `docs/evidence/flat_start_cleanup_m44.json`;
+- frozen readiness: `docs/evidence/frozen_readiness_m44.json`;
+- readiness doc: `docs/frozen_validation_readiness_m44.md`.
 
 ## Frozen Paper Acceptance Criteria
 

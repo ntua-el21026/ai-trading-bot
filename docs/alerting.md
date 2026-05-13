@@ -1,6 +1,6 @@
 # Alerting
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 23 adds Telegram as the only real alert delivery channel for now. Email/Resend is
 intentionally deferred and is not required for this stage. Default tests and default activity wiring

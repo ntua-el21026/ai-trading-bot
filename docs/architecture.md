@@ -5,7 +5,7 @@ skeleton/activity, deterministic strategy, risk/execution-core, broker-reconcili
 intelligence, reporting/alerting, dashboard/control-plane, validation/testing, paper-operations,
 and Level 4 readiness documentation boundary architecture.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`. Current
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`. Current
 repository implementation is limited to Milestones 00-19 scaffolding and local/fake integration
 foundation: project metadata, safe configuration defaults, typed config loading, structured logging
 helpers, offline data contracts, deterministic feature utilities, universe filters, explicit-signal

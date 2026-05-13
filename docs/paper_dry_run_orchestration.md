@@ -1,6 +1,6 @@
 # Paper Dry-Run Orchestration
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
 
 Milestone 16 adds a fake/local end-to-end paper dry-run path. It is operational rehearsal only. It
 does not start actual paper trading, submit broker orders, call external services, or provide Level

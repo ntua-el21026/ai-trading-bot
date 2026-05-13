@@ -40,3 +40,19 @@ ai:
   ai_feedback_min_provider_coverage_rate: 0.60
   ai_feedback_max_fallback_rate: 0.35
   ai_feedback_max_missed_risk_false_negative_proxy_rate: 0.15
+
+validation_ai:
+  enabled: true
+  negative_only: true
+  ai_positive_ranking_enabled: false
+  ai_may_hard_block: true
+  ai_may_reduce_size: true
+  ai_may_increase_size: false
+  ai_may_authorize_trade: false
+  ai_may_authorize_scale_in: false
+  ai_may_authorize_shorts: false
+  neutral_fallback_on_error: true
+  max_ai_runs_per_day: 2
+  max_ai_calls_per_day: 10
+  max_symbols_per_run: 5
+  max_articles_per_symbol: 3

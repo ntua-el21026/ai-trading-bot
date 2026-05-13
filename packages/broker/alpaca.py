@@ -28,6 +28,8 @@ from packages.broker.models import (
     BrokerOperationStatus,
     BrokerOrder,
     BrokerOrderOperationResult,
+    BrokerOrderPurpose,
+    BrokerOrderRole,
     BrokerOrderStatus,
     BrokerOrderType,
     BrokerPosition,
@@ -451,6 +453,13 @@ class AlpacaPaperAdapter:
         try:
             order = map_alpaca_order(self._client.submit_order(request))
         except AlpacaClientError as exc:
+            if exc.ambiguous:
+                resolved_order = self._resolve_ambiguous_submit(intent.client_order_id_root)
+                if resolved_order is not None:
+                    return _result_from_existing_order(
+                        resolved_order,
+                        operation="submit_paper_entry_order",
+                    )
             return _order_failure(
                 "submit_paper_entry_order",
                 status=_status_from_error(exc),
@@ -472,6 +481,14 @@ class AlpacaPaperAdapter:
 
     def submit_order(self, intent: ExecutionIntent) -> BrokerOrderOperationResult:
         return self.submit_entry_order(intent)
+
+    def _resolve_ambiguous_submit(self, client_order_id: str) -> BrokerOrder | None:
+        """Resolve ambiguous submit state by broker client-order-id lookup before any retry."""
+
+        try:
+            return self.order_by_client_order_id(client_order_id)
+        except AlpacaClientError:
+            return None
 
     def cancel_order(self, client_order_id: str) -> BrokerOrderOperationResult:
         try:
@@ -643,6 +660,12 @@ def map_alpaca_account(
         equity=float(payload["equity"]),
         cash=float(payload["cash"]),
         buying_power=_optional_float(payload.get("buying_power")),
+        shorting_enabled=_optional_bool(payload.get("shorting_enabled")),
+        multiplier=_optional_float(payload.get("multiplier")),
+        long_market_value=_optional_float(payload.get("long_market_value")),
+        short_market_value=_optional_float(payload.get("short_market_value")),
+        initial_margin=_optional_float(payload.get("initial_margin")),
+        maintenance_margin=_optional_float(payload.get("maintenance_margin")),
         currency=str(payload.get("currency", "USD")).upper(),
         as_of=timestamp,
         raw_payload_hash=hash_payload(payload),
@@ -656,11 +679,15 @@ def map_alpaca_order(
 ) -> BrokerOrder:
     order_type = _order_type(order_payload.get("order_type") or order_payload.get("type"))
     status = _order_status(order_payload.get("status"))
+    side = _side(order_payload.get("side"))
+    purpose: BrokerOrderPurpose = (
+        "protective_stop" if order_type in {"stop", "stop_limit"} else "entry"
+    )
     return BrokerOrder(
         broker_order_id=str(order_payload["id"]),
         client_order_id=str(order_payload["client_order_id"]),
         symbol=str(order_payload["symbol"]).upper(),
-        side=_side(order_payload.get("side")),
+        side=side,
         asset_class=_asset_class(order_payload.get("asset_class")),
         quantity=float(order_payload["qty"]),
         filled_quantity=float(order_payload.get("filled_qty") or 0.0),
@@ -671,7 +698,8 @@ def map_alpaca_order(
         updated_at=_optional_datetime(order_payload.get("updated_at")),
         limit_price=_optional_float(order_payload.get("limit_price")),
         stop_price=_optional_float(order_payload.get("stop_price")),
-        purpose="protective_stop" if order_type in {"stop", "stop_limit"} else "entry",
+        purpose=purpose,
+        role=_broker_order_role(side=side, order_type=order_type, purpose=purpose),
         raw_payload_hash=raw_payload_hash or hash_payload(order_payload),
     )
 
@@ -726,6 +754,7 @@ def map_alpaca_protective_stop(payload: Mapping[str, Any]) -> BrokerProtectiveSt
         broker_order_id=order.broker_order_id,
         client_order_id=order.client_order_id,
         symbol=order.symbol,
+        side=order.side,
         quantity=order.quantity,
         stop_price=order.stop_price,
         status=order.status,
@@ -1016,6 +1045,19 @@ def _optional_float(value: object) -> float | None:
     return float(value)
 
 
+def _optional_bool(value: object) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "yes"}:
+        return True
+    if normalized in {"false", "0", "no"}:
+        return False
+    return None
+
+
 def _required_float(value: object, field_name: str) -> float:
     parsed = _optional_float(value)
     if parsed is None:
@@ -1027,6 +1069,27 @@ def _side(value: object) -> BrokerSide:
     if value not in {"buy", "sell"}:
         raise ValueError(f"unsupported Alpaca side: {value}")
     return cast(BrokerSide, value)
+
+
+def _broker_order_role(
+    *,
+    side: BrokerSide,
+    order_type: BrokerOrderType,
+    purpose: str,
+) -> BrokerOrderRole:
+    if purpose == "protective_stop" and side == "sell":
+        return "initial_protective_stop"
+    if purpose == "protective_stop" and side == "buy":
+        return "short_protective_stop"
+    if purpose == "entry" and side == "buy":
+        return "initial_entry"
+    if purpose == "entry" and side == "sell":
+        return "short_entry"
+    if purpose == "cleanup":
+        return "cleanup"
+    if purpose == "incident_repair":
+        return "incident_repair"
+    return "unknown_or_ambiguous"
 
 
 def _order_type(value: object) -> BrokerOrderType:

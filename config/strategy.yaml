@@ -26,3 +26,32 @@ strategy:
   technical_exit_confirm_closes: 2
   time_stop_days: 20
   fail_fast_exit_days: 5
+
+validation_strategy:
+  active_breakout_lookback: 20
+  research_breakout_lookbacks:
+    - 55
+  same_day_reentry_forbidden: true
+  early_close_new_entries_allowed: false
+  force_trades: false
+  active_long_filters:
+    - close_above_sma50
+    - sma50_above_sma200
+    - volume_ratio20
+    - relative_strength63
+    - atr_band
+    - price_liquidity
+    - earnings_blackout
+  rejection_reasons:
+    - early_close_session
+    - execution_budget_exhausted
+    - correlation_cluster_cap
+    - same_day_reentry_forbidden
+    - scale_in_stage_gate_not_met
+
+validation_exits:
+  protective_stop: true
+  fail_fast_exit: true
+  technical_exit_ema10: true
+  time_stop: true
+  app_level_trailing_stop: false
