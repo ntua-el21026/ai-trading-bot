@@ -536,3 +536,11 @@ The M41 read-only verification returned GO: AAPL and MSFT are both open for quan
 a verified protective stop for quantity `1`, open orders contain only the expected AAPL/MSFT
 protective stops, positions contain only the expected AAPL/MSFT paper positions, and reconciliation
 is `clean_protected_holds`. Broker writes and schedule actions in M41 were `false`.
+
+Milestone 42 performed one supervised paper-only scheduled workflow equivalent under explicit
+operator approval. No Temporal Cloud schedule was created; the local one-shot boundary was prepared,
+activated for one supervised run, completed once, and deactivated immediately. M42 selected `XLK`,
+filled one paper share, submitted and verified the normal protective stop for quantity `1`, and did
+not use the recovery-stop path. Final reconciliation is `clean_protected_holds` with AAPL, MSFT,
+and XLK paper positions protected by verified stops. No recurring unattended schedule remains
+active. Frozen validation has not started, and Level 4 remains not ready.

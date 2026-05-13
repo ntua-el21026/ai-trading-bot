@@ -1,0 +1,347 @@
+{
+  "milestone": "42",
+  "result": {
+    "ai_broker_write_authority": false,
+    "autonomous_live_execution_enabled": false,
+    "blockers": [],
+    "broker_writes_performed": true,
+    "freeze_readiness_recommendation": "M43_FREEZE_READINESS_MAY_BE_CONSIDERED",
+    "frozen_validation_started": false,
+    "level4_ready": false,
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "real_read_only_calls_performed": true,
+    "refused": false,
+    "schedule_workflow_created_or_activated": true,
+    "schedule_workflow_remains_active": false,
+    "status": "executed",
+    "success": true,
+    "unattended_operation_enabled": false,
+    "unsafe": false
+  },
+  "supervised_scheduled_paper_run": {
+    "aapl_position_stop_status": {
+      "position_quantity": 1.0,
+      "position_status": "open",
+      "protective_stop_matches_position_quantity": true,
+      "protective_stop_order_status": "new",
+      "protective_stop_quantity": 1.0,
+      "protective_stop_status": "open_verified",
+      "protective_stop_verified": true,
+      "symbol": "AAPL"
+    },
+    "actual_paper_trading_started": true,
+    "ai_broker_write_authority": false,
+    "autonomous_live_execution_enabled": false,
+    "blockers": [],
+    "broker_writes": [
+      {
+        "attempted": true,
+        "broker_order_id": "00000000-0000-4000-8000-900000000001",
+        "client_order_id": "first-session-XLK-20000101T000000Z-00000005",
+        "fake_only": false,
+        "operation": "submit_entry_order",
+        "status": "succeeded"
+      },
+      {
+        "attempted": true,
+        "broker_order_id": "00000000-0000-4000-8000-900000000004",
+        "client_order_id": "first-session-XLK-20000101T000000Z-00000005-stop",
+        "fake_only": false,
+        "operation": "submit_protective_stop",
+        "status": "succeeded"
+      }
+    ],
+    "candidate_decision_risk_evidence": "deterministic_m42_candidate_envelope_and_risk_gates",
+    "candidate_evaluations": [
+      {
+        "allowed": true,
+        "blockers": [],
+        "clean": true,
+        "envelope": {
+          "estimated_notional_usd": 300.0,
+          "limit_price": 300.0,
+          "max_notional_usd": 300.0,
+          "max_quantity": 1,
+          "target_symbol": "XLK"
+        },
+        "envelope_valid": true,
+        "open_order_count": 0,
+        "position_quantity": 0.0,
+        "selected": true,
+        "target_symbol": "XLK"
+      },
+      {
+        "allowed": true,
+        "blockers": [],
+        "clean": true,
+        "envelope": {
+          "estimated_notional_usd": 100.0,
+          "limit_price": 100.0,
+          "max_notional_usd": 100.0,
+          "max_quantity": 1,
+          "target_symbol": "XLF"
+        },
+        "envelope_valid": true,
+        "open_order_count": 0,
+        "position_quantity": 0.0,
+        "selected": false,
+        "target_symbol": "XLF"
+      }
+    ],
+    "cleanup_flatten_result": "not_applicable_verify_only",
+    "commit_hash": "f11b037",
+    "current_broker_state_summary_before_schedule_run": {
+      "account_reachable": true,
+      "broker_writes_attempted": false,
+      "candidate_target_states": [
+        {
+          "allowed": true,
+          "blockers": [],
+          "clean": true,
+          "envelope": {
+            "estimated_notional_usd": 300.0,
+            "limit_price": 300.0,
+            "max_notional_usd": 300.0,
+            "max_quantity": 1,
+            "target_symbol": "XLK"
+          },
+          "envelope_valid": true,
+          "open_order_count": 0,
+          "position_quantity": 0.0,
+          "selected": false,
+          "target_symbol": "XLK"
+        },
+        {
+          "allowed": true,
+          "blockers": [],
+          "clean": true,
+          "envelope": {
+            "estimated_notional_usd": 100.0,
+            "limit_price": 100.0,
+            "max_notional_usd": 100.0,
+            "max_quantity": 1,
+            "target_symbol": "XLF"
+          },
+          "envelope_valid": true,
+          "open_order_count": 0,
+          "position_quantity": 0.0,
+          "selected": false,
+          "target_symbol": "XLF"
+        }
+      ],
+      "clock_is_open": true,
+      "clock_reachable": true,
+      "expected_protective_stop_open_orders": 2,
+      "live_endpoint_used": false,
+      "open_orders_total": 2,
+      "paper_endpoint_proven": true,
+      "positions_total": 2,
+      "protected_holds": [
+        {
+          "position_quantity": 1.0,
+          "position_status": "open",
+          "protective_stop_matches_position_quantity": true,
+          "protective_stop_order_status": "new",
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "open_verified",
+          "protective_stop_verified": true,
+          "symbol": "AAPL"
+        },
+        {
+          "position_quantity": 1.0,
+          "position_status": "open",
+          "protective_stop_matches_position_quantity": true,
+          "protective_stop_order_status": "new",
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "open_verified",
+          "protective_stop_verified": true,
+          "symbol": "MSFT"
+        }
+      ],
+      "read_only_calls_performed": true,
+      "reconciliation_summary": "clean_protected_holds",
+      "unexpected_open_order_symbols": [],
+      "unexpected_open_orders_count": 0,
+      "unexpected_position_symbols": [],
+      "unexpected_positions_count": 0
+    },
+    "entry_order_status": "filled",
+    "execution_intent_id": "intent-first-session-XLK-20000101T000000Z-00000005",
+    "fill_status": "filled",
+    "final_reconciliation": "clean_protected_holds",
+    "freeze_readiness_recommendation": "M43_FREEZE_READINESS_MAY_BE_CONSIDERED",
+    "frozen_validation_started": false,
+    "incidents": [],
+    "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md",
+    "level4_ready": false,
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "m41_readiness_audit": {
+      "aapl_protected_hold_verified": true,
+      "blockers": [],
+      "frozen_validation_started": false,
+      "level4_ready": false,
+      "milestone": "41",
+      "msft_protected_hold_verified": true,
+      "no_unexpected_open_orders": true,
+      "no_unexpected_positions": true,
+      "packet_path": "docs/evidence/supervised_scheduled_paper_readiness_m41.json",
+      "parseable": true,
+      "readiness_go": true,
+      "reconciliation_clean": true,
+      "schedules_not_activated": true,
+      "supervised_run_m42_may_be_considered": true
+    },
+    "m41_readiness_packet_reference": "docs/evidence/supervised_scheduled_paper_readiness_m41.json",
+    "msft_position_stop_status": {
+      "position_quantity": 1.0,
+      "position_status": "open",
+      "protective_stop_matches_position_quantity": true,
+      "protective_stop_order_status": "new",
+      "protective_stop_quantity": 1.0,
+      "protective_stop_status": "open_verified",
+      "protective_stop_verified": true,
+      "symbol": "MSFT"
+    },
+    "no_go_reason": null,
+    "no_recurring_unattended_schedule_remains_active": true,
+    "normal_stop_path_succeeded": true,
+    "order_envelope": {
+      "estimated_notional_usd": 300.0,
+      "limit_price": 300.0,
+      "max_notional_usd": 300.0,
+      "max_quantity": 1,
+      "target_symbol": "XLK"
+    },
+    "packet_id": "668f6ce3-d6da-517c-b757-4cfc7bbc0d34",
+    "post_run_broker_state": {
+      "account_reachable": true,
+      "broker_writes_attempted": false,
+      "candidate_target_states": [
+        {
+          "allowed": true,
+          "blockers": [
+            "target_symbol_open_order_present",
+            "target_symbol_position_present"
+          ],
+          "clean": false,
+          "envelope": {
+            "estimated_notional_usd": 300.0,
+            "limit_price": 300.0,
+            "max_notional_usd": 300.0,
+            "max_quantity": 1,
+            "target_symbol": "XLK"
+          },
+          "envelope_valid": true,
+          "open_order_count": 1,
+          "position_quantity": 1.0,
+          "selected": false,
+          "target_symbol": "XLK"
+        }
+      ],
+      "clock_is_open": true,
+      "clock_reachable": true,
+      "expected_protective_stop_open_orders": 3,
+      "live_endpoint_used": false,
+      "open_orders_total": 3,
+      "paper_endpoint_proven": true,
+      "positions_total": 3,
+      "protected_holds": [
+        {
+          "position_quantity": 1.0,
+          "position_status": "open",
+          "protective_stop_matches_position_quantity": true,
+          "protective_stop_order_status": "new",
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "open_verified",
+          "protective_stop_verified": true,
+          "symbol": "AAPL"
+        },
+        {
+          "position_quantity": 1.0,
+          "position_status": "open",
+          "protective_stop_matches_position_quantity": true,
+          "protective_stop_order_status": "new",
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "open_verified",
+          "protective_stop_verified": true,
+          "symbol": "MSFT"
+        },
+        {
+          "position_quantity": 1.0,
+          "position_status": "open",
+          "protective_stop_matches_position_quantity": true,
+          "protective_stop_order_status": "new",
+          "protective_stop_quantity": 1.0,
+          "protective_stop_status": "open_verified",
+          "protective_stop_verified": true,
+          "symbol": "XLK"
+        }
+      ],
+      "read_only_calls_performed": true,
+      "reconciliation_summary": "clean_protected_holds",
+      "unexpected_open_order_symbols": [],
+      "unexpected_open_orders_count": 0,
+      "unexpected_position_symbols": [],
+      "unexpected_positions_count": 0
+    },
+    "protective_stop_verification_result": "verified",
+    "provider_ai_telegram_vercel_calls": false,
+    "recovery_stop_path_used": false,
+    "schedule_workflow_activation_status": "activated_for_single_supervised_run",
+    "schedule_workflow_creation_status": "local_one_shot_workflow_prepared",
+    "schedule_workflow_deactivation_status": "deactivated_after_single_run",
+    "schedule_workflow_run_status": "completed_once",
+    "schedules_activated_final_state": false,
+    "secrets_redacted": {
+      "ALPACA_API_KEY": "<redacted-not-inspected>",
+      "ALPACA_BASE_URL": "<redacted-not-inspected>",
+      "ALPACA_SECRET_KEY": "<redacted-not-inspected>",
+      "ALPHA_VANTAGE_API_KEY": "<redacted-not-inspected>",
+      "DATABASE_URL": "<redacted-not-inspected>",
+      "MARKETAUX_API_KEY": "<redacted-not-inspected>",
+      "OPENAI_API_KEY": "<redacted-not-inspected>",
+      "TELEGRAM_BOT_TOKEN": "<redacted-not-inspected>",
+      "TELEGRAM_CHAT_ID": "<redacted-not-inspected>",
+      "TEMPORAL_ADDRESS": "<redacted-not-inspected>",
+      "TEMPORAL_API_KEY": "<redacted-not-inspected>",
+      "TEMPORAL_NAMESPACE": "<redacted-not-inspected>"
+    },
+    "selected_target_symbol": "XLK",
+    "spec_version": "Autonomous_AI_Trading_Bot_SPEC_v0.3.md",
+    "temporal_schedule_actions": [
+      {
+        "action": "create",
+        "detail": "No Temporal Cloud schedule was created; local supervised one-shot equivalent only.",
+        "status": "local_one_shot_workflow_prepared"
+      },
+      {
+        "action": "activate",
+        "detail": "Activation was bounded to one immediate supervised local run.",
+        "status": "activated_for_single_supervised_run"
+      },
+      {
+        "action": "run_once",
+        "detail": "The supervised paper run was invoked exactly once.",
+        "status": "completed_once"
+      },
+      {
+        "action": "deactivate",
+        "detail": "No recurring unattended schedule remains active.",
+        "status": "deactivated_after_single_run"
+      }
+    ],
+    "timestamp": "2026-05-13T13:47:46.141406Z"
+  },
+  "_publication_redaction": {
+    "schema_version": 1,
+    "artifact_kind": "sanitized_historical_paper_operation_record",
+    "private_original": "Preserved in owner-controlled private backup outside the public repository.",
+    "identifier_scope": "Operational broker UUIDs and client-order identifiers are consistently synthetic; timestamps and digests inside these identifiers are synthetic.",
+    "financial_snapshot_scope": "Account equity, buying power and baseline paper equity are redacted to null where present.",
+    "financial_snapshot_json_pointers": [],
+    "historical_status_scope": "Original result, incident, refusal, readiness and gate fields are retained; no new broker call, experiment or acceptance observation was performed.",
+    "qualification_scope": "This redacted historical record is not current broker state, current operational qualification, authorization to trade, or proof of profitability."
+  }
+}

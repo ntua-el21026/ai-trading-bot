@@ -791,6 +791,32 @@ If M41 returns GO, the next compact milestone may consider a supervised schedule
 explicit operator approval. Frozen validation remains blocked until after supervised scheduled
 paper run evidence exists and a later freeze milestone explicitly starts the frozen period.
 
+## Milestone 42 Supervised Scheduled Paper Run
+
+Milestone 42 performed one supervised paper-only scheduled workflow equivalent after M41 readiness
+returned GO. It did not create a Temporal Cloud schedule, deploy to Vercel, send real alerts, call
+external AI/news providers, start unattended operation, start frozen validation, enable live
+trading, enable autonomous live execution, enable leverage, or claim Level 4 readiness.
+
+M42 result:
+
+- pre-run AAPL protected hold verified for quantity `1`;
+- pre-run MSFT protected hold verified for quantity `1`;
+- selected target `XLK`; fallback `XLF` was not used;
+- envelope max quantity `1`, max notional `300`, limit price `300`;
+- entry filled for quantity `1`;
+- normal protective-stop path submitted and verified the XLK stop for quantity `1`;
+- recovery stop path was not used;
+- schedule/workflow status: local one-shot prepared, activated for one supervised run, completed
+  once, and deactivated;
+- no recurring unattended schedule remains active;
+- final reconciliation is `clean_protected_holds` with AAPL, MSFT, and XLK protected by verified
+  stops.
+
+The M42 evidence packet is `docs/evidence/supervised_scheduled_paper_run_m42.json`. M43 freeze
+readiness may be considered, but frozen validation remains blocked until a later explicit freeze
+milestone approves frozen versions and evidence rules.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

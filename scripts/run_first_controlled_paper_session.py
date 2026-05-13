@@ -21,6 +21,7 @@ from packages.paper import (
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     MILESTONE_39_REAL_OPERATOR_APPROVAL,
     MILESTONE_40_REAL_OPERATOR_APPROVAL,
+    MILESTONE_42_REAL_OPERATOR_APPROVAL,
     REAL_SESSION_SCENARIO_IDS,
     FirstPaperSessionMode,
     audit_first_session_symbol_universe,
@@ -76,7 +77,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{MILESTONE_35B_REAL_OPERATOR_APPROVAL}; for M35C real-paper use "
             f"{MILESTONE_35C_REAL_OPERATOR_APPROVAL}; for M39 real-paper use "
             f"{MILESTONE_39_REAL_OPERATOR_APPROVAL}; for M40 real-paper use "
-            f"{MILESTONE_40_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
+            f"{MILESTONE_40_REAL_OPERATOR_APPROVAL}; for M42 supervised scheduled "
+            f"paper use {MILESTONE_42_REAL_OPERATOR_APPROVAL}. Do not pass secrets."
         ),
     )
     parser.add_argument("--target-symbol", default=None)
@@ -190,13 +192,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         result_path = args.result_output
         if result_path is None and execution_mode == "real-paper":
-            result_path = (
-                M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
-                if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL
-                else M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
-                if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL
-                else M34_RESULT_EVIDENCE_PATH
-            )
+            if args.operator_approval == MILESTONE_42_REAL_OPERATOR_APPROVAL:
+                result_path = None
+            else:
+                result_path = (
+                    M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH
+                    if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL
+                    else M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH
+                    if args.operator_approval == MILESTONE_39_REAL_OPERATOR_APPROVAL
+                    else M34_RESULT_EVIDENCE_PATH
+                )
         written_path = None
         if result_path:
             if args.operator_approval == MILESTONE_40_REAL_OPERATOR_APPROVAL:

@@ -93,7 +93,8 @@ AI_Trading_Bot/
 │   │   ├── protected_position_monitoring_m36.json
 │   │   ├── repeated_controlled_batch_m40.json
 │   │   ├── repeated_controlled_batch_m40_preflight.json
-│   │   └── supervised_scheduled_paper_readiness_m41.json
+│   │   ├── supervised_scheduled_paper_readiness_m41.json
+│   │   └── supervised_scheduled_paper_run_m42.json
 │   ├── project_analytics/
 │   │   ├── project_analytics.py
 │   │   └── project_analytics.txt
@@ -142,6 +143,7 @@ AI_Trading_Bot/
 │   ├── reporting.md
 │   ├── risk_policy.md
 │   ├── supervised_scheduled_paper_readiness_m41.md
+│   ├── supervised_scheduled_paper_run_m42.md
 │   ├── temporal_workflows.md
 │   └── validation_plan.md
 ├── packages/
@@ -216,7 +218,8 @@ AI_Trading_Bot/
 │   │   ├── post_session_audit.py
 │   │   ├── preflight.py
 │   │   ├── readiness.py
-│   │   └── real_gate.py
+│   │   ├── real_gate.py
+│   │   └── supervised_schedule.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
 │   │   ├── models.py
@@ -261,6 +264,7 @@ AI_Trading_Bot/
 │   ├── check_vercel_dashboard_preview.py
 │   ├── run_first_controlled_paper_session.py
 │   ├── run_paper_dry_run.py
+│   ├── run_supervised_scheduled_paper_once.py
 │   ├── seed_temporal_schedules.py
 │   └── start_worker.py
 ├── tests/
@@ -326,6 +330,7 @@ AI_Trading_Bot/
 │       ├── test_risk_checks.py
 │       ├── test_strategy_exits.py
 │       ├── test_strategy_signals.py
+│       ├── test_supervised_scheduled_paper_run.py
 │       ├── test_telegram_alerting.py
 │       ├── test_temporal_cloud_runtime.py
 │       ├── test_temporal_config.py
@@ -345,4 +350,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 300
+Total directories: 46, Total files: 305

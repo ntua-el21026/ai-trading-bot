@@ -130,3 +130,18 @@ risk, execution, AI prompt/schema, config versions, and evidence collection rule
 If M41 verifies both AAPL and MSFT protected holds, finds no unexpected orders or positions, and
 accepts the M40 evidence, the next milestone may consider a supervised scheduled paper run. M41
 itself does not authorize or activate that run.
+
+## M42 Follow-On Result
+
+Milestone 42 used this readiness packet as the precondition for one supervised paper-only scheduled
+workflow equivalent. M42 did not create a Temporal Cloud schedule; it prepared a local one-shot
+workflow boundary, ran it exactly once under the explicit
+`MILESTONE_42_SUPERVISED_SCHEDULED_PAPER_RUN` marker, and deactivated it immediately afterward.
+
+M42 selected `XLK`, filled one paper share, submitted and verified the normal protective stop for
+quantity `1`, and recorded no recovery-stop path or unresolved incident. Final reconciliation is
+`clean_protected_holds` with AAPL, MSFT, and XLK protected by verified stops.
+
+The M42 evidence packet is `docs/evidence/supervised_scheduled_paper_run_m42.json`. No recurring
+unattended schedule remains active, frozen validation has not started, and Level 4 remains not
+ready.

@@ -29,7 +29,7 @@
     "blockers": [],
     "broker_writes_performed_in_m41": false,
     "cleanup_flatten_policy_summary": "Future supervised scheduled paper runs may only use explicit operator-approved risk reducing cleanup for session-created quantities. Protected holds must remain covered by verified stops until a separately approved cleanup or repair milestone.",
-    "commit_hash": "21a1828",
+    "commit_hash": "f11b037",
     "current_broker_state_summary": {
       "aapl": {
         "position_quantity": 1.0,
@@ -43,7 +43,7 @@
       },
       "account_reachable": true,
       "broker_writes_attempted": false,
-      "clock_is_open": false,
+      "clock_is_open": true,
       "clock_reachable": true,
       "expected_protective_stop_open_orders": 2,
       "live_endpoint_used": false,
@@ -128,7 +128,7 @@
       "Operator must review reconciliation, alerts, dashboard state, and evidence.",
       "Operator must pause new risk on unexpected broker state, missing stops, duplicates, API ambiguity, or kill-switch activation."
     ],
-    "packet_id": "c62a0587-78b6-5709-bb12-eca43b550bc1",
+    "packet_id": "7b1fe977-d74d-54a8-8341-8340cd80989e",
     "positions_summary": "expected_aapl_msft_positions_only",
     "provider_ai_telegram_vercel_temporal_calls": false,
     "real_read_only_calls_performed": true,
@@ -205,6 +205,6 @@
     "supervised_scheduled_paper_run_readiness_recommendation": "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED",
     "temporal_schedules_activated": false,
     "temporal_schedules_created": false,
-    "timestamp": "2026-05-12T20:20:57.296137Z"
+    "timestamp": "2026-05-13T13:47:26.448855Z"
   }
 }

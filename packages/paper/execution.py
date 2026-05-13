@@ -50,6 +50,7 @@ MILESTONE_39_REAL_OPERATOR_APPROVAL = (
 MILESTONE_40_REAL_OPERATOR_APPROVAL = (
     "MILESTONE_40_REPEATED_CONTROLLED_BATCH_AND_AUDIT"
 )
+MILESTONE_42_REAL_OPERATOR_APPROVAL = "MILESTONE_42_SUPERVISED_SCHEDULED_PAPER_RUN"
 MILESTONE_34_FAKE_OPERATOR_APPROVAL = "MILESTONE_34_FAKE_REAL_PAPER"
 M34_RESULT_EVIDENCE_PATH = "docs/evidence/first_controlled_paper_session_result.json"
 M39_CLEAN_CONTROLLED_SESSION_EVIDENCE_PATH = (
@@ -60,6 +61,9 @@ M40_REPEATED_CONTROLLED_BATCH_EVIDENCE_PATH = (
 )
 M40_READ_ONLY_PREFLIGHT_EVIDENCE_PATH = (
     "docs/evidence/repeated_controlled_batch_m40_preflight.json"
+)
+M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH = (
+    "docs/evidence/supervised_scheduled_paper_readiness_m41.json"
 )
 M34_LAUNCH_PACKET_PATH = "docs/evidence/first_controlled_paper_session_launch_packet.json"
 M38_CORRECTED_CLEANUP_EVIDENCE_PATH = "docs/evidence/corrected_cleanup_m38.json"
@@ -127,6 +131,7 @@ REAL_PAPER_OPERATOR_APPROVAL_MARKERS = (
     MILESTONE_35C_REAL_OPERATOR_APPROVAL,
     MILESTONE_39_REAL_OPERATOR_APPROVAL,
     MILESTONE_40_REAL_OPERATOR_APPROVAL,
+    MILESTONE_42_REAL_OPERATOR_APPROVAL,
 )
 _ORDER_ENVELOPE_BLOCKER_CODES = frozenset(
     {
@@ -338,6 +343,9 @@ class FirstPaperSessionExecutionRequest(M34Model):
     launch_packet_path: str = M34_LAUNCH_PACKET_PATH
     m38_corrected_cleanup_packet_path: str = M38_CORRECTED_CLEANUP_EVIDENCE_PATH
     m39_clean_controlled_session_packet_path: str = M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
+    m41_supervised_schedule_readiness_packet_path: str = (
+        M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH
+    )
     cleanup_policy: Literal["verify_only"] = "verify_only"
     current_gross_exposure: float = Field(default=0.0, ge=0)
     valid_execution_intent_present: bool = True
@@ -585,6 +593,9 @@ def default_first_paper_session_execution_request(
     m39_clean_controlled_session_packet_path: str = (
         M39_CLEAN_CONTROLLED_SESSION_PACKET_PATH
     ),
+    m41_supervised_schedule_readiness_packet_path: str = (
+        M41_SUPERVISED_SCHEDULE_READINESS_EVIDENCE_PATH
+    ),
 ) -> FirstPaperSessionExecutionRequest:
     scenario = _validate_scenario_id(scenario_id)
     default_confirm = mode == "fake-real-paper"
@@ -637,6 +648,9 @@ def default_first_paper_session_execution_request(
         ),
         m38_corrected_cleanup_packet_path=m38_corrected_cleanup_packet_path,
         m39_clean_controlled_session_packet_path=m39_clean_controlled_session_packet_path,
+        m41_supervised_schedule_readiness_packet_path=(
+            m41_supervised_schedule_readiness_packet_path
+        ),
     )
     return _scenario_request(request, scenario)
 
@@ -1003,6 +1017,8 @@ def write_repeated_controlled_batch_m40_artifact(
 
 
 def _result_artifact_milestone(result: FirstPaperSessionExecutionResult) -> str:
+    if result.result_packet.operator_approval_marker == MILESTONE_42_REAL_OPERATOR_APPROVAL:
+        return "42"
     if result.result_packet.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
         return "40"
     if result.result_packet.operator_approval_marker == MILESTONE_39_REAL_OPERATOR_APPROVAL:
@@ -1212,7 +1228,14 @@ def _pre_broker_blockers(
         if not bool(getattr(request, field_name)):
             blockers.append(reason)
     if request.mode == "real-paper":
-        if request.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
+        if request.operator_approval_marker == MILESTONE_42_REAL_OPERATOR_APPROVAL:
+            blockers.extend(_m42_request_gate_blockers(request))
+            blockers.extend(
+                _m41_supervised_schedule_readiness_packet_blockers(
+                    request.m41_supervised_schedule_readiness_packet_path
+                )
+            )
+        elif request.operator_approval_marker == MILESTONE_40_REAL_OPERATOR_APPROVAL:
             blockers.extend(_m40_launch_packet_blockers(request.launch_packet_path, request))
         else:
             blockers.extend(_launch_packet_blockers(request.launch_packet_path))
@@ -1356,6 +1379,96 @@ def _m40_request_gate_blockers(
         if _estimated_entry_notional(envelope) != 300.0:
             blockers.append("m40_xlk_estimated_notional_must_be_300")
     return tuple(blockers)
+
+
+def _m42_request_gate_blockers(
+    request: FirstPaperSessionExecutionRequest,
+) -> tuple[str, ...]:
+    envelope = request.order_envelope
+    blockers: list[str] = []
+    if request.target_symbol not in {"XLK", "XLF"}:
+        blockers.append("m42_target_symbol_must_be_xlk_or_xlf")
+    if request.target_symbol in {"AAPL", "MSFT"}:
+        blockers.append("m42_duplicate_existing_protected_hold_entry_forbidden")
+    if envelope.max_quantity != 1:
+        blockers.append("m42_max_qty_must_be_one")
+    if request.target_symbol == "XLK":
+        if envelope.max_notional_usd != 300.0:
+            blockers.append("m42_xlk_max_notional_must_be_300")
+        if envelope.limit_price != 300.0:
+            blockers.append("m42_xlk_limit_price_must_be_300")
+        if _estimated_entry_notional(envelope) != 300.0:
+            blockers.append("m42_xlk_estimated_notional_must_be_300")
+    elif request.target_symbol == "XLF":
+        if envelope.max_notional_usd != 100.0:
+            blockers.append("m42_xlf_max_notional_must_be_100")
+        if envelope.limit_price != 100.0:
+            blockers.append("m42_xlf_limit_price_must_be_100")
+        if _estimated_entry_notional(envelope) != 100.0:
+            blockers.append("m42_xlf_estimated_notional_must_be_100")
+    return tuple(blockers)
+
+
+def _m41_supervised_schedule_readiness_packet_blockers(path: str) -> tuple[str, ...]:
+    packet_path = Path(path)
+    if not packet_path.is_file():
+        return ("m41_supervised_schedule_readiness_packet_missing",)
+    try:
+        payload = json.loads(packet_path.read_text(encoding="utf-8"))
+        result = payload["result"]
+        packet = payload["supervised_schedule_readiness"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return ("m41_supervised_schedule_readiness_packet_unparseable",)
+
+    broker_state = packet.get("current_broker_state_summary", {})
+    blockers: list[str] = []
+    checks = {
+        "m41_readiness_milestone_is_41": payload.get("milestone") == "41",
+        "m41_readiness_go": (
+            result.get("readiness_approved") is True
+            and result.get("go_no_go") == "go"
+            and not result.get("blockers")
+        ),
+        "m41_packet_recommends_m42": (
+            packet.get("supervised_scheduled_paper_run_readiness_recommendation")
+            == "M42_SUPERVISED_SCHEDULED_PAPER_RUN_MAY_BE_CONSIDERED"
+        ),
+        "m41_aapl_protected_hold_verified": (
+            packet.get("aapl_position_stop_status", {}).get("position_status") == "open"
+            and packet.get("aapl_position_stop_status", {}).get(
+                "protective_stop_status"
+            )
+            == "open_verified"
+        ),
+        "m41_msft_protected_hold_verified": (
+            packet.get("msft_position_stop_status", {}).get("position_status") == "open"
+            and packet.get("msft_position_stop_status", {}).get(
+                "protective_stop_status"
+            )
+            == "open_verified"
+        ),
+        "m41_no_unexpected_open_orders": (
+            broker_state.get("unexpected_open_orders_count") == 0
+        ),
+        "m41_no_unexpected_positions": (
+            broker_state.get("unexpected_positions_count") == 0
+        ),
+        "m41_reconciliation_clean": (
+            packet.get("reconciliation_summary") == "clean_protected_holds"
+        ),
+        "m41_no_missing_gates": not packet.get("missing_gates"),
+        "m41_no_packet_blockers": not packet.get("blockers"),
+        "m41_frozen_validation_not_started": (
+            packet.get("frozen_validation_started") is False
+        ),
+        "m41_level4_not_ready": packet.get("level4_ready") is False,
+        "m41_schedules_not_activated": (
+            packet.get("schedules_activated") is False
+            and result.get("schedules_activated") is False
+        ),
+    }
+    blockers.extend(name for name, passed in checks.items() if not passed)
+    return _unique(tuple(blockers))
 
 
 def _launch_packet_blockers(path: str) -> tuple[str, ...]:

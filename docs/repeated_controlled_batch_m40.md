@@ -32,3 +32,18 @@ unattended operation, start frozen validation, or claim Level 4 readiness.
 
 The M41 readiness document is `docs/supervised_scheduled_paper_readiness_m41.md`. The M41
 readiness packet is `docs/evidence/supervised_scheduled_paper_readiness_m41.json`.
+
+## M42 Supervised Scheduled Paper Run
+
+Milestone 42 accepted the M41 readiness packet, re-verified the AAPL/MSFT protected holds, and ran
+one supervised paper-only scheduled workflow equivalent. The implementation did not create a
+Temporal Cloud schedule; it prepared a local one-shot boundary, ran it once, and deactivated it.
+
+M42 selected `XLK` under the operator-approved envelope, filled one paper share, submitted and
+verified the normal protective stop for quantity `1`, and avoided the recovery-stop path. Final
+broker state has AAPL, MSFT, and XLK paper positions, each protected by a verified stop. Final
+reconciliation is `clean_protected_holds`.
+
+The M42 evidence packet is `docs/evidence/supervised_scheduled_paper_run_m42.json`. No recurring
+unattended schedule remains active. Frozen validation has not started, and Level 4 remains not
+ready.
