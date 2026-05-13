@@ -393,8 +393,8 @@ def test_launch_authorization_packet_contains_required_fields() -> None:
     assert packet.timestamp.tzinfo is not None
     assert packet.operator_approval_marker == MILESTONE_31_FAKE_OPERATOR_APPROVAL
     assert packet.commit_hash
-    assert packet.spec_version == "Autonomous_AI_Trading_Bot_SPEC_v0.3.md"
-    assert packet.latest_spec_path == "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md"
+    assert packet.spec_version == "Autonomous_AI_Trading_Bot_SPEC_v0.4.md"
+    assert packet.latest_spec_path == "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md"
     assert "docs/pre_paper_operations_gap_audit.md" in packet.doc_references
     assert packet.preflight_mode == "fake"
     assert packet.broker_endpoint_mode == "paper"

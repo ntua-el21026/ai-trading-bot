@@ -1,6 +1,6 @@
 # Paper Weekly Review Checklist
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Use this checklist with `docs/paper_trading_runbook.md`. It is documentation-only and does not
 execute broker, AI/news, database, or Temporal actions.

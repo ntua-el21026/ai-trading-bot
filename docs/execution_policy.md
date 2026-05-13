@@ -1,6 +1,6 @@
 # Execution Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 06 implements passive execution-core and broker-reconciliation contracts:
 `ExecutionIntent`, client-order idempotency helpers, order lifecycle transition validation,
@@ -16,7 +16,9 @@ orchestration that creates and persists an `ExecutionIntent`, fake order/fill/po
 protective-stop verification evidence without real broker orders. Milestone 21A adds an
 operator-invoked Alpaca paper order-lifecycle smoke harness that refuses by default unless all
 write-smoke gates are present. It is harness-only preparation unless separately run with those
-gates, and it is not actual paper trading, frozen paper evidence, or Level 4 readiness.
+gates, and it is not actual paper trading, frozen paper evidence, or Level 4 readiness. Milestone
+43 adds deterministic paper-validation scale-in policy helpers and fake/stub coverage only. It
+performs no real broker writes, activates no schedules, and does not start frozen validation.
 
 ## Foundation Defaults
 
@@ -71,6 +73,27 @@ default tests.
 
 Milestone 16 exercises this idempotent client-order path through `FakeAlpacaClient` in the
 fake/local dry run only. It is not actual paper broker execution.
+
+## Deterministic Scale-In Boundary
+
+`packages/execution/scale_in.py` defines the M43 scale-in policy boundary for paper validation.
+It does not call a broker and does not submit, cancel, replace, or flatten orders.
+
+Scale-in uses these execution rules:
+
+- one initial entry plus at most one scale-in entry per symbol;
+- pending entry orders block scale-in;
+- verified existing protective stops do not block scale-in by themselves;
+- unknown, ambiguous, stale, or pending-exit orders block new risk;
+- a fresh deterministic add-on signal is required;
+- scale-in `ExecutionIntent` metadata is distinct from initial-entry metadata;
+- duplicate active scale-in intents and repeated scale-ins for the same signal are blocked;
+- no scale-in may proceed while the previous add-on stop is unverified.
+
+The M43 stop policy is additive only. The existing protective stop remains intact. After an add-on
+fill, the execution path must submit and verify a separate protective stop for only the added
+quantity. The scale-in path must not cancel or replace existing stops unless a future spec version
+explicitly approves a separate stop-management policy.
 
 ## Order Lifecycle Abstractions
 

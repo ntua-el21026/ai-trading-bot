@@ -5,7 +5,7 @@ Date: 2026-05-05
 Latest identified spec:
 
 ```text
-docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md
 ```
 
 ## Summary
@@ -113,7 +113,7 @@ Still not implemented after Milestone 14:
 
 Latest spec re-identification found:
 
-- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`
+- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`
 - `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.2.md`
 
 Therefore v0.3 is the governing spec.

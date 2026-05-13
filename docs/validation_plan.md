@@ -2,7 +2,7 @@
 
 This document describes the current validation scaffold.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestones 17-27
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`. Milestones 17-27
 add managed Postgres/Supabase runtime preparation with explicit `DATABASE_URL` validation,
 migration dry-run/apply scripts, schema-check helpers, second opt-in gates, opt-in managed DB
 repository CRUD tests skipped by default, local Temporal SDK test-environment/replay coverage,
@@ -24,6 +24,9 @@ schedule activation, live trading, or profitability.
 Milestone 27 adds controlled paper operations readiness tests and a read-only readiness script that
 aggregate existing evidence only; they do not start paper trading, activate schedules, submit broker
 orders, call providers, send alerts, or deploy.
+Milestone 43 adds deterministic scale-in policy coverage with fake/stub clients only. It does not
+start frozen validation, activate schedules, perform broker writes, call providers, or claim Level 4
+readiness.
 
 ## Foundation Checks
 
@@ -46,10 +49,17 @@ orders, call providers, send alerts, or deploy.
   no managed database credentials.
 - Regime classification is fixture-tested for `RISK_ON`, `CAUTION`, and `RISK_OFF`.
 - Strategy candidate evaluation is fixture-tested for long-only accepted/rejected candidates, 20D and 55D breakout variants, RS63, ATR percent, earnings blackout, held-symbol, and duplicate-intent gates.
+- Strategy candidate evaluation can explicitly evaluate held symbols as scale-in candidates while
+  still refusing held symbols by default.
 - Exit helpers are fixture-tested for initial stops, trailing stops, technical exits, time stops, and fail-fast exits without submitting orders.
 - Risk checks are fixture-tested for accepted and rejected new-risk paths, stale data, kill switch, duplicate intent, exposure, and loss-limit failures.
 - Position sizing is fixture-tested for configured caps, multipliers, invalid stop distance, and below-one-share rejection.
 - Execution intent and idempotency helpers are fixture-tested for approved-risk intent creation, protective-stop validation, expiration checks, deterministic client order IDs, duplicate detection, and passive lifecycle transition rejection.
+- Scale-in policy helpers are fixture-tested for config defaults, disabled policy refusal, protected
+  existing positions, missing-stop refusal, open-order role blockers, unresolved incidents, symbol
+  and portfolio caps, missing add-on signals, distinct scale-in intent metadata, additive stop
+  requirements, aggregate protection, failed stop incidents, duplicate active intents, reporting
+  roles, full-universe eligibility, and AAPL/MSFT/XLK protected-hold candidate handling.
 - Broker model validation is fixture-tested without credentials.
 - Alpaca `trade_updates` mapping is fixture-tested without websocket connections.
 - Paper-only Alpaca adapter gates, fake-client mapping, idempotency lookup, paper entry/cancel,
@@ -144,6 +154,7 @@ orders, call providers, send alerts, or deploy.
 | Position sizing | `tests/unit/test_position_sizing.py` |
 | Kill switch | `tests/unit/test_kill_switch.py`, `tests/temporal/test_workflow_contracts.py` |
 | Execution intent | `tests/unit/test_execution_intent.py` |
+| Scale-in policy | `tests/unit/test_scale_in_policy.py` |
 | Idempotency | `tests/unit/test_idempotency.py` |
 | Order lifecycle contracts | `tests/unit/test_execution_intent.py`, `tests/unit/test_failure_simulations.py` |
 | Broker models and stream mapping | `tests/unit/test_broker_models.py`, `tests/unit/test_alpaca_mapping.py` |

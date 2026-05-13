@@ -1,12 +1,14 @@
 # Broker Integration
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 14 adds paper-only Alpaca broker boundaries. Milestone 16 uses those boundaries through
 `FakeAlpacaClient` in a fake/local dry-run path. Milestone 20 adds an opt-in read-only Alpaca paper
 smoke path. Milestone 21A adds an explicitly gated Alpaca paper order-lifecycle smoke harness. The
 repository does not start paper trading operations, does not activate Temporal schedules, does not
 add real credentials, and does not enable live trading.
+Milestone 43 adds scale-in broker-state classification and additive-stop policy helpers with
+fake/stub tests only. It does not run a real scale-in order or perform real broker writes.
 
 ## Current Implementation
 
@@ -83,6 +85,10 @@ Implemented fake-tested boundaries:
 - paper order cancellation;
 - paper protective-stop submission for filled quantity;
 - protective-stop verification against open fake broker orders;
+- deterministic open-order role classification for `protective_stop`, `pending_entry`,
+  `pending_exit`, `stale_session_order`, and `unknown_or_ambiguous`;
+- additive protective-stop representation for scale-in filled quantity without canceling or
+  replacing existing stops;
 - Alpaca `trade_updates` mapping;
 - read-only account, open-order, position, and clock/status smoke mapping;
 - explicitly gated smoke-only DAY limit entry submission, acknowledgement/fill observation,

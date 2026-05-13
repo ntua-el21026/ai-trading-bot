@@ -1,6 +1,6 @@
 # Alerting
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 23 adds Telegram as the only real alert delivery channel for now. Email/Resend is
 intentionally deferred and is not required for this stage. Default tests and default activity wiring
@@ -13,6 +13,10 @@ Telegram commands, or use alerts as a control path.
 
 Milestone 27 readiness aggregation records Telegram harness and prior smoke evidence as local
 status only. It does not send Telegram messages or use alerts as a control path.
+
+Milestone 43 scale-in incidents, including an unverified add-on protective stop, must be alertable
+as critical missing-stop or broker-ambiguity style incidents in future runtime wiring. M43 itself
+uses fake/stub tests only and sends no real Telegram messages.
 
 ## Implemented
 

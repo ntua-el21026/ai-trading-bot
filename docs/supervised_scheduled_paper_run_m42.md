@@ -52,8 +52,13 @@ delivery, or claim Level 4 readiness.
 The sanitized evidence packet is
 `docs/evidence/supervised_scheduled_paper_run_m42.json`.
 
-## Next Boundary
+## M43 Follow-Up Boundary
 
-M43 freeze readiness may be considered, but frozen validation must not start until a later explicit
-freeze milestone approves the frozen strategy, risk, execution, AI prompt/schema, config versions,
-evidence collection rules, and operator monitoring policy.
+M43 adds deterministic scale-in policy before the validation freeze. The M42 protected holds
+(AAPL/MSFT/XLK quantity `1`, each with verified protective stop quantity `1`) are not automatic
+skips under v0.4; they may be considered as scale-in candidates only if a fresh deterministic
+add-on signal and all risk/execution/reconciliation gates pass.
+
+Frozen validation must not start until a later explicit freeze milestone approves the frozen
+strategy, risk, execution, AI prompt/schema, config versions, evidence collection rules, and
+operator monitoring policy.

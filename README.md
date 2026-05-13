@@ -5,25 +5,17 @@ Spec-governed autonomous AI-assisted trading bot repository.
 The latest identified source-of-truth spec is:
 
 ```text
-docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md
 ```
 
 ## Current Status
 
-This repository is at Milestone 27 controlled paper operations readiness harness wiring with offline default
-tests, fake/local trading defaults, and explicitly gated real-service smokes. Milestone 21B
-completed a controlled Alpaca paper order-lifecycle smoke with final target-symbol state
-clean/flat; Milestone 22 real provider/OpenAI smokes, Milestone 23 real Telegram smoke, and
-Milestone 24 Temporal Cloud dev smoke have also run through gated paths. Milestone 25 dashboard dev
-runtime smoke completed with fake/default dispatch. Milestone 26B records Vercel dashboard
-deployment evidence: the preview deployment
-`https://ai-trading-cy85e5pf1-michael-peppas-projects.vercel.app` exists, and an accidental
-production deployment/alias also exists at
-`https://ai-trading-qxid0g5t8-michael-peppas-projects.vercel.app` and
-`https://ai-trading-bot-silk.vercel.app`. These are dashboard-only static/read-only artifacts, not
-worker or execution deployments. Milestone 27 adds a read-only readiness harness that aggregates
-existing evidence and local-safe status checks only. Actual paper trading operations remain
-deferred, frozen paper evidence is absent, and Level 4 is not ready.
+This repository is at Milestone 43 deterministic scale-in policy support before frozen paper
+validation. Milestones 39-42 produced controlled paper evidence with protected AAPL, MSFT, and XLK
+paper holds. Milestone 43 adds config-backed scale-in eligibility, open-order role classification,
+aggregate protective-stop coverage, and fake/stub tests only. It does not start frozen validation,
+activate schedules, perform real broker writes, enable live trading, enable autonomous live
+execution, enable leverage, or claim Level 4 readiness.
 
 Implemented pieces:
 
@@ -47,6 +39,8 @@ Implemented pieces:
 - long-only deterministic candidate evaluation for configured trend, breakout, volume, RS63, ATR, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates
 - stop-level and exit-trigger calculation helpers that do not submit orders
 - deterministic risk checks for new-risk eligibility
+- deterministic scale-in policy helpers for one initial entry plus at most one add-on entry per
+  symbol under paper-validation caps, with fake/stub tests only
 - position sizing from configured risk and position caps
 - kill-switch state models
 - passive `ExecutionIntent`, idempotency, order lifecycle, and rejection contracts

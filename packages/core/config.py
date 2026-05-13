@@ -135,6 +135,49 @@ class ProtectiveStopConfig(StrictModel):
         return self
 
 
+class ScaleInConfig(StrictModel):
+    enabled_for_paper_validation: bool
+    max_entries_per_symbol: int = Field(ge=1)
+    max_add_entries_per_symbol: int = Field(ge=0)
+    max_new_entry_qty: int = Field(gt=0)
+    max_scale_in_qty: int = Field(gt=0)
+    max_total_symbol_qty: int = Field(gt=0)
+    max_pending_entry_orders_per_symbol: int = Field(ge=0)
+    max_unresolved_incidents_per_symbol: int = Field(ge=0)
+    require_existing_stop_verified: bool
+    require_add_on_signal: bool
+    require_no_pending_entry_order: bool
+    require_no_unresolved_symbol_incident: bool
+    protective_stop_required_before_scale_in: bool
+    protective_stop_required_after_scale_in: bool
+    stop_policy: Literal["additive_stop_for_added_quantity"]
+    allow_stop_replacement: bool
+    allow_stop_cancel_before_scale_in: bool
+    block_if_protected_quantity_below_position_quantity: bool
+
+    @model_validator(mode="after")
+    def validate_scale_in_bounds(self) -> Self:
+        if self.max_entries_per_symbol != 2:
+            raise ValueError("paper-validation scale-in must allow exactly two entries per symbol")
+        if self.max_add_entries_per_symbol > self.max_entries_per_symbol - 1:
+            raise ValueError("add-entry cap cannot exceed total entries minus initial entry")
+        if self.max_total_symbol_qty < self.max_new_entry_qty:
+            raise ValueError("total symbol quantity cap cannot be below initial entry quantity")
+        if self.max_total_symbol_qty < self.max_scale_in_qty:
+            raise ValueError("total symbol quantity cap cannot be below scale-in quantity")
+        if self.allow_stop_replacement:
+            raise ValueError("scale-in stop replacement is not allowed")
+        if self.allow_stop_cancel_before_scale_in:
+            raise ValueError("scale-in cannot cancel stops before add-on entry")
+        if not self.protective_stop_required_before_scale_in:
+            raise ValueError("scale-in requires verified existing protective stops")
+        if not self.protective_stop_required_after_scale_in:
+            raise ValueError("scale-in requires protective stop after added fill")
+        if not self.block_if_protected_quantity_below_position_quantity:
+            raise ValueError("under-protected positions must block scale-in")
+        return self
+
+
 class LiveUniverseConfig(StrictModel):
     symbols: tuple[str, ...]
     min_price: float = Field(gt=0)
@@ -357,6 +400,7 @@ class AppConfig(StrictModel):
     temporal: TemporalConfig
     execution: ExecutionConfig
     protective_stop: ProtectiveStopConfig
+    scale_in: ScaleInConfig
     live_universe: LiveUniverseConfig
     research_universe: ResearchUniverseConfig
     strategy: StrategyConfig

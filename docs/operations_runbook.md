@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`. Milestone 27 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`. Milestone 27 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does
@@ -25,6 +25,9 @@ execution services, schedules, secrets, broker calls, AI/news calls, or alerts.
 Milestone 27 adds a controlled paper operations readiness harness that aggregates existing local
 status and documented smoke evidence only. It does not start paper trading, activate schedules,
 submit broker orders, call providers, send real alerts, or deploy anything.
+Milestone 43 adds deterministic scale-in policy support with fake/stub tests only. Operators must
+not run a real scale-in order, submit an add-on stop, cancel/replace stops, activate schedules, or
+start the frozen validation clock as part of M43.
 
 ## Current Foundation Operations
 
@@ -43,6 +46,8 @@ Broker reconciliation is currently a pure comparison contract:
 4. Treat critical incidents as pause-new-risk recommendations.
 5. Treat missing protective stops according to the configured warning, critical, and flatten
    thresholds.
+6. For scale-in validation, treat summed verified protective-stop quantity below open position
+   quantity as a critical mismatch that blocks new risk.
 
 Milestone 14 includes fake-client submit/cancel/protective-stop boundaries, but no current operation
 submits, cancels, or flattens real broker orders. Flattening is represented only as a

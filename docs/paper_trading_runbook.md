@@ -1,6 +1,6 @@
 # Paper Trading Runbook
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 27 adds a controlled paper operations readiness harness while paper trading remains disabled. The
 repository still does not implement actual paper trading operations, production dashboard
@@ -279,7 +279,7 @@ Environment rules:
 
 Complete this checklist before every paper session:
 
-- Confirm the latest spec version: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+- Confirm the latest spec version: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 - Confirm `git status --short` is clean or every dirty file is known and documented.
 - Confirm required tests pass:
   `uv run --group dev pytest tests/unit tests/temporal`.
@@ -816,6 +816,31 @@ M42 result:
 The M42 evidence packet is `docs/evidence/supervised_scheduled_paper_run_m42.json`. M43 freeze
 readiness may be considered, but frozen validation remains blocked until a later explicit freeze
 milestone approves frozen versions and evidence rules.
+
+## Milestone 43 Deterministic Scale-In Policy
+
+Milestone 43 adds deterministic scale-in support before the validation freeze. It changes protected
+existing paper positions from automatic skips into possible scale-in candidates, but only when all
+risk, execution, broker-state, stop-coverage, duplicate-intent, and deterministic add-on signal
+gates pass.
+
+M43 result:
+
+- full configured universe remains eligible for evaluation;
+- no trades are forced;
+- one initial entry plus at most one scale-in entry is allowed per symbol;
+- AAPL, MSFT, and XLK protected holds may be considered as candidates only if a fresh deterministic
+  add-on signal and all caps pass;
+- pending entry, pending exit, stale, unknown, or ambiguous open orders block scale-in;
+- verified existing protective stops are required and do not block scale-in by themselves;
+- add-on fills require an additive protective stop for only the filled add-on quantity;
+- existing protective stops must not be canceled or replaced in the scale-in path;
+- aggregate verified protected quantity must be at least total open symbol quantity;
+- no real broker writes, schedule activation, frozen validation start, live trading, autonomous
+  live execution, leverage, provider calls, or Level 4 readiness claim occur in M43.
+
+The M43 evidence packet is `docs/evidence/scale_in_policy_m43.json`. M44 must separately freeze the
+version set and explicitly start the 8-week validation clock if accepted.
 
 ## Frozen Paper Acceptance Criteria
 

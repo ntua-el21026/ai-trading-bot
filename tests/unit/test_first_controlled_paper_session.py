@@ -53,7 +53,7 @@ def test_happy_path_wires_full_fake_local_first_session_evidence_chain() -> None
     assert evidence.timestamp.tzinfo is not None
     assert evidence.operator_approval_marker == FIRST_SESSION_APPROVAL_MARKER
     assert evidence.commit_hash
-    assert evidence.spec_version == "Autonomous_AI_Trading_Bot_SPEC_v0.3.md"
+    assert evidence.spec_version == "Autonomous_AI_Trading_Bot_SPEC_v0.4.md"
     assert evidence.config_safety_snapshot["secrets"]["DATABASE_URL"] == (
         "<redacted-not-inspected>"
     )

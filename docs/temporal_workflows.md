@@ -1,6 +1,6 @@
 # Temporal Workflows
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Through Milestone 26, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
@@ -15,6 +15,11 @@ test-environment coverage, and replay coverage for a generated
 workflow history. It does not implement actual paper trading orchestration, default AI/provider
 external calls, production schedule activation, browser-side Temporal calls, actual paper trading
 operations, or live trading.
+
+Milestone 43 scale-in support is currently a deterministic policy/helper boundary. A future
+Temporal execution path may call it before add-on paper entries, but workflow code must still only
+orchestrate deterministic state and call activities for side effects. M43 itself activates no
+schedules and performs no broker writes.
 
 ## Configuration
 

@@ -19,6 +19,24 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.execution.require_protective_stop is True
     assert config.execution.first_session_max_qty == 1
     assert config.execution.first_session_absolute_max_notional_usd == 500.0
+    assert config.scale_in.enabled_for_paper_validation is True
+    assert config.scale_in.max_entries_per_symbol == 2
+    assert config.scale_in.max_add_entries_per_symbol == 1
+    assert config.scale_in.max_new_entry_qty == 1
+    assert config.scale_in.max_scale_in_qty == 1
+    assert config.scale_in.max_total_symbol_qty == 2
+    assert config.scale_in.max_pending_entry_orders_per_symbol == 0
+    assert config.scale_in.max_unresolved_incidents_per_symbol == 0
+    assert config.scale_in.require_existing_stop_verified is True
+    assert config.scale_in.require_add_on_signal is True
+    assert config.scale_in.require_no_pending_entry_order is True
+    assert config.scale_in.require_no_unresolved_symbol_incident is True
+    assert config.scale_in.protective_stop_required_before_scale_in is True
+    assert config.scale_in.protective_stop_required_after_scale_in is True
+    assert config.scale_in.stop_policy == "additive_stop_for_added_quantity"
+    assert config.scale_in.allow_stop_replacement is False
+    assert config.scale_in.allow_stop_cancel_before_scale_in is False
+    assert config.scale_in.block_if_protected_quantity_below_position_quantity is True
     assert config.risk_level_4_micro_live.allow_margin is False
     assert config.risk_level_4_micro_live.allow_shorting is False
     assert config.risk_level_4_micro_live.allow_options is False

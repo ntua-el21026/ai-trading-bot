@@ -91,6 +91,7 @@ def evaluate_candidate(
     prior_high_55: float | None = None,
     rs_percentile: float | None = None,
     currently_held_symbols: Collection[str] = (),
+    scale_in_candidate_symbols: Collection[str] = (),
     active_intent_symbols: Collection[str] = (),
     breakout_lookback: BreakoutLookback | None = None,
 ) -> CandidateEvaluation:
@@ -113,8 +114,13 @@ def evaluate_candidate(
     )
     _append_feature_rejections(rejection_reasons, feature)
 
-    if feature.symbol in currently_held_symbols:
+    if (
+        feature.symbol in currently_held_symbols
+        and feature.symbol not in scale_in_candidate_symbols
+    ):
         rejection_reasons.append("symbol_already_held")
+    elif feature.symbol in currently_held_symbols:
+        reason_codes.append("held_symbol_scale_in_signal_evaluation")
     if feature.symbol in active_intent_symbols:
         rejection_reasons.append("active_duplicate_intent")
     if not earnings.allow_entries:
@@ -215,6 +221,7 @@ def generate_candidates(
     prior_high_55_by_symbol: Mapping[str, float] | None = None,
     rs_percentile_by_symbol: Mapping[str, float] | None = None,
     currently_held_symbols: Collection[str] = (),
+    scale_in_candidate_symbols: Collection[str] = (),
     active_intent_symbols: Collection[str] = (),
 ) -> tuple[CandidateEvaluation, ...]:
     evaluations: list[CandidateEvaluation] = []
@@ -236,6 +243,7 @@ def generate_candidates(
                 prior_high_55=(prior_high_55_by_symbol or {}).get(symbol),
                 rs_percentile=(rs_percentile_by_symbol or {}).get(symbol),
                 currently_held_symbols=currently_held_symbols,
+                scale_in_candidate_symbols=scale_in_candidate_symbols,
                 active_intent_symbols=active_intent_symbols,
             )
         )

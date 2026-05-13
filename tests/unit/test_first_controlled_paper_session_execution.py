@@ -810,7 +810,7 @@ def test_result_packet_contains_required_fields_and_excludes_secrets(tmp_path: P
 
     assert packet.result_packet_id
     assert packet.operator_approval_marker == MILESTONE_34_FAKE_OPERATOR_APPROVAL
-    assert packet.latest_spec_path == "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md"
+    assert packet.latest_spec_path == "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md"
     assert packet.candidate_id == "candidate-AAPL-m34"
     assert packet.ai_news_neutral_fallback_marker == "neutral_fake_ai_news_no_broker_authority"
     assert packet.decision_id

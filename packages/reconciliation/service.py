@@ -344,14 +344,17 @@ def _append_protective_stop_mismatch(
     confirmed_stops = [
         stop
         for stop in protective_stops
-        if stop.confirmed and stop.is_open and stop.quantity >= broker_position.quantity
+        if stop.confirmed and stop.is_open
     ]
-    if confirmed_stops:
+    protected_quantity_sum = sum(stop.quantity for stop in confirmed_stops)
+    if protected_quantity_sum >= broker_position.quantity:
         return
     opened_at = internal_position.opened_at or broker_position.opened_at
     age_seconds = None if opened_at is None else (as_of - opened_at).total_seconds()
     severity, message = _stop_failure_severity(age_seconds, protective_stop_config)
     details = {
+        "broker_position_quantity": f"{broker_position.quantity:.6f}",
+        "protected_quantity_sum": f"{protected_quantity_sum:.6f}",
         "warning_after_seconds": str(protective_stop_config.warning_after_seconds),
         "critical_after_seconds": str(protective_stop_config.critical_after_seconds),
         "flatten_after_seconds": str(protective_stop_config.flatten_after_seconds),

@@ -74,7 +74,8 @@ AI_Trading_Bot/
 │   │   ├── image/
 │   │   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
-│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+│   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.4.md
 │   ├── checklists/
 │   │   ├── credential_separation_checklist.md
 │   │   ├── kill_switch_rearm_checklist.md
@@ -93,6 +94,7 @@ AI_Trading_Bot/
 │   │   ├── protected_position_monitoring_m36.json
 │   │   ├── repeated_controlled_batch_m40.json
 │   │   ├── repeated_controlled_batch_m40_preflight.json
+│   │   ├── scale_in_policy_m43.json
 │   │   ├── supervised_scheduled_paper_readiness_m41.json
 │   │   └── supervised_scheduled_paper_run_m42.json
 │   ├── project_analytics/
@@ -142,6 +144,7 @@ AI_Trading_Bot/
 │   ├── repeated_controlled_batch_m40.md
 │   ├── reporting.md
 │   ├── risk_policy.md
+│   ├── scale_in_policy_m43.md
 │   ├── supervised_scheduled_paper_readiness_m41.md
 │   ├── supervised_scheduled_paper_run_m42.md
 │   ├── temporal_workflows.md
@@ -199,7 +202,8 @@ AI_Trading_Bot/
 │   │   ├── idempotency.py
 │   │   ├── models.py
 │   │   ├── order_lifecycle.py
-│   │   └── rejections.py
+│   │   ├── rejections.py
+│   │   └── scale_in.py
 │   ├── ledger/
 │   │   ├── __init__.py
 │   │   ├── connection.py
@@ -328,6 +332,7 @@ AI_Trading_Bot/
 │       ├── test_reporting.py
 │       ├── test_reporting_activities.py
 │       ├── test_risk_checks.py
+│       ├── test_scale_in_policy.py
 │       ├── test_strategy_exits.py
 │       ├── test_strategy_signals.py
 │       ├── test_supervised_scheduled_paper_run.py
@@ -350,4 +355,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 305
+Total directories: 46, Total files: 310

@@ -1,6 +1,6 @@
 # Database Runtime
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestones 17-18 prepare a managed Postgres/Supabase-compatible runtime path for the audit ledger
 and add explicit managed repository CRUD validation. They do not start actual paper trading, submit

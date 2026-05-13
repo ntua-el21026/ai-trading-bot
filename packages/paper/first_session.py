@@ -49,7 +49,7 @@ from packages.reporting.ledger import (
 
 FIRST_SESSION_STARTED_AT = datetime(2026, 5, 7, 14, 0, tzinfo=UTC)
 FIRST_SESSION_COMPLETED_AT = FIRST_SESSION_STARTED_AT + timedelta(minutes=10)
-FIRST_SESSION_SPEC_VERSION = "Autonomous_AI_Trading_Bot_SPEC_v0.3.md"
+FIRST_SESSION_SPEC_VERSION = "Autonomous_AI_Trading_Bot_SPEC_v0.4.md"
 FIRST_SESSION_SAFE_MODE: Literal["fake-local"] = "fake-local"
 FIRST_SESSION_APPROVAL_MARKER = "FAKE_LOCAL_OPERATOR_APPROVED"
 FIRST_SESSION_RISK_CONFIG_VERSION = "risk_v0_3"

@@ -1,6 +1,6 @@
 # Level 4 Micro-Live Readiness Checklist
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 This checklist is documentation-only. It does not enable live trading or submit broker orders.
 

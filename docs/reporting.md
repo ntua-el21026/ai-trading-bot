@@ -1,6 +1,6 @@
 # Reporting
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 15 adds local/fake-safe reporting foundations. Reports are generated from supplied
 ledger/read-model snapshots, rendered deterministically, and persisted through the ledger repository.
@@ -24,6 +24,12 @@ Milestone 25 surfaces report summaries through the dashboard/control-plane read 
 harness. Dashboard report sections are read-only and may be empty or unavailable-safe when no local
 ledger records exist; they do not generate new reports, send alerts, deploy a dashboard, or start
 paper trading.
+
+Milestone 43 requires scale-in evidence and future frozen validation reports to distinguish
+`initial_entry`, `scale_in_entry`, `initial_protective_stop`, `add_on_protective_stop`, `exit`,
+`cleanup`, and `incident_repair`. Reports must be able to record scale-in count, success/failure,
+total symbol quantity, protected quantity, scale-in incidents, and attribution notes when partial
+scale-in exists.
 
 ## Implemented
 

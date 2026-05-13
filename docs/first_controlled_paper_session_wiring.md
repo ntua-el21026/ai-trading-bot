@@ -1,6 +1,6 @@
 # First Controlled Paper Session Wiring Harness
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 ## Purpose
 

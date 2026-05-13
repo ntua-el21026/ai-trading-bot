@@ -1,6 +1,6 @@
 # Pre-Paper Operations Gap Audit
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 ## 1. Purpose
 
@@ -79,6 +79,12 @@ did not cancel the protective stop, submit the cleanup sell, or perform emergenc
 AAPL remains open for quantity `1` with the expected verified protective stop, and repeated
 controlled paper sessions remain blocked.
 
+Milestone 43 creates the v0.4 deterministic scale-in policy before frozen validation. Existing
+protected paper positions may be evaluated as potential scale-in candidates instead of automatic
+skips, but only under strict deterministic gates. Pending entries, ambiguous orders, unresolved
+incidents, unprotected positions, missing add-on signals, and exceeded risk/exposure caps still
+block new risk. M43 performs no broker writes and starts no frozen validation.
+
 ## 2. Source-Of-Truth Files Reviewed
 
 Source-of-truth hierarchy confirmed:
@@ -93,7 +99,7 @@ Source-of-truth hierarchy confirmed:
 Primary governance, spec, docs, config, and implementation areas reviewed:
 
 - `AGENTS.md`
-- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`
+- `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`
 - `README.md`
 - `.env.example`
 - `pyproject.toml`
@@ -322,7 +328,7 @@ Required closeout:
 ### A. Pre-Run Go/No-Go
 
 - [ ] Correct branch and commit recorded.
-- [ ] Latest spec identified as `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`, unless a newer
+- [ ] Latest spec identified as `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`, unless a newer
   versioned spec exists.
 - [ ] `.env` present locally if needed, untracked, and not printed.
 - [ ] Secrets not printed.
@@ -336,6 +342,9 @@ Required closeout:
 - [ ] Existing open orders checked.
 - [ ] Existing positions checked.
 - [ ] Target symbol clean or explicitly allowed.
+- [ ] Existing protected position routed through scale-in eligibility only if scale-in is intended.
+- [ ] Pending entry, ambiguous order, unresolved incident, or under-protected position blocks new
+  risk.
 - [ ] Kill switch allows new risk.
 - [ ] Prior incidents reviewed.
 - [ ] Real alert delivery mode explicitly chosen: fake, real Telegram, or disabled-fail-closed.
@@ -417,8 +426,9 @@ The approved staging path remains:
 3. Repeated controlled paper sessions.
 4. Scheduled paper sessions.
 5. Unattended scheduled paper operation.
-6. Frozen paper validation period.
-7. Level 4 go/no-go review.
+6. M43 deterministic scale-in policy freeze readiness review.
+7. Frozen paper validation period.
+8. Level 4 go/no-go review.
 
 The frozen validation clock must not start until:
 
@@ -426,6 +436,7 @@ The frozen validation clock must not start until:
 - paper execution is proven;
 - schedules and autonomy level are explicitly chosen;
 - strategy, risk, execution, AI prompt/schema, and config rules are frozen;
+- scale-in policy is either frozen under v0.4 or explicitly disabled before freeze;
 - the frozen-period evidence capture format is approved.
 
 ## 10. Level 4 Exclusion
@@ -457,7 +468,7 @@ Leverage remains out of scope for v0.1 active validation:
 Milestone 28 is documentation, audit, and protocol only.
 
 No blocking spec contradiction was found during this audit. The repository remains aligned with
-`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md` and remains ready to proceed to a future
+`docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md` and remains ready to proceed to a future
 implementation/wiring milestone for the first controlled paper session.
 
 At Milestone 28, actual paper trading had not started. Current M35C evidence records that actual

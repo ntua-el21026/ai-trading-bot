@@ -22,3 +22,23 @@ protective_stop:
   critical_after_seconds: 30
   flatten_after_seconds: 60
   max_retries: 3
+
+scale_in:
+  enabled_for_paper_validation: true
+  max_entries_per_symbol: 2
+  max_add_entries_per_symbol: 1
+  max_new_entry_qty: 1
+  max_scale_in_qty: 1
+  max_total_symbol_qty: 2
+  max_pending_entry_orders_per_symbol: 0
+  max_unresolved_incidents_per_symbol: 0
+  require_existing_stop_verified: true
+  require_add_on_signal: true
+  require_no_pending_entry_order: true
+  require_no_unresolved_symbol_incident: true
+  protective_stop_required_before_scale_in: true
+  protective_stop_required_after_scale_in: true
+  stop_policy: "additive_stop_for_added_quantity"
+  allow_stop_replacement: false
+  allow_stop_cancel_before_scale_in: false
+  block_if_protected_quantity_below_position_quantity: true

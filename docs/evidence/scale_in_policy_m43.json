@@ -1,0 +1,154 @@
+{
+  "packet_id": "scale_in_policy_m43",
+  "timestamp_utc": "2026-05-13T15:13:23Z",
+  "milestone": "M43",
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md",
+  "latest_spec_version": "v0.4",
+  "new_spec_version_created": true,
+  "new_spec_version_reason": "v0.3 did not permit deterministic paper-mode scale-in / pyramiding before frozen validation.",
+  "scale_in_policy_enabled": true,
+  "scale_in_policy_scope": "paper_validation_only_before_freeze",
+  "universe_included": [
+    "SPY",
+    "QQQ",
+    "DIA",
+    "IWM",
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "META",
+    "GOOGL"
+  ],
+  "full_universe_remains_eligible_for_evaluation": true,
+  "forced_trades": false,
+  "config_files_changed": [
+    "config/execution.yaml"
+  ],
+  "risk_execution_modules_changed": [
+    "packages/core/config.py",
+    "packages/execution/__init__.py",
+    "packages/execution/scale_in.py",
+    "packages/paper/first_session.py",
+    "packages/reconciliation/service.py",
+    "packages/strategy/signals.py"
+  ],
+  "scale_in_config": {
+    "enabled_for_paper_validation": true,
+    "max_entries_per_symbol": 2,
+    "max_add_entries_per_symbol": 1,
+    "max_new_entry_qty": 1,
+    "max_scale_in_qty": 1,
+    "max_total_symbol_qty": 2,
+    "max_pending_entry_orders_per_symbol": 0,
+    "max_unresolved_incidents_per_symbol": 0,
+    "require_existing_stop_verified": true,
+    "require_add_on_signal": true,
+    "require_no_pending_entry_order": true,
+    "require_no_unresolved_symbol_incident": true,
+    "protective_stop_required_before_scale_in": true,
+    "protective_stop_required_after_scale_in": true,
+    "stop_policy": "additive_stop_for_added_quantity",
+    "allow_stop_replacement": false,
+    "allow_stop_cancel_before_scale_in": false,
+    "block_if_protected_quantity_below_position_quantity": true
+  },
+  "open_order_role_classification_summary": {
+    "protective_stop": "verified existing protective stops are allowed and required; they do not block scale-in by themselves",
+    "pending_entry": "blocks scale-in",
+    "pending_exit": "blocks new risk",
+    "stale_session_order": "blocks scale-in until resolved",
+    "unknown_or_ambiguous": "blocks scale-in until resolved"
+  },
+  "scale_in_eligibility_rule_summary": [
+    "existing position must be long-only with quantity > 0 and below max_total_symbol_qty",
+    "existing verified protective-stop coverage must be sufficient before scale-in",
+    "no unresolved symbol incident may exist",
+    "no pending entry, pending exit, stale, unknown, or ambiguous open order may exist",
+    "broker reconciliation must be clean",
+    "fresh deterministic add-on signal is required",
+    "aggregate symbol quantity, symbol notional, portfolio exposure, and aggregate risk-at-stop must remain within caps",
+    "valid distinct scale-in ExecutionIntent is required before order submission"
+  ],
+  "stop_policy_summary": "Existing protective stops must remain intact. After an add-on fill, a separate protective stop for only the newly filled quantity must be submitted and verified through the normal stop path. Stop cancel/replace is not allowed in the scale-in path.",
+  "aggregate_protection_rule_summary": "protected_quantity_sum >= open_position_quantity; under-protected symbols create an incident and block new risk.",
+  "duplicate_intent_prevention_summary": [
+    "no duplicate active scale-in intent for the same symbol",
+    "no duplicate active scale-in intent for the same signal",
+    "no scale-in while an entry order is pending",
+    "no scale-in while a previous scale-in stop is unverified"
+  ],
+  "reporting_statistics_rule_summary": [
+    "distinguish initial_entry from scale_in_entry",
+    "distinguish initial_protective_stop from add_on_protective_stop",
+    "record scale-in success/failure",
+    "record total symbol quantity after scale-in",
+    "record protected quantity after scale-in",
+    "record scale-in incidents and attribution notes when partial scale-in exists"
+  ],
+  "fake_stub_test_coverage_summary": [
+    "scale-in config defaults load",
+    "scale-in disabled refusal",
+    "existing protected long position eligibility",
+    "missing existing stop refusal",
+    "pending entry and ambiguous order blockers",
+    "unresolved incident blocker",
+    "entry/add/total quantity caps",
+    "symbol notional, portfolio exposure, and aggregate risk-at-stop caps",
+    "missing deterministic add-on signal refusal",
+    "distinct scale-in ExecutionIntent metadata",
+    "additive add-on stop representation with no cancel/replace",
+    "aggregate protection pass/fail",
+    "failed add-on stop structured incident",
+    "duplicate active scale-in intent blocker",
+    "reporting/evidence action-role distinction",
+    "full configured universe remains eligible",
+    "AAPL/MSFT/XLK protected holds treated as potential candidates only when gates pass"
+  ],
+  "expected_current_paper_holds_after_m42": [
+    {
+      "symbol": "AAPL",
+      "quantity": 1,
+      "verified_protective_stop_quantity": 1,
+      "m43_scale_in_treatment": "potential candidate only if deterministic add-on signal and all gates pass"
+    },
+    {
+      "symbol": "MSFT",
+      "quantity": 1,
+      "verified_protective_stop_quantity": 1,
+      "m43_scale_in_treatment": "potential candidate only if deterministic add-on signal and all gates pass"
+    },
+    {
+      "symbol": "XLK",
+      "quantity": 1,
+      "verified_protective_stop_quantity": 1,
+      "m43_scale_in_treatment": "potential candidate only if deterministic add-on signal and all gates pass"
+    }
+  ],
+  "real_broker_writes_performed": false,
+  "real_broker_write_commands_run": false,
+  "schedules_activated": false,
+  "frozen_validation_started": false,
+  "live_trading_enabled": false,
+  "autonomous_live_execution_enabled": false,
+  "leverage_enabled": false,
+  "ai_broker_write_authority_enabled": false,
+  "openai_called": false,
+  "marketaux_called": false,
+  "alpha_vantage_called": false,
+  "telegram_real_delivery_called": false,
+  "vercel_deployment_called": false,
+  "temporal_schedule_activation_called": false,
+  "level4_ready": false,
+  "m44_freeze_readiness_recommendation": "Proceed to M44 only as a separate freeze-readiness milestone that explicitly freezes spec/config/code versions, evidence rules, monitoring policy, and validation start conditions. Do not treat M43 as validation start.",
+  "blockers": [
+    "M44 freeze approval and version freeze are required before the 8-week validation clock can start",
+    "no real scale-in execution has been run; M43 validates policy behavior with fake/stub clients only",
+    "Level 4 remains blocked until frozen paper validation and all go/no-go evidence are complete"
+  ],
+  "secrets_included": false
+}

@@ -1,11 +1,13 @@
 # Level 4 Micro-Live Readiness
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 27 adds a controlled paper operations readiness harness while preserving the readiness boundary.
 It does not enable live trading, autonomous live execution, live credentials, real Alpaca calls in
 default tests, actual paper trading operations, live orders, production schedules, execution
 services on Vercel, expanded Level 4, or Level 5. Email/Resend remains deferred.
+Milestone 43 adds deterministic paper-validation scale-in policy support only. It does not start
+the frozen validation clock and does not move Level 4 readiness to GO.
 
 ## Purpose And Scope
 
@@ -43,7 +45,8 @@ Known status:
   default-refusing gated paper order-lifecycle smoke harness, plus provider/OpenAI/calibration,
   Telegram alerting, Temporal Cloud dev runtime boundaries, and dashboard/control-plane dev runtime
   boundaries with offline default tests.
-- Paper trading operations have not started.
+- Controlled paper sessions have produced protected AAPL, MSFT, and XLK paper holds, but frozen
+  paper validation has not started.
 - Frozen paper evidence is not available.
 - Database/audit-ledger foundation and local/fake Temporal ledger activities exist; managed
   Postgres/Supabase migration/check helpers and opt-in repository CRUD validation exist.
@@ -82,8 +85,8 @@ Hard blockers:
 
 - No production managed database activity wiring evidence.
 - No actual paper-operation worker evidence or schedule activation evidence.
-- No first controlled paper session evidence.
-- No controlled real paper operations evidence beyond the one-shot smoke.
+- No completed frozen 8-week paper validation evidence.
+- M43 scale-in policy must be frozen or disabled in M44 before the validation clock starts.
 - No production Temporal schedule evidence.
 - No production dashboard deployment evidence.
 - No frozen paper run evidence.

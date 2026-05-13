@@ -1,6 +1,6 @@
 # Risk Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 Milestone 06 implements deterministic risk-check contracts, position sizing, kill-switch state
 models, and passive broker reconciliation inputs. The implementation is passive: it approves or
@@ -14,7 +14,9 @@ dry-run scenarios, including risk rejection, duplicate active intent, stale data
 kill-switch/pause-new-risk inputs, without enabling autonomous execution in config. Milestone 21A
 adds a default-refusing Alpaca paper order-lifecycle smoke harness that must pass the same paper,
 live-disabled, autonomy-disabled, reconciliation-required, and protective-stop-required config
-invariants before any broker write-capable path can be reached.
+invariants before any broker write-capable path can be reached. Milestone 43 adds deterministic
+paper-validation scale-in caps and eligibility checks without weakening initial-entry safety or
+performing broker writes.
 
 ## Foundation Defaults
 
@@ -50,6 +52,26 @@ Checks include:
 - Temporal workflow state consistency placeholder.
 
 Any failed check rejects the new-risk order.
+
+## Scale-In Risk Gates
+
+M43 scale-in is treated as new risk and must pass the normal risk checks plus scale-in-specific
+caps:
+
+- `max_entries_per_symbol: 2`;
+- `max_add_entries_per_symbol: 1`;
+- `max_new_entry_qty: 1`;
+- `max_scale_in_qty: 1`;
+- `max_total_symbol_qty: 2`;
+- `max_pending_entry_orders_per_symbol: 0`;
+- `max_unresolved_incidents_per_symbol: 0`.
+
+An existing long paper position may be considered only when current protective-stop coverage is
+verified and sufficient. The add-on is refused if total symbol quantity, symbol notional, portfolio
+exposure, aggregate risk-at-stop, or portfolio risk-at-stop would exceed configured caps.
+
+Scale-in also refuses when no deterministic add-on signal exists. AI/news output cannot authorize
+scale-in and cannot increase position size, alter stops, mutate risk limits, or bypass any gate.
 
 ## Broker Reconciliation Input
 

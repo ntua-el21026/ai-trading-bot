@@ -1,6 +1,6 @@
 # Paper Incident Report Template
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md`.
 
 This template is documentation-only. Do not include secrets.
 

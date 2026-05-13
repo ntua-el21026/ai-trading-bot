@@ -7,7 +7,7 @@ These prompts are intended to be run sequentially unless the user explicitly dec
 As of this prompt pack, the latest identified spec is:
 
 ```text
-docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.3.md
+docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.4.md
 ```
 
 Future Codex runs must still re-identify the latest versioned spec before editing.
