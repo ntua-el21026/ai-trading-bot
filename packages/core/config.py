@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 CONFIG_FILES: tuple[str, ...] = (
     "system.yaml",
     "temporal.yaml",
+    "market_data.yaml",
     "execution.yaml",
     "universe.yaml",
     "strategy.yaml",
@@ -80,6 +81,56 @@ class TemporalConfig(StrictModel):
     task_queues: TemporalTaskQueues
     schedules: TemporalSchedules
     retry_defaults: RetryDefaults
+
+
+class MarketDataConfig(StrictModel):
+    primary_signal_provider: str
+    primary_signal_feed: Literal["sip", "iex", "delayed_sip", "other"]
+    require_non_iex_primary_signal_data: bool
+    fail_if_primary_signal_feed_is_iex: bool
+    allow_iex_only_for_frozen_validation: bool
+    allow_delayed_sip_for_signal_generation: bool = False
+    non_iex_primary_signal_data_verified: bool = False
+    non_iex_primary_signal_data_waiver_enabled: bool = False
+    non_iex_primary_signal_data_waiver_reason: str = ""
+
+    @field_validator("primary_signal_provider", mode="before")
+    @classmethod
+    def normalize_provider(cls, provider: object) -> str:
+        normalized = str(provider).strip().lower()
+        if not normalized:
+            raise ValueError("primary signal provider is required")
+        return normalized
+
+    @field_validator("primary_signal_feed", mode="before")
+    @classmethod
+    def normalize_feed(cls, feed: object) -> str:
+        normalized = str(feed).strip().lower().replace("-", "_")
+        if normalized == "sip_delayed":
+            normalized = "delayed_sip"
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_market_data_policy(self) -> Self:
+        if not self.require_non_iex_primary_signal_data:
+            raise ValueError("v0.5 requires non-IEX primary signal data before M45")
+        if not self.fail_if_primary_signal_feed_is_iex:
+            raise ValueError("IEX-only primary signal data must fail the M45 gate")
+        if self.allow_iex_only_for_frozen_validation and not (
+            self.non_iex_primary_signal_data_waiver_enabled
+            and self.non_iex_primary_signal_data_waiver_reason.strip()
+        ):
+            raise ValueError("IEX-only validation requires an explicit waiver reason")
+        if self.primary_signal_feed == "delayed_sip" and not (
+            self.allow_delayed_sip_for_signal_generation
+            or self.non_iex_primary_signal_data_waiver_enabled
+        ):
+            # Delayed SIP is classified explicitly by the M44B gate, but config loading should
+            # remain conservative instead of silently equating it to real-time SIP.
+            return self
+        if self.non_iex_primary_signal_data_verified and self.primary_signal_feed == "iex":
+            raise ValueError("IEX-only feed cannot be marked non-IEX verified")
+        return self
 
 
 class ExecutionConfig(StrictModel):
@@ -746,6 +797,7 @@ class ValidationAiConfig(ValidationAiPolicy):
 class AppConfig(StrictModel):
     system: SystemConfig
     temporal: TemporalConfig
+    market_data: MarketDataConfig
     execution: ExecutionConfig
     protective_stop: ProtectiveStopConfig
     scale_in: ScaleInConfig

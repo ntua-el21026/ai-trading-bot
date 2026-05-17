@@ -19,6 +19,13 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.execution.require_protective_stop is True
     assert config.execution.first_session_max_qty == 1
     assert config.execution.first_session_absolute_max_notional_usd == 500.0
+    assert config.market_data.primary_signal_provider == "alpaca"
+    assert config.market_data.primary_signal_feed == "sip"
+    assert config.market_data.require_non_iex_primary_signal_data is True
+    assert config.market_data.fail_if_primary_signal_feed_is_iex is True
+    assert config.market_data.allow_iex_only_for_frozen_validation is False
+    assert config.market_data.non_iex_primary_signal_data_verified is False
+    assert config.market_data.non_iex_primary_signal_data_waiver_enabled is False
     assert config.scale_in.enabled_for_paper_validation is True
     assert config.scale_in.max_entries_per_symbol == 2
     assert config.scale_in.max_add_entries_per_symbol == 1

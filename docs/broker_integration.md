@@ -13,6 +13,11 @@ Milestone 44 adds v0.5 side-aware broker semantics and flat-start cleanup eviden
 writes were limited to cancelling verified AAPL/MSFT/XLK protective stops and submitting
 risk-reducing sells for the current long quantities. No real short broker orders were submitted.
 Final M44 broker baseline is flat with zero open orders and zero positions.
+Milestone 44B adds a read-only market-data gate for primary signal data. The gate uses Alpaca
+market-data reads only when verifying `feed=sip`; it does not call broker order endpoints, submit or
+cancel orders, activate schedules, or start frozen validation. The first real M44B verify attempt
+returned sanitized unauthorized SIP access, so M45 remains blocked unless SIP/non-IEX access is
+verified or the explicit governance waiver is recorded.
 
 ## Current Implementation
 

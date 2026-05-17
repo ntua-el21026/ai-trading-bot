@@ -242,6 +242,17 @@ gate, M44/M45 evidence must include:
 non_iex_primary_signal_data_not_verified
 ```
 
+The preferred verification path is a read-only SIP/non-IEX market-data check against the configured
+primary signal provider. For Alpaca, the checker must request `feed=sip`; an IEX feed, missing
+credentials, unauthorized SIP subscription, empty response, or inconclusive response does not pass
+the gate. Delayed SIP is a separate classification and cannot silently substitute for real-time SIP
+unless a future policy explicitly allows it for signal generation.
+
+An explicit waiver may satisfy M45 operational-readiness only when the operator/governance marker
+is recorded. A waiver must state that the first frozen window is operational paper validation with
+market-data limitations and that strategy-performance conclusions are limited. The waiver path must
+not claim non-IEX data verification.
+
 ### 2.1.6 Frozen Schedule
 
 All schedule times are America/New_York:

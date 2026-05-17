@@ -877,6 +877,41 @@ Evidence:
 - frozen readiness: `docs/evidence/frozen_readiness_m44.json`;
 - readiness doc: `docs/frozen_validation_readiness_m44.md`.
 
+### Milestone 44B Non-IEX Data Gate
+
+M44B checks the remaining M45 blocker without starting M45. It performs no broker writes, no
+schedule activation, no frozen validation start, no leverage enablement, and no short enablement.
+
+Verify mode:
+
+```bash
+uv run python scripts/check_primary_signal_data_gate.py \
+  --mode verify \
+  --provider alpaca \
+  --feed sip \
+  --confirm-read-only \
+  --confirm-no-broker-writes \
+  --confirm-no-schedules \
+  --confirm-no-frozen-validation-start
+```
+
+Waiver mode requires explicit governance approval:
+
+```bash
+uv run python scripts/check_primary_signal_data_gate.py \
+  --mode waive \
+  --operator-approval MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER \
+  --waiver-reason "<operator-approved limitation statement>" \
+  --confirm-no-broker-writes \
+  --confirm-no-schedules \
+  --confirm-no-frozen-validation-start
+```
+
+M44B result: the real read-only Alpaca SIP check returned sanitized unauthorized access, so
+`non_iex_primary_signal_data_not_verified` remains. M45 cannot start until non-IEX/SIP access is
+verified or the explicit waiver path is approved. If waived, the paper run is operational
+validation with market-data limitations and cannot be presented as clean strategy-performance proof.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

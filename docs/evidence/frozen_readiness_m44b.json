@@ -1,0 +1,44 @@
+{
+  "frozen_readiness_m44b": {
+    "autonomous_live_execution_enabled": false,
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified",
+      "primary_signal_data_gate_not_satisfied"
+    ],
+    "broker_baseline_rechecked": false,
+    "broker_baseline_source": "m44_flat_start_cleanup_packet",
+    "flat_start_achieved": true,
+    "frozen_validation_started": false,
+    "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md",
+    "latest_spec_version": "v0.5",
+    "level4_ready": false,
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "m44_flat_cleanup_packet_reference": "docs/evidence/flat_start_cleanup_m44.json",
+    "m44_frozen_readiness_packet_reference": "docs/evidence/frozen_readiness_m44.json",
+    "m44b_primary_signal_data_gate_packet_reference": "docs/evidence/primary_signal_data_gate_m44b.json",
+    "m45_readiness": false,
+    "non_iex_gate_status": "not_verified",
+    "non_iex_primary_signal_data_verified": false,
+    "non_iex_primary_signal_data_waived": false,
+    "open_orders_count": 0,
+    "packet_id": "6a18adb2-4167-5a16-b640-42681c6ddd9a",
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "schedules_activated": false,
+    "shorts_enabled": false,
+    "timestamp": "2026-05-17T12:05:56.867143Z",
+    "validation_limitation": null
+  },
+  "milestone": "44B",
+  "result": {
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified",
+      "primary_signal_data_gate_not_satisfied"
+    ],
+    "frozen_validation_started": false,
+    "go_no_go": "no_go",
+    "m45_readiness": false,
+    "schedules_activated": false
+  }
+}

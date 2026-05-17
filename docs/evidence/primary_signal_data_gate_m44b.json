@@ -1,0 +1,46 @@
+{
+  "milestone": "44B",
+  "primary_signal_data_gate": {
+    "allow_iex_only_for_frozen_validation": false,
+    "autonomous_live_execution_enabled": false,
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified"
+    ],
+    "broker_writes_performed": false,
+    "configured_primary_signal_feed": "sip",
+    "configured_primary_signal_provider": "alpaca",
+    "data_check_error_class": "alpaca_market_data_http_403",
+    "data_check_performed": true,
+    "data_check_result": "unauthorized",
+    "data_check_symbols": [
+      "SPY"
+    ],
+    "frozen_validation_started": false,
+    "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md",
+    "latest_spec_version": "v0.5",
+    "leverage_enabled": false,
+    "live_trading_enabled": false,
+    "m45_readiness_impact": "no_go",
+    "mode": "verify",
+    "non_iex_primary_signal_data_verified": false,
+    "non_iex_primary_signal_data_waived": false,
+    "packet_id": "2a93fd9d-654f-5a4c-be43-040c38f99e4f",
+    "require_non_iex_primary_signal_data": true,
+    "schedules_activated": false,
+    "shorts_enabled": false,
+    "timestamp": "2026-05-17T12:05:56.120559Z",
+    "validation_limitation": null,
+    "waiver_reason": null
+  },
+  "result": {
+    "blockers": [
+      "non_iex_primary_signal_data_not_verified"
+    ],
+    "broker_writes_performed": false,
+    "frozen_validation_started": false,
+    "go_no_go": "no_go",
+    "non_iex_primary_signal_data_verified": false,
+    "non_iex_primary_signal_data_waived": false,
+    "schedules_activated": false
+  }
+}

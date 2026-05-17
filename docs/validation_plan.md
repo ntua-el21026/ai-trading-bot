@@ -328,6 +328,13 @@ M45 remains NO-GO until the non-IEX primary signal-data gate is verified or expl
 also freezes negative-only AI/news behavior for the first window: AI may block, reduce, and report,
 but may not authorize trades, shorts, scale-ins, or larger sizing.
 
+M44B implements this gate as a separate readiness check. Verify mode must prove the configured
+primary signal feed is non-IEX, preferably Alpaca `sip`, through read-only market-data access.
+Waiver mode requires the explicit `MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER` marker and records that
+the paper window is operational validation with market-data limitations. The first M44B real verify
+attempt returned sanitized unauthorized SIP access, so M45 remains NO-GO until SIP/non-IEX access is
+verified or waiver evidence is explicitly recorded.
+
 ## Current Assumptions
 
 Earnings blackout logic requires a caller-supplied trading calendar and earnings date. If earnings

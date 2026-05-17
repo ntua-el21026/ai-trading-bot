@@ -133,3 +133,33 @@ by governance, M45 should regenerate readiness evidence immediately before start
 clock.
 
 Frozen readiness evidence: `docs/evidence/frozen_readiness_m44.json`.
+
+## Milestone 44B Primary Signal Data Gate
+
+M44B adds the dedicated primary-signal data gate evidence path. It does not start M45, activate
+schedules, perform broker writes, enable live/autonomous execution, enable leverage, or enable
+shorts.
+
+Configured market-data policy:
+
+- primary signal provider: `alpaca`;
+- primary signal feed: `sip`;
+- non-IEX primary signal data required: `true`;
+- IEX-only frozen validation allowed by config: `false`;
+- waiver enabled by config: `false`.
+
+M44B verify mode requested Alpaca SIP data with read-only market-data access. The check reached the
+data endpoint but returned sanitized `unauthorized`, so non-IEX primary signal data is still not
+verified. M45 remains NO-GO.
+
+M44B evidence:
+
+- signal data gate: `docs/evidence/primary_signal_data_gate_m44b.json`;
+- refreshed readiness: `docs/evidence/frozen_readiness_m44b.json`.
+
+Remaining ways to clear the gate:
+
+- enable/confirm Alpaca SIP or another approved non-IEX primary signal feed and rerun verify mode;
+- or provide the explicit `MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER` governance marker with a waiver
+  reason. Waiver mode makes M45 an operational paper validation with market-data limitations, not a
+  clean strategy-performance proof.

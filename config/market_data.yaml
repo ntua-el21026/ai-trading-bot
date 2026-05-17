@@ -1,0 +1,10 @@
+market_data:
+  primary_signal_provider: alpaca
+  primary_signal_feed: sip
+  require_non_iex_primary_signal_data: true
+  fail_if_primary_signal_feed_is_iex: true
+  allow_iex_only_for_frozen_validation: false
+  allow_delayed_sip_for_signal_generation: false
+  non_iex_primary_signal_data_verified: false
+  non_iex_primary_signal_data_waiver_enabled: false
+  non_iex_primary_signal_data_waiver_reason: ""
