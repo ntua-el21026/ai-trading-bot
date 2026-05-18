@@ -159,7 +159,39 @@ M44B evidence:
 
 Remaining ways to clear the gate:
 
+- verify the approved Tiingo EOD primary signal feed with read-only historical completed daily
+  bars for the frozen universe;
 - enable/confirm Alpaca SIP or another approved non-IEX primary signal feed and rerun verify mode;
 - or provide the explicit `MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER` governance marker with a waiver
   reason. Waiver mode makes M45 an operational paper validation with market-data limitations, not a
   clean strategy-performance proof.
+
+## Milestone 44C Tiingo EOD Primary Signal Data Gate
+
+M44C changes the configured M45 primary signal data source from Alpaca SIP to Tiingo EOD historical
+completed daily bars. Alpaca remains the paper broker and execution integration, but Alpaca IEX is
+not allowed for frozen-validation signal generation.
+
+Configured market-data policy:
+
+- primary signal provider: `tiingo`;
+- primary signal feed: `eod`;
+- primary signal mode: `historical_completed_daily_bars`;
+- Tiingo token environment variable name: `TIINGO_API_KEY`;
+- minimum history required per sample symbol: `260` completed bars;
+- sample symbols: `SPY`, `QQQ`, `AAPL`, `MSFT`, `XLK`;
+- IEX-only frozen validation allowed by config: `false`.
+
+M44C verify mode performs read-only Tiingo EOD requests only. It validates completed daily OHLCV and
+adjusted-price fields and sufficient history for SMA200, RS63, ATR, 20D breakout, and volume
+filters. It performs no broker writes, schedule activation, or frozen-validation start.
+
+M44C evidence:
+
+- signal data gate: `docs/evidence/primary_signal_data_gate_m44c.json`;
+- refreshed readiness: `docs/evidence/frozen_readiness_m44c.json`.
+
+M44C result: the real read-only Tiingo EOD check verified `SPY`, `QQQ`, `AAPL`, `MSFT`, and
+`XLK` with sufficient completed daily history and no missing core fields. The refreshed readiness
+packet records M45 readiness `GO`, with frozen validation still not started and explicit M45
+operator approval still required.

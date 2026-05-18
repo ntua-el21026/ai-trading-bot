@@ -83,9 +83,58 @@ class TemporalConfig(StrictModel):
     retry_defaults: RetryDefaults
 
 
+class TiingoMarketDataConfig(StrictModel):
+    enabled: bool
+    api_key_env: str
+    base_url: str
+    eod_endpoint_template: str
+    adjusted_prices_required: bool
+    completed_daily_bars_only: bool
+    min_history_bars: int = Field(ge=260)
+    validation_sample_symbols: tuple[str, ...]
+
+    @field_validator("api_key_env")
+    @classmethod
+    def validate_api_key_env(cls, api_key_env: str) -> str:
+        normalized = api_key_env.strip()
+        if normalized != "TIINGO_API_KEY":
+            raise ValueError("Tiingo token must be loaded from TIINGO_API_KEY")
+        return normalized
+
+    @field_validator("validation_sample_symbols")
+    @classmethod
+    def validate_validation_sample_symbols(cls, symbols: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(symbol.strip().upper() for symbol in symbols if symbol.strip())
+        if not normalized:
+            raise ValueError("Tiingo validation sample symbols are required")
+        if any(symbol != symbol.upper() for symbol in normalized):
+            raise ValueError("Tiingo validation sample symbols must be uppercase")
+        return normalized
+
+
+class AlpacaMarketDataFallbackConfig(StrictModel):
+    fallback_allowed_for_execution_broker: bool
+    fallback_allowed_for_signal_generation: bool
+    iex_allowed_for_signal_generation: bool
+
+    @model_validator(mode="after")
+    def validate_signal_generation_fallback(self) -> Self:
+        if self.fallback_allowed_for_signal_generation:
+            raise ValueError("Alpaca fallback is not allowed for frozen signal generation")
+        if self.iex_allowed_for_signal_generation:
+            raise ValueError("Alpaca IEX is not allowed for frozen signal generation")
+        return self
+
+
 class MarketDataConfig(StrictModel):
     primary_signal_provider: str
-    primary_signal_feed: Literal["sip", "iex", "delayed_sip", "other"]
+    primary_signal_feed: Literal["sip", "iex", "delayed_sip", "eod", "other"]
+    primary_signal_mode: Literal[
+        "historical_completed_daily_bars",
+        "realtime_bars",
+        "delayed_historical_bars",
+        "other",
+    ] = "other"
     require_non_iex_primary_signal_data: bool
     fail_if_primary_signal_feed_is_iex: bool
     allow_iex_only_for_frozen_validation: bool
@@ -93,6 +142,8 @@ class MarketDataConfig(StrictModel):
     non_iex_primary_signal_data_verified: bool = False
     non_iex_primary_signal_data_waiver_enabled: bool = False
     non_iex_primary_signal_data_waiver_reason: str = ""
+    tiingo: TiingoMarketDataConfig | None = None
+    alpaca: AlpacaMarketDataFallbackConfig | None = None
 
     @field_validator("primary_signal_provider", mode="before")
     @classmethod
@@ -116,6 +167,13 @@ class MarketDataConfig(StrictModel):
             raise ValueError("v0.5 requires non-IEX primary signal data before M45")
         if not self.fail_if_primary_signal_feed_is_iex:
             raise ValueError("IEX-only primary signal data must fail the M45 gate")
+        if self.primary_signal_provider == "tiingo":
+            if self.primary_signal_feed != "eod":
+                raise ValueError("Tiingo primary signal data must use EOD feed")
+            if self.primary_signal_mode != "historical_completed_daily_bars":
+                raise ValueError("Tiingo frozen signals must use completed daily bars")
+            if self.tiingo is None or not self.tiingo.enabled:
+                raise ValueError("Tiingo config must be enabled for Tiingo primary signal data")
         if self.allow_iex_only_for_frozen_validation and not (
             self.non_iex_primary_signal_data_waiver_enabled
             and self.non_iex_primary_signal_data_waiver_reason.strip()

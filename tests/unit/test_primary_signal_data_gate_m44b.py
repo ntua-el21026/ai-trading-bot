@@ -22,6 +22,11 @@ from packages.data.primary_signal_gate import (
 )
 
 AS_OF = datetime(2026, 5, 17, 12, 0, tzinfo=UTC)
+ALPACA_SIP_ENV = {
+    "MARKET_DATA_PRIMARY_PROVIDER": "alpaca",
+    "MARKET_DATA_PRIMARY_FEED": "sip",
+    "MARKET_DATA_PRIMARY_SIGNAL_MODE": "realtime_bars",
+}
 
 
 class _VerifiedDataClient:
@@ -91,18 +96,23 @@ def _m44_readiness_packet(tmp_path: Path) -> Path:
 def test_config_loader_supports_market_data_block() -> None:
     config = load_app_config()
 
-    assert config.market_data.primary_signal_provider == "alpaca"
-    assert config.market_data.primary_signal_feed == "sip"
+    assert config.market_data.primary_signal_provider == "tiingo"
+    assert config.market_data.primary_signal_feed == "eod"
+    assert config.market_data.primary_signal_mode == "historical_completed_daily_bars"
     assert config.market_data.require_non_iex_primary_signal_data is True
     assert config.market_data.fail_if_primary_signal_feed_is_iex is True
     assert config.market_data.allow_iex_only_for_frozen_validation is False
     assert config.market_data.non_iex_primary_signal_data_waiver_enabled is False
+    assert config.market_data.tiingo is not None
+    assert config.market_data.tiingo.api_key_env == "TIINGO_API_KEY"
 
 
 def test_feed_normalization_and_classification_are_explicit() -> None:
     assert normalize_primary_signal_feed("SIP") == "sip"
+    assert normalize_primary_signal_feed("EOD") == "eod"
     assert normalize_primary_signal_feed("sip-delayed") == "delayed_sip"
     assert classify_primary_signal_feed("sip") == "non_iex"
+    assert classify_primary_signal_feed("eod") == "non_iex"
     assert classify_primary_signal_feed("iex") == "iex_only"
     assert classify_primary_signal_feed("delayed_sip") == "delayed_non_iex"
     assert classify_primary_signal_feed("delayed_sip", delayed_sip_allowed=True) == "non_iex"
@@ -129,7 +139,7 @@ def test_verify_mode_marks_go_only_with_verified_sip_data_check() -> None:
     result = run_primary_signal_data_gate(
         _verify_request(),
         data_client=_VerifiedDataClient(),
-        environ={},
+        environ=ALPACA_SIP_ENV,
         now=AS_OF,
     )
 
@@ -143,7 +153,7 @@ def test_verify_mode_marks_go_only_with_verified_sip_data_check() -> None:
 def test_verify_mode_remains_no_go_when_feed_is_iex() -> None:
     result = run_primary_signal_data_gate(
         _verify_request(feed="iex"),
-        environ={"MARKET_DATA_PRIMARY_FEED": "iex"},
+        environ=ALPACA_SIP_ENV | {"MARKET_DATA_PRIMARY_FEED": "iex"},
         now=AS_OF,
     )
 
@@ -156,7 +166,7 @@ def test_verify_mode_remains_no_go_when_sip_access_is_inconclusive() -> None:
     result = run_primary_signal_data_gate(
         _verify_request(),
         data_client=_EmptyDataClient(),
-        environ={},
+        environ=ALPACA_SIP_ENV,
         now=AS_OF,
     )
 
@@ -168,7 +178,7 @@ def test_verify_mode_remains_no_go_when_sip_access_is_inconclusive() -> None:
 def test_delayed_sip_does_not_silently_equal_realtime_sip() -> None:
     result = run_primary_signal_data_gate(
         _verify_request(feed="delayed_sip"),
-        environ={"MARKET_DATA_PRIMARY_FEED": "delayed_sip"},
+        environ=ALPACA_SIP_ENV | {"MARKET_DATA_PRIMARY_FEED": "delayed_sip"},
         now=AS_OF,
     )
 
@@ -202,7 +212,7 @@ def test_evidence_packets_contain_required_fields_and_exclude_secrets(tmp_path: 
     gate = run_primary_signal_data_gate(
         _verify_request(),
         data_client=_VerifiedDataClient(),
-        environ={},
+        environ=ALPACA_SIP_ENV,
         now=AS_OF,
     )
     gate_path = write_primary_signal_data_gate_artifact(gate, tmp_path / "gate.json")
@@ -236,7 +246,7 @@ def test_refreshed_readiness_remains_false_if_gate_not_satisfied(tmp_path: Path)
     gate = run_primary_signal_data_gate(
         _verify_request(),
         data_client=_EmptyDataClient(),
-        environ={},
+        environ=ALPACA_SIP_ENV,
         now=AS_OF,
     )
     readiness = build_frozen_readiness_m44b_packet(
@@ -254,7 +264,9 @@ def test_refreshed_readiness_remains_false_if_gate_not_satisfied(tmp_path: Path)
 
 def test_config_rejects_iex_marked_verified() -> None:
     config = load_app_config().market_data.model_dump() | {
+        "primary_signal_provider": "alpaca",
         "primary_signal_feed": "iex",
+        "primary_signal_mode": "realtime_bars",
         "non_iex_primary_signal_data_verified": True,
     }
 

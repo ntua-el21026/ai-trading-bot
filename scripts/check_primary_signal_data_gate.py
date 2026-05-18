@@ -8,13 +8,18 @@ import json
 
 from packages.data.primary_signal_gate import (
     FROZEN_READINESS_M44B_EVIDENCE_PATH,
+    FROZEN_READINESS_M44C_EVIDENCE_PATH,
     M44B_NON_IEX_DATA_GATE_WAIVER_APPROVAL,
     PRIMARY_SIGNAL_DATA_GATE_M44B_EVIDENCE_PATH,
+    PRIMARY_SIGNAL_DATA_GATE_M44C_EVIDENCE_PATH,
     PrimarySignalDataGateRequest,
     build_frozen_readiness_m44b_packet,
+    build_frozen_readiness_m44c_packet,
     run_primary_signal_data_gate,
     write_frozen_readiness_m44b_artifact,
+    write_frozen_readiness_m44c_artifact,
     write_primary_signal_data_gate_artifact,
+    write_primary_signal_data_gate_m44c_artifact,
 )
 from packages.paper.preflight import load_preflight_environment
 
@@ -29,12 +34,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--mode", choices=("verify", "waive"), required=True)
     parser.add_argument("--provider")
-    parser.add_argument("--feed", choices=("sip", "iex", "delayed_sip", "other"))
+    parser.add_argument("--feed", choices=("sip", "iex", "delayed_sip", "eod", "other"))
     parser.add_argument("--symbols", default="")
     parser.add_argument("--operator-approval")
     parser.add_argument("--waiver-reason", default="")
-    parser.add_argument("--output", default=PRIMARY_SIGNAL_DATA_GATE_M44B_EVIDENCE_PATH)
-    parser.add_argument("--readiness-output", default=FROZEN_READINESS_M44B_EVIDENCE_PATH)
+    parser.add_argument("--output")
+    parser.add_argument("--readiness-output")
     parser.add_argument("--confirm-read-only", action="store_true")
     parser.add_argument("--confirm-no-broker-writes", action="store_true")
     parser.add_argument("--confirm-no-schedules", action="store_true")
@@ -61,12 +66,35 @@ def main() -> int:
         request,
         environ=load_preflight_environment(),
     )
-    gate_path = write_primary_signal_data_gate_artifact(result, args.output)
-    readiness = build_frozen_readiness_m44b_packet(
-        result.packet,
-        gate_packet_path=str(gate_path),
+    is_m44c_tiingo = (
+        result.packet.configured_primary_signal_provider == "tiingo"
+        and result.packet.configured_primary_signal_feed == "eod"
+        and args.mode == "verify"
     )
-    readiness_path = write_frozen_readiness_m44b_artifact(readiness, args.readiness_output)
+    if is_m44c_tiingo:
+        output = args.output or PRIMARY_SIGNAL_DATA_GATE_M44C_EVIDENCE_PATH
+        readiness_output = args.readiness_output or FROZEN_READINESS_M44C_EVIDENCE_PATH
+        gate_path = write_primary_signal_data_gate_m44c_artifact(result, output)
+        readiness_m44c = build_frozen_readiness_m44c_packet(
+            result.packet,
+            m44c_gate_packet_path=str(gate_path),
+        )
+        readiness_path = write_frozen_readiness_m44c_artifact(readiness_m44c, readiness_output)
+        readiness_go_no_go = readiness_m44c.go_no_go
+        m45_readiness = readiness_m44c.packet.m45_readiness
+        readiness_blockers = readiness_m44c.blockers
+    else:
+        output = args.output or PRIMARY_SIGNAL_DATA_GATE_M44B_EVIDENCE_PATH
+        readiness_output = args.readiness_output or FROZEN_READINESS_M44B_EVIDENCE_PATH
+        gate_path = write_primary_signal_data_gate_artifact(result, output)
+        readiness_m44b = build_frozen_readiness_m44b_packet(
+            result.packet,
+            gate_packet_path=str(gate_path),
+        )
+        readiness_path = write_frozen_readiness_m44b_artifact(readiness_m44b, readiness_output)
+        readiness_go_no_go = readiness_m44b.go_no_go
+        m45_readiness = readiness_m44b.packet.m45_readiness
+        readiness_blockers = readiness_m44b.blockers
     print(
         json.dumps(
             {
@@ -81,9 +109,9 @@ def main() -> int:
                 ),
                 "data_check_performed": result.packet.data_check_performed,
                 "data_check_result": result.packet.data_check_result,
-                "m45_readiness": readiness.packet.m45_readiness,
-                "go_no_go": readiness.go_no_go,
-                "blockers": list(readiness.blockers),
+                "m45_readiness": m45_readiness,
+                "go_no_go": readiness_go_no_go,
+                "blockers": list(readiness_blockers),
                 "broker_writes_performed": False,
                 "schedules_activated": False,
                 "frozen_validation_started": False,
@@ -95,7 +123,7 @@ def main() -> int:
             sort_keys=True,
         )
     )
-    return 0 if readiness.go_no_go == "go" else 1
+    return 0 if readiness_go_no_go == "go" else 1
 
 
 if __name__ == "__main__":

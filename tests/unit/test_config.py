@@ -19,13 +19,27 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.execution.require_protective_stop is True
     assert config.execution.first_session_max_qty == 1
     assert config.execution.first_session_absolute_max_notional_usd == 500.0
-    assert config.market_data.primary_signal_provider == "alpaca"
-    assert config.market_data.primary_signal_feed == "sip"
+    assert config.market_data.primary_signal_provider == "tiingo"
+    assert config.market_data.primary_signal_feed == "eod"
+    assert config.market_data.primary_signal_mode == "historical_completed_daily_bars"
     assert config.market_data.require_non_iex_primary_signal_data is True
     assert config.market_data.fail_if_primary_signal_feed_is_iex is True
     assert config.market_data.allow_iex_only_for_frozen_validation is False
     assert config.market_data.non_iex_primary_signal_data_verified is False
     assert config.market_data.non_iex_primary_signal_data_waiver_enabled is False
+    assert config.market_data.tiingo is not None
+    assert config.market_data.tiingo.api_key_env == "TIINGO_API_KEY"
+    assert config.market_data.tiingo.min_history_bars == 260
+    assert config.market_data.tiingo.validation_sample_symbols == (
+        "SPY",
+        "QQQ",
+        "AAPL",
+        "MSFT",
+        "XLK",
+    )
+    assert config.market_data.alpaca is not None
+    assert config.market_data.alpaca.fallback_allowed_for_execution_broker is True
+    assert config.market_data.alpaca.fallback_allowed_for_signal_generation is False
     assert config.scale_in.enabled_for_paper_validation is True
     assert config.scale_in.max_entries_per_symbol == 2
     assert config.scale_in.max_add_entries_per_symbol == 1

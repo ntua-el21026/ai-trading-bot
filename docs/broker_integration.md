@@ -18,6 +18,11 @@ market-data reads only when verifying `feed=sip`; it does not call broker order 
 cancel orders, activate schedules, or start frozen validation. The first real M44B verify attempt
 returned sanitized unauthorized SIP access, so M45 remains blocked unless SIP/non-IEX access is
 verified or the explicit governance waiver is recorded.
+Milestone 44C selects Tiingo EOD as the primary M45 signal-data provider. Tiingo is used read-only
+for historical completed daily bars and never for broker execution or live quotes. Alpaca remains
+the broker/execution provider, and Alpaca IEX is not approved for frozen-validation signal
+generation. The real M44C Tiingo EOD verification succeeded, but it did not perform broker writes
+or start frozen validation.
 
 ## Current Implementation
 

@@ -242,11 +242,19 @@ gate, M44/M45 evidence must include:
 non_iex_primary_signal_data_not_verified
 ```
 
-The preferred verification path is a read-only SIP/non-IEX market-data check against the configured
-primary signal provider. For Alpaca, the checker must request `feed=sip`; an IEX feed, missing
-credentials, unauthorized SIP subscription, empty response, or inconclusive response does not pass
-the gate. Delayed SIP is a separate classification and cannot silently substitute for real-time SIP
-unless a future policy explicitly allows it for signal generation.
+The M44C primary verification path is Tiingo EOD historical completed daily bars. Alpaca remains
+the broker/execution provider, but Alpaca Basic/IEX must not be used for frozen-validation signal
+generation. The checker must fetch read-only Tiingo EOD samples from the frozen universe, verify
+core OHLCV and adjusted-price fields, and prove sufficient completed daily history for SMA200,
+RS63, ATR, 20D breakout, and volume filters. Missing `TIINGO_API_KEY`, unauthorized Tiingo access,
+rate limits, insufficient history, missing OHLCV/adjusted fields, provider errors, empty responses,
+or inconclusive responses do not pass the gate.
+
+Alpaca SIP remains an acceptable future non-IEX path if explicitly configured and verified with
+`feed=sip`; an IEX feed, missing credentials, unauthorized SIP subscription, empty response, or
+inconclusive response does not pass the gate. Delayed SIP is a separate classification and cannot
+silently substitute for the configured primary signal feed unless a future policy explicitly allows
+it for signal generation.
 
 An explicit waiver may satisfy M45 operational-readiness only when the operator/governance marker
 is recorded. A waiver must state that the first frozen window is operational paper validation with
@@ -309,7 +317,7 @@ M45 may start only if all are true:
 8. Short architecture is present but shorts are disabled.
 9. Scale-in implementation is present but disabled at T0.
 10. AI/news negative-only policy is frozen.
-11. Non-IEX primary signal data gate passed or is explicitly waived by governance.
+11. Tiingo EOD/non-IEX primary signal data gate passed or is explicitly waived by governance.
 12. Required tests and checks pass.
 13. Secrets are not printed or committed.
 14. Explicit operator approval is supplied for M45 start.
@@ -2070,7 +2078,7 @@ Broker / execution:
     Alpaca
 
 Historical daily bars:
-    Tiingo or Polygon / Massive
+    Tiingo EOD for the M45 frozen-validation primary signal feed
 
 Ticker-tagged news:
     Polygon / Massive News
@@ -2123,7 +2131,9 @@ production deployment evidence, and does not satisfy paper trading or Level 4 re
 
 ```text
 Production signals must not rely solely on Alpaca free IEX feed.
-Use SIP-quality or consolidated data where possible.
+M45 frozen-validation signals use Tiingo EOD historical completed daily bars. Alpaca IEX may remain
+available to the broker adapter for execution context, but it is not approved as the primary signal
+generation feed.
 ```
 
 ### 18.4 Alert Delivery Policy

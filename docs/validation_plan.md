@@ -329,11 +329,17 @@ also freezes negative-only AI/news behavior for the first window: AI may block, 
 but may not authorize trades, shorts, scale-ins, or larger sizing.
 
 M44B implements this gate as a separate readiness check. Verify mode must prove the configured
-primary signal feed is non-IEX, preferably Alpaca `sip`, through read-only market-data access.
-Waiver mode requires the explicit `MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER` marker and records that
-the paper window is operational validation with market-data limitations. The first M44B real verify
-attempt returned sanitized unauthorized SIP access, so M45 remains NO-GO until SIP/non-IEX access is
-verified or waiver evidence is explicitly recorded.
+primary signal feed is non-IEX through read-only market-data access. Waiver mode requires the
+explicit `MILESTONE_44B_NON_IEX_DATA_GATE_WAIVER` marker and records that the paper window is
+operational validation with market-data limitations.
+
+M44C sets Tiingo EOD historical completed daily bars as the primary M45 signal feed. The check uses
+`TIINGO_API_KEY` from local environment, fetches read-only daily bars for `SPY`, `QQQ`, `AAPL`,
+`MSFT`, and `XLK`, and requires at least 260 completed bars with valid OHLCV and adjusted-price
+fields. Alpaca remains the paper broker; Alpaca IEX is not allowed for signal generation. M45
+remains NO-GO unless the Tiingo EOD gate verifies or an explicit governance waiver is recorded.
+The M44C real read-only check verified Tiingo EOD access and refreshed readiness to M45 `GO`;
+starting the frozen window still requires the separate M45 operator approval milestone.
 
 ## Current Assumptions
 

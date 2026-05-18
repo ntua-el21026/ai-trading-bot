@@ -912,6 +912,44 @@ M44B result: the real read-only Alpaca SIP check returned sanitized unauthorized
 verified or the explicit waiver path is approved. If waived, the paper run is operational
 validation with market-data limitations and cannot be presented as clean strategy-performance proof.
 
+### Milestone 44C Tiingo EOD Data Gate
+
+M44C configures Tiingo EOD as the M45 primary signal-data provider. Alpaca remains the paper broker,
+but Alpaca IEX is not allowed for frozen-validation signal generation. Tiingo is used read-only for
+historical completed daily bars and requires local `TIINGO_API_KEY`.
+
+Verify mode:
+
+```bash
+RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE= \
+ALERT_ENABLE_REAL_DELIVERY=false \
+AI_ENABLE_ESCALATION=false \
+NEWS_ENABLE_OPENAI_WEB_FALLBACK=false \
+DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS=false \
+RUN_FIRST_CONTROLLED_PAPER_SESSION= \
+RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION= \
+RUN_TEMPORAL_CLOUD_SMOKE= \
+RUN_DASHBOARD_CONTROL_PLANE_SMOKE= \
+RUN_VERCEL_DASHBOARD_PREVIEW= \
+RUN_TELEGRAM_ALERT_SMOKE= \
+uv run python scripts/check_primary_signal_data_gate.py \
+  --mode verify \
+  --provider tiingo \
+  --feed eod \
+  --confirm-read-only \
+  --confirm-no-broker-writes \
+  --confirm-no-schedules \
+  --confirm-no-frozen-validation-start
+```
+
+The check writes `docs/evidence/primary_signal_data_gate_m44c.json` and
+`docs/evidence/frozen_readiness_m44c.json`. It does not start M45, activate schedules, or perform
+broker writes. M45 can only be the freeze/start milestone after this gate is verified and the
+operator supplies explicit M45 approval.
+
+M44C result: the real read-only Tiingo EOD check verified the configured sample symbols and the
+refreshed readiness packet reports M45 readiness `GO`. Frozen validation has not started.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:
