@@ -10,17 +10,18 @@ docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md
 
 ## Current Status
 
-This repository is at Milestone 44E v0.6 readiness preparation. Milestones 39-44C proved controlled
+This repository is at Milestone 45 v0.6 freeze/start readiness. Milestones 39-44C proved controlled
 paper entry/stop paths, supervised scheduled one-shot behavior, flat broker cleanup, and Tiingo EOD
 primary signal-data verification. Milestone 44D created the v0.6 frozen-validation spec and proved
-the real paper broad-ETF short lifecycle. Milestone 44E repairs the real paper long scale-in proof
-path so M45 can be considered for long+paper-short+long-scale-in validation only if the scale-in
-rehearsal succeeds and the broker baseline is restored flat. It does not start frozen validation,
-activate unattended schedules, enable live trading, enable autonomous live execution, enable live
-shorting, enable leverage, or claim Level 4 readiness.
+the real paper broad-ETF short lifecycle. Milestone 44E repaired and proved the real paper long
+scale-in proof path and restored a flat broker baseline.
 
-M44E evidence records the real paper `XLK` scale-in repair rehearsal as complete, final broker
-baseline flat, and M45 long+short+scale-in readiness `GO` pending explicit M45 operator approval.
+M45 has started the official 56-day long+paper-short+long-scale-in frozen paper validation. The
+validation clock started at `2026-05-18T16:51:09.038248Z` and targets
+`2026-07-13T16:51:09.038248Z`. The M45 start path recorded the validation clock and a local
+paper-validation schedule registry; it did not submit immediate broker orders, create a Temporal
+Cloud schedule, enable live trading, enable autonomous live execution, enable live shorting, enable
+leverage, or claim Level 4 readiness.
 
 Implemented pieces:
 

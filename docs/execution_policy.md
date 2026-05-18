@@ -1,6 +1,6 @@
 # Execution Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 06 implements passive execution-core and broker-reconciliation contracts:
 `ExecutionIntent`, client-order idempotency helpers, order lifecycle transition validation,
@@ -220,3 +220,15 @@ does not rerun the short rehearsal, and repairs only the long scale-in add-on pa
 add-on uses an Alpaca OTO order with an attached stop-loss child when a plain add-on buy would be
 rejected while the initial sell stop is open. The existing stop remains intact during add-on
 submission, and aggregate stop coverage must still be verified before cleanup.
+
+## Milestone 45 Execution Boundary
+
+M45 start does not submit broker orders. It validates final evidence, performs Alpaca paper
+read-only baseline checks, computes frozen hashes, starts the validation clock, and records the
+local paper-validation schedule registry. Future scheduled paper workflow executions may submit
+paper orders only after their own per-run gates pass: Tiingo EOD data freshness, deterministic
+signal, risk cap, shortability if short, scale-in eligibility if add-on, broker reconciliation, no
+pending duplicate entry, protective stop plan, and stop verification after fill.
+
+No M45 path may enable live trading, autonomous live execution, live shorting, leverage, forced
+trades, AI order authority, or Level 4 readiness.

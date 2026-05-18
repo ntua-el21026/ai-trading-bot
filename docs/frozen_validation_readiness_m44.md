@@ -1,6 +1,6 @@
 # Frozen Validation Readiness M44
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 44 prepares the repository for M45, but it does not start the 8-week frozen paper
 validation clock. It does not activate schedules, enable unattended operation, enable live trading,
@@ -266,3 +266,15 @@ initial sell stop, filled the OTO add-on, verified the additive child sell stop,
 two-share protection, sold two shares in cleanup, canceled a transient session-created orphan
 emergency stop after flat-position verification, and refreshed M45 long+short+scale-in readiness to
 `GO`. M45 still requires explicit operator approval and has not started.
+
+## Milestone 45 Freeze/Start Gate
+
+M45 uses v0.6 as the frozen source of truth and starts the official 56-day paper validation only
+when the M44C Tiingo gate, M44D short proof, M44E scale-in proof, current flat broker baseline,
+frozen policy hashes, and explicit M45 operator approval all pass.
+
+The M45 start path performs Alpaca paper read-only baseline verification, computes frozen config and
+policy hashes, writes `docs/evidence/frozen_paper_validation_start_m45.json`, and records a
+paper-only local validation schedule registry entry. It does not create a Temporal Cloud schedule,
+submit an immediate broker order, enable live trading, enable autonomous live execution, enable
+leverage, enable live shorting, or claim Level 4 readiness.

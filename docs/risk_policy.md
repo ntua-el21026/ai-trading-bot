@@ -1,6 +1,6 @@
 # Risk Policy
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 06 implements deterministic risk-check contracts, position sizing, kill-switch state
 models, and passive broker reconciliation inputs. The implementation is passive: it approves or
@@ -210,3 +210,11 @@ additive-stop rehearsal succeeds:
 The final M44E and M45 start baseline must be flat with zero open orders, zero positions, and clean
 reconciliation. Live trading, autonomous live execution, leverage, and Level 4 readiness remain out
 of scope.
+
+## Milestone 45 Frozen Risk Boundary
+
+M45 freezes v0.6 risk for the 56-day paper window: maximum gross exposure 20%, maximum net exposure
+20%, maximum open positions 4, maximum two new entries per day, maximum one long scale-in per day,
+maximum one open short symbol, no short scale-ins, no live shorting, no leverage, no forced trades,
+and zero unresolved critical incidents. Broker reconciliation and protective-stop verification
+remain mandatory before and after any scheduled paper execution.

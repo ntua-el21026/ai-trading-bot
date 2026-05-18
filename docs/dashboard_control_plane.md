@@ -1,6 +1,6 @@
 # Dashboard Control Plane
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 15 implements dashboard/control-plane contracts plus a ledger-backed backend read-model
 provider. Vercel is dashboard-only; autonomous execution workers must run outside Vercel.
@@ -194,3 +194,10 @@ M44E readiness read models should also expose the scale-in repair status, suspec
 selected symbol, OTO add-on/child-stop verification status, aggregate protection result, cleanup
 result, and refreshed M45 GO/NO-GO state. These fields remain read-only evidence; they do not create
 dashboard order controls.
+
+M45 dashboard/read-model surfaces should expose the validation clock status, start/end target,
+active spec `v0.6`, local paper-validation schedule registry status, Tiingo EOD gate status, paper
+short enablement, long scale-in enablement, short scale-in disabled status, AI negative-only status,
+daily/weekly evidence status, current broker baseline, reconciliation status, and incident status.
+The dashboard remains read-only: no browser control may force trades, activate live trading, modify
+risk, change the universe, modify stops, or expose broker/data-provider/Temporal/database secrets.

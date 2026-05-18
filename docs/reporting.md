@@ -1,6 +1,6 @@
 # Reporting
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 15 adds local/fake-safe reporting foundations. Reports are generated from supplied
 ledger/read-model snapshots, rendered deterministically, and persisted through the ledger repository.
@@ -115,3 +115,15 @@ M44E reporting must additionally record the repaired scale-in add-on order shape
 add-on used a broker-native OTO parent with an attached stop-loss child, the initial stop remained
 open during add-on submission, aggregate protection passed, cleanup restored flat state, and M45
 readiness remained gated by explicit operator approval.
+
+## Milestone 45 Reporting Requirements
+
+Frozen paper reports during the M45 window must include validation clock status, active spec
+version, local schedule registry status, Tiingo EOD data gate status, full long universe, short
+universe, paper-short enablement, live-shorting disabled status, long scale-in enablement, short
+scale-in disabled status, AI negative-only status, broker baseline/reconciliation status, open
+orders, positions, protective stop coverage, buy-stop coverage for shorts, additive stop coverage
+for scale-ins, incidents, operator interventions, and blockers.
+
+Daily and weekly reports must not claim Level 4 readiness, profitability proof, or live-readiness
+until future milestones approve those claims.

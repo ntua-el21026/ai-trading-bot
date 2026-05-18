@@ -1,6 +1,6 @@
 # Temporal Workflows
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Through Milestone 26, the repository includes Temporal SDK scaffolding, worker bootstrap, workflow skeletons,
 ledger-backed activity contracts using safe local/fake repositories, paper-only broker activity
@@ -249,11 +249,16 @@ Start one worker for a configured queue after a local Temporal service is availa
 uv run python scripts/start_worker.py --task-queue execution-task-queue
 ```
 
-Schedule creation remains dry-run only in the current implementation:
+Schedule creation remains dry-run only in the Temporal implementation:
 
 ```bash
 uv run python scripts/seed_temporal_schedules.py
 ```
+
+M45 starts the frozen paper validation through a local paper-validation schedule registry recorded
+in `docs/evidence/frozen_paper_validation_start_m45.json`. It does not create a Temporal Cloud
+schedule. A future milestone may replace the local registry with a real Temporal schedule only after
+separate paper-only schedule gates and evidence are added.
 
 ## Temporal Cloud Dev Smoke
 

@@ -1020,6 +1020,37 @@ was canceled after flat-position verification, and final broker baseline was res
 orders and zero positions. Refreshed M45 long+short+scale-in readiness is `GO`; M45 still requires
 separate explicit operator approval.
 
+## Milestone 45 Frozen Paper Start
+
+Start command:
+
+```bash
+uv run python scripts/start_frozen_paper_validation_m45.py \
+  --operator-approval MILESTONE_45_START_8_WEEK_LONG_SHORT_SCALEIN_FROZEN_PAPER_VALIDATION \
+  --confirm-paper-only \
+  --confirm-flat-baseline \
+  --confirm-tiingo-eod-primary-signal-data \
+  --confirm-paper-shorts-enabled \
+  --confirm-live-shorting-disabled \
+  --confirm-long-scale-ins-enabled \
+  --confirm-short-scale-ins-disabled \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-leverage \
+  --confirm-ai-negative-only \
+  --confirm-no-forced-trades \
+  --confirm-level4-not-ready
+```
+
+The M45 command performs final read-only Alpaca paper baseline verification, validates M44C/M44D/M44E
+evidence, computes frozen hashes, writes `docs/evidence/frozen_paper_validation_start_m45.json`, and
+records the local paper-validation schedule registry entry. It must not submit, cancel, replace, or
+modify broker orders as part of start.
+
+During the frozen window, scheduled paper workflow runs may submit paper orders only when their own
+data, strategy, risk, shortability, scale-in, broker, reconciliation, and protective-stop gates pass.
+No forced trade is allowed.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

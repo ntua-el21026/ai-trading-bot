@@ -1,0 +1,115 @@
+{
+  "blockers": [],
+  "broker_writes_performed": false,
+  "current_broker_baseline": {
+    "account_reachable": true,
+    "clock_is_open": true,
+    "clock_reachable": true,
+    "open_orders_count": 0,
+    "paper_endpoint_proven": true,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "symbols_with_open_orders": [],
+    "symbols_with_positions": []
+  },
+  "current_market_data_gate": {
+    "feed": "eod",
+    "mode": "historical_completed_daily_bars",
+    "provider": "tiingo",
+    "verified": true
+  },
+  "frozen_hashes": {
+    "ai_policy_hash": "b3cfcf6bb305b4246c26be09dda26976fd018ee5f455939997d3247b42a48938",
+    "config_hash": "43a93aad2ae7c79e3550c8036a3bf34366b5ac2c4c07d3ba7d2342d84b5fce3e",
+    "execution_policy_hash": "10b8f22d3f21c29ade373c61db47f2cdd364fadb86cf2318d0142166266be819",
+    "market_data_policy_hash": "e46d9638a5f999eca0080bc6ec3832cf8f5146ba47f206e863c7c171b4d56a61",
+    "reconciliation_policy_hash": "51e59b38e33f206646bedc6473592d07732e9f246db0c9673cf1913fba7a27c9",
+    "reporting_schema_hash": "c3a987af17c265e1576116e1e1f89ccafc820256e5a395d3f252f6adb8b54178",
+    "risk_policy_hash": "a6b734c86e0b712c189629c48318aa1612d72fba4c212a5a616a2eaab84fd1a3",
+    "schedule_hash": "f1ae99afb69b69259a45fa8c4267233a012e90978a0eb8634c05a3c304b97876",
+    "strategy_policy_hash": "c13f3f84a9fc516343ad72a5b6360804d798ee068f34ff31b71669195b5e7094",
+    "universe_hash": "4ef6c9fa4c54f9cbbc9a0586c28452e9372f7c2661f1157cf1a315667f8e8900"
+  },
+  "frozen_policy": {
+    "ai_negative_only": true,
+    "autonomous_live_execution_enabled": false,
+    "forced_trades": false,
+    "full_long_universe_enabled": true,
+    "leverage_enabled": false,
+    "live_shorting_enabled": false,
+    "live_trading_enabled": false,
+    "long_scale_in_enabled": true,
+    "paper_shorts_enabled": true,
+    "short_scale_in_enabled": false
+  },
+  "incident_rules": [
+    "missing_or_unverified_protective_stop_blocks_new_risk",
+    "broker_state_mismatch_blocks_new_risk",
+    "unexpected_position_or_open_order_blocks_new_risk",
+    "short_without_verified_buy_stop_is_critical_incident",
+    "scale_in_without_additive_stop_is_critical_incident",
+    "operator_strategy_override_contaminates_validation"
+  ],
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "operator_approval_marker": "MILESTONE_45_START_8_WEEK_LONG_SHORT_SCALEIN_FROZEN_PAPER_VALIDATION",
+  "operator_intervention_policy": [
+    "pause_or_kill_switch",
+    "manual_review",
+    "stop_repair",
+    "risk_reducing_cleanup",
+    "disable_schedule_after_incident",
+    "restart_only_after_documented_incident_review",
+    "credential_rotation_if_compromised",
+    "non_strategy_operational_bugfix_with_evidence"
+  ],
+  "packet_id": "frozen-paper-validation-start-m45-20260518T165109Z",
+  "references": {
+    "activation_rehearsal_m44d": "docs/evidence/activation_rehearsal_m44d.json",
+    "flat_start_cleanup_m44": "docs/evidence/flat_start_cleanup_m44.json",
+    "frozen_readiness_m44e": "docs/evidence/frozen_readiness_m44e.json",
+    "primary_signal_data_gate_m44c": "docs/evidence/primary_signal_data_gate_m44c.json",
+    "scale_in_rehearsal_m44e": "docs/evidence/scale_in_rehearsal_m44e.json"
+  },
+  "reporting_requirements": [
+    "daily_reconciliation_report",
+    "daily_trade_plan_snapshot",
+    "daily_evidence_packet_for_scheduled_run",
+    "weekly_validation_summary",
+    "incident_report_for_any_no_go_or_repair"
+  ],
+  "scale_in_readiness": {
+    "additive_stop_required": true,
+    "enabled_at_validation_start": true,
+    "max_add_entries_per_symbol": 1,
+    "max_entries_per_symbol": 2,
+    "proof_reference": "docs/evidence/scale_in_rehearsal_m44e.json"
+  },
+  "schedule": {
+    "activation_type": "local_registry",
+    "old_test_schedules_active": false,
+    "schedule_created_or_activated": true,
+    "schedule_final_state": "active_local_paper_validation_registry",
+    "schedule_id_or_name": "frozen-paper-validation-v0.6-long-short-scalein",
+    "temporal_cloud_schedule_created": false
+  },
+  "short_readiness": {
+    "eligible_symbols": [
+      "SPY",
+      "QQQ",
+      "DIA",
+      "IWM"
+    ],
+    "enabled_at_validation_start": true,
+    "live_shorting_enabled": false,
+    "proof_reference": "docs/evidence/activation_rehearsal_m44d.json",
+    "short_scale_in_enabled": false
+  },
+  "timestamp": "2026-05-18T16:51:09.038248Z",
+  "validation_end_target_timestamp_utc": "2026-07-13T16:51:09.038248Z",
+  "validation_start_result": "GO",
+  "validation_start_timestamp_utc": "2026-05-18T16:51:09.038248Z",
+  "validation_status": "active",
+  "validation_window_days": 56
+}

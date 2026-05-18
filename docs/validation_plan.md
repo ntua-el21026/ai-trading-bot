@@ -354,6 +354,13 @@ would conflict with Alpaca wash-trade protection while the initial sell stop is 
 long+short+scale-in validation may be considered only if M44E proves the real add-on fill,
 additive stop verification, aggregate protection, cleanup, and final flat baseline.
 
+M45 is the freeze/start milestone. When all final gates pass, it records the official 56-day
+validation clock in `docs/evidence/frozen_paper_validation_start_m45.json` and registers the
+paper-only frozen validation schedule locally. The frozen policy remains v0.6: Tiingo EOD primary
+signals, Alpaca paper broker, full long universe, broad-ETF paper shorts, long scale-ins, no short
+scale-ins, negative-only AI/news, no forced trades, no live trading, no autonomous live execution,
+no leverage, and Level 4 not ready.
+
 ## Current Assumptions
 
 Earnings blackout logic requires a caller-supplied trading calendar and earnings date. If earnings

@@ -2,7 +2,7 @@
 
 This document is a foundation placeholder for operations.
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`. Milestone 27 does
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`. Milestone 27 does
 not implement production services, active schedules, actual paper trading runs, real AI/news
 provider/API calls by default, production schedule activation, dashboard deployment, Level 4 live
 readiness evidence, or live trading. It does
@@ -456,6 +456,21 @@ Current conclusion: Level 4 micro-live is not ready. The readiness documents def
 config review, credential separation, kill-switch/manual re-arm tests, reconciliation evidence,
 protective-stop evidence, slippage/fill-quality evidence, dashboard evidence, and final go/no-go
 records. They do not enable live trading or autonomous live execution.
+
+## M45 Frozen Paper Operations
+
+M45 can start the official 56-day frozen paper validation after final gates pass. The start command
+records the validation clock and a local paper-validation schedule registry in
+`docs/evidence/frozen_paper_validation_start_m45.json`; it does not submit immediate broker orders
+and does not create a Temporal Cloud schedule.
+
+Operators must monitor daily scheduled evidence, broker reconciliation, protective stop coverage,
+short buy-stop coverage, scale-in additive stop coverage, reports, and incidents. Allowed
+interventions are pause/kill switch, manual review, stop repair, risk-reducing cleanup, disabling
+the schedule after incident, documented restart after incident review, credential rotation, and
+non-strategy operational bug fixes with evidence. Strategy/risk/universe/data-provider changes,
+forced trades, live trading, leverage, live shorting, and AI trade authorization contaminate or
+restart the validation.
 
 ## Future Operations Scope
 
