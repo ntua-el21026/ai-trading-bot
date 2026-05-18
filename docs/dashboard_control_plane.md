@@ -207,3 +207,8 @@ surfaces may display runner path, runner status, heartbeat freshness, due-cycle 
 result, broker-write reason, frozen hash drift status, and M47 blockers. These fields remain
 read-only; dashboard controls must not start duplicate runners, force trades, create schedules,
 or expose runtime secrets.
+
+M47B adds durable-runner readiness fields for off-PC operation: selected durable path, durable
+runner status, deployment artifacts, heartbeat status and age, Temporal schedule/worker status,
+Vercel execution-worker detection, off-PC GO/NO-GO, and blockers. These fields are read-only and
+must not expose server-side credentials or create execution workers on Vercel.

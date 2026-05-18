@@ -86,6 +86,17 @@ the clock, change frozen policy, force trades, activate live trading, or deploy 
 frozen schedule point is due, it starts the runner and records `skipped_not_due` with no broker
 writes.
 
+Milestone 47B adds off-PC deployment packaging:
+
+```bash
+docker compose -f docker-compose.paper-runner.yml up -d --build frozen-paper-runner
+```
+
+The packaged worker is paper-only and server-side. It uses the same frozen v0.6 runner command,
+stores runtime heartbeat state under `.runtime/`, and must be health-checked before it is accepted
+as durable operation. A deployment-ready package without a fresh off-PC heartbeat remains NO-GO for
+off-PC operation.
+
 Milestone 28 locks the pre-paper operations gap audit and future first controlled paper session
 protocol in `docs/pre_paper_operations_gap_audit.md`.
 

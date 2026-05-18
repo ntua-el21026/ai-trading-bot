@@ -53,3 +53,10 @@ Latest source of truth: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 ## Monitoring
 
 Monitor the runner heartbeat, generated cycle evidence, broker reconciliation, Tiingo status, protective stop coverage, daily reports, and incidents each trading day. Do not change frozen strategy, risk, universe, data provider, or AI authority during the validation window.
+
+## M47B Off-PC Follow-Up
+
+The M47 local runner depends on the operator's PC staying online. Milestone 47B adds a
+deployment-ready Docker Compose/systemd runner package for a small VPS or cloud VM and audits
+whether a durable off-PC heartbeat is actually present. M47B does not reset the validation clock,
+change frozen policy, activate live trading, deploy Vercel workers, or force trades.

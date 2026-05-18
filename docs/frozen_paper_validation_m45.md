@@ -38,6 +38,10 @@ hashes were not reset. The runner does not force trades; it wakes on frozen sche
 executes only read-only gate checks unless a natural due cycle later produces a valid frozen-policy
 paper execution path.
 
+Milestone 47B adds deployment-ready off-PC runner packaging for a cloud VM/VPS. The M45 validation
+clock remains unchanged. Off-PC operation is GO only after a durable runner heartbeat or Temporal
+schedule plus worker registration is confirmed.
+
 ## Frozen Policy
 
 - active spec: `v0.6`;

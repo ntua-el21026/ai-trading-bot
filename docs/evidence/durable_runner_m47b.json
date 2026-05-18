@@ -1,0 +1,66 @@
+{
+  "ai_broker_authority": false,
+  "autonomous_live_execution_enabled": false,
+  "blockers": [
+    "durable_off_pc_runner_not_active"
+  ],
+  "broker_state": {
+    "open_orders_count": 0,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders"
+  },
+  "broker_writes_performed_in_m47b": false,
+  "current_time_utc": "2026-05-18T21:52:58.395024Z",
+  "cycle_ran_in_m47b": false,
+  "cycle_result": null,
+  "deployment_artifacts": [
+    "Dockerfile.paper-runner",
+    ".dockerignore",
+    "docker-compose.paper-runner.yml",
+    "deploy/systemd/frozen-paper-runner.service",
+    "scripts/run_frozen_paper_validation_runner.py",
+    "scripts/check_frozen_paper_runner_health.py"
+  ],
+  "durable_runner_status": "deployment_ready_not_active",
+  "frozen_policy_drift_detected": false,
+  "health_check_command": "docker compose -f docker-compose.paper-runner.yml exec -T frozen-paper-runner uv run python scripts/check_frozen_paper_runner_health.py --heartbeat .runtime/frozen_validation_runner/heartbeat.json --max-age-seconds 900",
+  "heartbeat_age_seconds": null,
+  "heartbeat_status": "missing",
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_shorting_enabled": false,
+  "live_trading_enabled": false,
+  "m45_evidence_reference": "docs/evidence/frozen_paper_validation_start_m45.json",
+  "m46_evidence_reference": "docs/evidence/frozen_validation_day1_audit_m46.json",
+  "m47_evidence_reference": "docs/evidence/frozen_validation_runner_m47.json",
+  "market_data_status": {
+    "feed": "eod",
+    "latest_check_result": "verified",
+    "provider": "tiingo",
+    "sample_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "XLK"
+    ]
+  },
+  "off_pc_operation_result": "NO_GO",
+  "old_test_schedules_active": false,
+  "packet_id": "durable-runner-m47b-20260518T215258Z",
+  "preparation_result": "GO",
+  "runner_command": "docker compose -f docker-compose.paper-runner.yml up -d --build frozen-paper-runner",
+  "selected_durable_path": "cloud_vps_docker_runner",
+  "temporal_schedule_created": false,
+  "temporal_schedule_id": null,
+  "timestamp": "2026-05-18T21:52:58.395024Z",
+  "validation_day_index": 1,
+  "validation_start_timestamp_utc": "2026-05-18T16:51:09.038248Z",
+  "validation_status": "active",
+  "validation_target_end_timestamp_utc": "2026-07-13T16:51:09.038248Z",
+  "validation_window_active": true,
+  "vercel_execution_worker_detected": false,
+  "worker_registration_confirmed": "unknown"
+}

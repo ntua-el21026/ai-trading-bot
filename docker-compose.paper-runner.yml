@@ -1,0 +1,61 @@
+services:
+  frozen-paper-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.paper-runner
+    image: ai-trading-bot-frozen-paper-runner:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: paper
+      LIVE_TRADING_ENABLED: "false"
+      AUTONOMOUS_EXECUTION_ENABLED: "false"
+      AUTONOMOUS_LIVE_EXECUTION_ENABLED: "false"
+      LEVERAGE_ENABLED: "false"
+      LIVE_SHORTING_ENABLED: "false"
+      FROZEN_VALIDATION_ENABLED: "true"
+      FROZEN_VALIDATION_SPEC_VERSION: v0.6
+      RUN_ALPACA_PAPER_ORDER_LIFECYCLE_SMOKE: ""
+      ALERT_ENABLE_REAL_DELIVERY: "false"
+      AI_ENABLE_ESCALATION: "false"
+      NEWS_ENABLE_OPENAI_WEB_FALLBACK: "false"
+      DASHBOARD_CONTROL_PLANE_ALLOW_CONTROL_SIGNALS: "false"
+      RUN_FIRST_CONTROLLED_PAPER_SESSION: ""
+      RUN_FIRST_CONTROLLED_PAPER_SESSION_EXECUTION: ""
+      RUN_VERCEL_DASHBOARD_PREVIEW: ""
+      RUN_TELEGRAM_ALERT_SMOKE: ""
+    command:
+      - uv
+      - run
+      - python
+      - scripts/run_frozen_paper_validation_runner.py
+      - --daemon
+      - --poll-seconds
+      - "${PAPER_RUNNER_POLL_SECONDS:-300}"
+      - --confirm-paper-only
+      - --confirm-no-live-trading
+      - --confirm-no-autonomous-live
+      - --confirm-no-leverage
+      - --confirm-live-shorting-disabled
+      - --confirm-ai-no-broker-authority
+      - --confirm-no-level4
+      - --confirm-no-forced-trades
+    volumes:
+      - ./docs/evidence:/app/docs/evidence
+      - ./.runtime:/app/.runtime
+    healthcheck:
+      test:
+        - CMD
+        - uv
+        - run
+        - python
+        - scripts/check_frozen_paper_runner_health.py
+        - --heartbeat
+        - .runtime/frozen_validation_runner/heartbeat.json
+        - --max-age-seconds
+        - "900"
+      interval: 5m
+      timeout: 20s
+      retries: 3
+      start_period: 30s

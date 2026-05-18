@@ -1,0 +1,28 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_SYSTEM_PYTHON=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir uv
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+COPY apps ./apps
+COPY config ./config
+COPY docs ./docs
+COPY packages ./packages
+COPY scripts ./scripts
+
+HEALTHCHECK --interval=5m --timeout=20s --start-period=30s --retries=3 \
+    CMD uv run python scripts/check_frozen_paper_runner_health.py \
+    --heartbeat .runtime/frozen_validation_runner/heartbeat.json \
+    --max-age-seconds 900
+
+CMD ["uv", "run", "python", "scripts/run_frozen_paper_validation_runner.py", "--daemon", "--poll-seconds", "300", "--confirm-paper-only", "--confirm-no-live-trading", "--confirm-no-autonomous-live", "--confirm-no-leverage", "--confirm-live-shorting-disabled", "--confirm-ai-no-broker-authority", "--confirm-no-level4", "--confirm-no-forced-trades"]

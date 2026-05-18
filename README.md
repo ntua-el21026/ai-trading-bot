@@ -23,6 +23,11 @@ paper-validation schedule registry; it did not submit immediate broker orders, c
 Cloud schedule, enable live trading, enable autonomous live execution, enable live shorting, enable
 leverage, or claim Level 4 readiness.
 
+M47 activated a local paper-only runner for the already-started validation. M47B adds a
+deployment-ready Docker Compose/systemd package for an off-PC paper runner, but off-PC operation is
+not accepted until a durable runner heartbeat or Temporal schedule plus worker registration is
+confirmed.
+
 Implemented pieces:
 
 - `uv`-compatible `pyproject.toml`
@@ -80,6 +85,8 @@ Implemented pieces:
   daily report generation, and dashboard/read-model snapshots
 - safe CLI entry point `scripts/run_paper_dry_run.py` that defaults to fake/local mode and submits
   no broker orders
+- local frozen paper validation runner and M47B Docker Compose/systemd packaging for an off-PC
+  paper-only runner, with health-check and audit scripts
 - REST fallback snapshot contracts using the spec's 30-second fallback interval
 - passive broker/internal reconciliation snapshots, mismatch classification, incident contracts,
   and pause-new-risk or flatten-if-safe recommendations

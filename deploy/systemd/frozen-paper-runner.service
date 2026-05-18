@@ -1,0 +1,16 @@
+[Unit]
+Description=AI Trading Bot frozen paper validation runner
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/ai-trading-bot
+ExecStart=/usr/bin/docker compose -f docker-compose.paper-runner.yml up -d --build frozen-paper-runner
+ExecStop=/usr/bin/docker compose -f docker-compose.paper-runner.yml down
+RemainAfterExit=yes
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

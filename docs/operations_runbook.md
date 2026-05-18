@@ -32,6 +32,9 @@ Milestone 47 activates the local paper-only frozen validation runner for the alr
 validation window. It does not reset the validation clock, change frozen strategy/risk/universe
 configuration, submit broker orders during activation, create a Temporal Cloud schedule, enable live
 trading, or claim Level 4 readiness.
+Milestone 47B adds a deployment-ready Docker Compose/systemd package for an off-PC paper runner.
+It does not prove off-PC operation until a cloud/VPS heartbeat or Temporal worker registration is
+confirmed.
 
 ## Current Foundation Operations
 
@@ -67,6 +70,38 @@ The runner does not force signals or trades. It wakes on frozen schedule points,
 window and frozen policy, and writes cycle evidence only for due cycles. Broker writes remain
 forbidden unless a later natural due cycle passes every frozen strategy, risk, reconciliation,
 broker, shortability, scale-in, and protective-stop gate.
+
+Milestone 47B off-PC preparation command:
+
+```bash
+uv run python scripts/check_durable_frozen_validation_runner_m47b.py \
+  --operator-approval MILESTONE_47B_DURABLE_OFF_PC_RUNNER \
+  --confirm-paper-only \
+  --confirm-validation-already-started \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-leverage \
+  --confirm-live-shorting-disabled \
+  --confirm-ai-no-broker-authority \
+  --confirm-no-level4 \
+  --confirm-no-forced-trades \
+  --confirm-no-vercel-execution-worker
+```
+
+Start the off-PC Docker runner on the server:
+
+```bash
+docker compose -f docker-compose.paper-runner.yml up -d --build frozen-paper-runner
+```
+
+Health check:
+
+```bash
+docker compose -f docker-compose.paper-runner.yml exec -T frozen-paper-runner uv run python scripts/check_frozen_paper_runner_health.py --heartbeat .runtime/frozen_validation_runner/heartbeat.json --max-age-seconds 900
+```
+
+If the audit reports `deployment_ready_not_active`, the repo is packaged but the validation still
+depends on local or manual operation until the runner is started on an always-on host.
 
 ## Current Reconciliation Operations
 
