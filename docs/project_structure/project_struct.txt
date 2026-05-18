@@ -104,6 +104,7 @@ AI_Trading_Bot/
 │   │   ├── frozen_readiness_m44c.json
 │   │   ├── frozen_readiness_m44d.json
 │   │   ├── frozen_readiness_m44e.json
+│   │   ├── frozen_validation_day1_audit_m46.json
 │   │   ├── primary_signal_data_gate_m44b.json
 │   │   ├── primary_signal_data_gate_m44c.json
 │   │   ├── protected_position_monitoring_m36.json
@@ -153,6 +154,7 @@ AI_Trading_Bot/
 │   ├── first_controlled_paper_session_real_gate_wiring.md
 │   ├── first_controlled_paper_session_wiring.md
 │   ├── frozen_paper_validation_m45.md
+│   ├── frozen_validation_day1_audit_m46.md
 │   ├── frozen_validation_readiness_m44.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
@@ -236,6 +238,7 @@ AI_Trading_Bot/
 │   ├── paper/
 │   │   ├── __init__.py
 │   │   ├── activation_rehearsal.py
+│   │   ├── day1_audit.py
 │   │   ├── dry_run.py
 │   │   ├── execution.py
 │   │   ├── first_session.py
@@ -286,6 +289,7 @@ AI_Trading_Bot/
 │   ├── check_first_controlled_paper_session.py
 │   ├── check_first_controlled_paper_session_post_audit.py
 │   ├── check_first_controlled_paper_session_preflight.py
+│   ├── check_frozen_validation_day1_m46.py
 │   ├── check_ledger_database.py
 │   ├── check_paper_operations_readiness.py
 │   ├── check_primary_signal_data_gate.py
@@ -344,6 +348,7 @@ AI_Trading_Bot/
 │       ├── test_first_controlled_paper_session_preflight.py
 │       ├── test_first_controlled_paper_session_real_gate.py
 │       ├── test_frozen_paper_validation_start_m45.py
+│       ├── test_frozen_validation_day1_audit_m46.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
 │       ├── test_ledger_activities.py
@@ -389,4 +394,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 344
+Total directories: 46, Total files: 349

@@ -1,0 +1,59 @@
+{
+  "ai_broker_authority": false,
+  "autonomous_live_execution_enabled": false,
+  "blockers": [
+    "local_registry_has_no_active_runner"
+  ],
+  "broker_state": {
+    "open_orders_count": 0,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders"
+  },
+  "broker_writes_performed_in_m46": false,
+  "current_time_utc": "2026-05-18T17:42:56.475832Z",
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_shorting_enabled": false,
+  "live_trading_enabled": false,
+  "m45_evidence_reference": "docs/evidence/frozen_paper_validation_start_m45.json",
+  "m46_result": "NO_GO",
+  "market_data_status": {
+    "feed": "eod",
+    "latest_check_result": "verified",
+    "provider": "tiingo",
+    "sample_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "XLK"
+    ]
+  },
+  "old_test_schedules_active": false,
+  "packet_id": "frozen-validation-day1-audit-m46-20260518T174256Z",
+  "reporting_status": {
+    "daily_packet_generated": true,
+    "daily_report_generated": false,
+    "dashboard_snapshot_generated": false
+  },
+  "runner_command": null,
+  "schedule_id_or_name": "frozen-paper-validation-v0.6-long-short-scalein",
+  "schedule_registry_status": "active_local_paper_validation_registry",
+  "scheduled_cycle_result": null,
+  "scheduled_cycle_run_in_m46": false,
+  "scheduler_execution_status": "active_registry_only_no_runner",
+  "temporal_cloud_schedule_detected": false,
+  "timestamp": "2026-05-18T17:42:56.475832Z",
+  "trades_created_by_scheduled_cycle": [],
+  "validation_day_index": 1,
+  "validation_integrity": {
+    "config_hash_matches_start": true,
+    "frozen_policy_drift_detected": false
+  },
+  "validation_start_timestamp_utc": "2026-05-18T16:51:09.038248Z",
+  "validation_status": "active",
+  "validation_target_end_timestamp_utc": "2026-07-13T16:51:09.038248Z",
+  "validation_window_active": true
+}
