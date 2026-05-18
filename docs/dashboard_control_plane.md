@@ -201,3 +201,9 @@ short enablement, long scale-in enablement, short scale-in disabled status, AI n
 daily/weekly evidence status, current broker baseline, reconciliation status, and incident status.
 The dashboard remains read-only: no browser control may force trades, activate live trading, modify
 risk, change the universe, modify stops, or expose broker/data-provider/Temporal/database secrets.
+
+M47 adds local runner status evidence for the active M45 validation window. Dashboard/read-model
+surfaces may display runner path, runner status, heartbeat freshness, due-cycle status, last cycle
+result, broker-write reason, frozen hash drift status, and M47 blockers. These fields remain
+read-only; dashboard controls must not start duplicate runners, force trades, create schedules,
+or expose runtime secrets.

@@ -1,6 +1,6 @@
 # Paper Trading Runbook
 
-The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md`.
+The latest source of truth is `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 
 Milestone 27 adds a controlled paper operations readiness harness while paper trading remains disabled. The
 repository still does not implement actual paper trading operations, production dashboard
@@ -64,6 +64,27 @@ uv run python scripts/check_paper_operations_readiness.py
 It aggregates readiness evidence only. It does not start paper trading, activate schedules, submit
 or cancel broker orders, run strategy-generated paper trading, call AI/news providers, send real
 alerts, or deploy anything.
+
+The active M45 frozen validation runner command added in Milestone 47 is:
+
+```bash
+uv run python scripts/check_frozen_validation_runner_m47.py \
+  --operator-approval MILESTONE_47_ACTIVATE_FROZEN_VALIDATION_RUNNER \
+  --confirm-paper-only \
+  --confirm-validation-already-started \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-leverage \
+  --confirm-live-shorting-disabled \
+  --confirm-ai-no-broker-authority \
+  --confirm-no-level4 \
+  --confirm-no-forced-trades
+```
+
+It activates only the local paper runner for the existing M45 validation window. It does not reset
+the clock, change frozen policy, force trades, activate live trading, or deploy workers. If no
+frozen schedule point is due, it starts the runner and records `skipped_not_due` with no broker
+writes.
 
 Milestone 28 locks the pre-paper operations gap audit and future first controlled paper session
 protocol in `docs/pre_paper_operations_gap_audit.md`.

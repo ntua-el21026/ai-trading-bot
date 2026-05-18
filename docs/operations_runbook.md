@@ -28,6 +28,10 @@ submit broker orders, call providers, send real alerts, or deploy anything.
 Milestone 43 adds deterministic scale-in policy support with fake/stub tests only. Operators must
 not run a real scale-in order, submit an add-on stop, cancel/replace stops, activate schedules, or
 start the frozen validation clock as part of M43.
+Milestone 47 activates the local paper-only frozen validation runner for the already-started M45
+validation window. It does not reset the validation clock, change frozen strategy/risk/universe
+configuration, submit broker orders during activation, create a Temporal Cloud schedule, enable live
+trading, or claim Level 4 readiness.
 
 ## Current Foundation Operations
 
@@ -35,6 +39,34 @@ start the frozen validation clock as part of M43.
 2. Validate configuration with `uv run pytest tests/unit/test_config.py`.
 3. Keep `.env` files local and uncommitted.
 4. Treat `.env.example` as variable names only.
+
+## Frozen Validation Runner Operations
+
+Milestone 47 uses a local runner process for the active M45 frozen paper validation:
+
+```bash
+uv run python scripts/check_frozen_validation_runner_m47.py \
+  --operator-approval MILESTONE_47_ACTIVATE_FROZEN_VALIDATION_RUNNER \
+  --confirm-paper-only \
+  --confirm-validation-already-started \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-leverage \
+  --confirm-live-shorting-disabled \
+  --confirm-ai-no-broker-authority \
+  --confirm-no-level4 \
+  --confirm-no-forced-trades
+```
+
+The command performs read-only M45/M46 evidence checks, frozen hash drift checks, Tiingo EOD
+verification, and Alpaca paper broker baseline reads before starting
+`scripts/run_frozen_paper_validation_runner.py --daemon`. Runtime heartbeat and PID files are under
+`.runtime/frozen_validation_runner/`, which remains local runtime state and must not be committed.
+
+The runner does not force signals or trades. It wakes on frozen schedule points, verifies the M45
+window and frozen policy, and writes cycle evidence only for due cycles. Broker writes remain
+forbidden unless a later natural due cycle passes every frozen strategy, risk, reconciliation,
+broker, shortability, scale-in, and protective-stop gate.
 
 ## Current Reconciliation Operations
 

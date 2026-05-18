@@ -32,6 +32,12 @@ The current implementation records a local paper-validation schedule registry en
 evidence packet. It does not create a Temporal Cloud schedule. Temporal schedule activation remains
 deferred until a separately gated implementation exists.
 
+Milestone 47 resolved the M46 `local_registry_has_no_active_runner` blocker by activating the
+paper-only local runner `frozen-validation-runner-v0.6-local`. The M45 validation clock and frozen
+hashes were not reset. The runner does not force trades; it wakes on frozen schedule points and
+executes only read-only gate checks unless a natural due cycle later produces a valid frozen-policy
+paper execution path.
+
 ## Frozen Policy
 
 - active spec: `v0.6`;

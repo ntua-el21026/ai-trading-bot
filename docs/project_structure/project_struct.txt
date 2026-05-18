@@ -105,6 +105,7 @@ AI_Trading_Bot/
 │   │   ├── frozen_readiness_m44d.json
 │   │   ├── frozen_readiness_m44e.json
 │   │   ├── frozen_validation_day1_audit_m46.json
+│   │   ├── frozen_validation_runner_m47.json
 │   │   ├── primary_signal_data_gate_m44b.json
 │   │   ├── primary_signal_data_gate_m44c.json
 │   │   ├── protected_position_monitoring_m36.json
@@ -156,6 +157,7 @@ AI_Trading_Bot/
 │   ├── frozen_paper_validation_m45.md
 │   ├── frozen_validation_day1_audit_m46.md
 │   ├── frozen_validation_readiness_m44.md
+│   ├── frozen_validation_runner_m47.md
 │   ├── level4_micro_live_readiness.md
 │   ├── operations_runbook.md
 │   ├── paper_dry_run_orchestration.md
@@ -250,6 +252,7 @@ AI_Trading_Bot/
 │   │   ├── readiness.py
 │   │   ├── real_gate.py
 │   │   ├── supervised_schedule.py
+│   │   ├── validation_runner.py
 │   │   └── validation_start.py
 │   ├── reconciliation/
 │   │   ├── __init__.py
@@ -290,6 +293,7 @@ AI_Trading_Bot/
 │   ├── check_first_controlled_paper_session_post_audit.py
 │   ├── check_first_controlled_paper_session_preflight.py
 │   ├── check_frozen_validation_day1_m46.py
+│   ├── check_frozen_validation_runner_m47.py
 │   ├── check_ledger_database.py
 │   ├── check_paper_operations_readiness.py
 │   ├── check_primary_signal_data_gate.py
@@ -299,6 +303,7 @@ AI_Trading_Bot/
 │   ├── run_activation_rehearsal_m44d.py
 │   ├── run_first_controlled_paper_session.py
 │   ├── run_flat_start_cleanup_m44.py
+│   ├── run_frozen_paper_validation_runner.py
 │   ├── run_paper_dry_run.py
 │   ├── run_supervised_scheduled_paper_once.py
 │   ├── seed_temporal_schedules.py
@@ -349,6 +354,7 @@ AI_Trading_Bot/
 │       ├── test_first_controlled_paper_session_real_gate.py
 │       ├── test_frozen_paper_validation_start_m45.py
 │       ├── test_frozen_validation_day1_audit_m46.py
+│       ├── test_frozen_validation_runner_m47.py
 │       ├── test_idempotency.py
 │       ├── test_kill_switch.py
 │       ├── test_ledger_activities.py
@@ -394,4 +400,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 349
+Total directories: 46, Total files: 355

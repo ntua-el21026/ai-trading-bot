@@ -74,6 +74,7 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+.runtime/
 
 # Experiment / trading outputs
 artifacts/

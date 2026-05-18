@@ -1,0 +1,62 @@
+{
+  "ai_broker_authority": false,
+  "autonomous_live_execution_enabled": false,
+  "blockers": [],
+  "broker_writes_performed_in_m47": false,
+  "broker_writes_reason": "none",
+  "current_time_utc": "2026-05-18T21:14:17.462730Z",
+  "cycle_ran_in_m47": false,
+  "cycle_result": "skipped_not_due",
+  "due_cycle_detected": false,
+  "frozen_policy_drift_detected": false,
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_shorting_enabled": false,
+  "live_trading_enabled": false,
+  "m45_evidence_reference": "docs/evidence/frozen_paper_validation_start_m45.json",
+  "m46_evidence_reference": "docs/evidence/frozen_validation_day1_audit_m46.json",
+  "m47_result": "GO",
+  "market_data_status": {
+    "feed": "eod",
+    "latest_check_result": "verified",
+    "provider": "tiingo",
+    "sample_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "XLK"
+    ]
+  },
+  "old_test_schedules_active": false,
+  "packet_id": "frozen-validation-runner-m47-20260518T211417Z",
+  "post_activation_broker_state": {
+    "open_orders_count": 0,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders"
+  },
+  "pre_activation_broker_state": {
+    "open_orders_count": 0,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders"
+  },
+  "reporting_status": {
+    "cycle_packet_generated": false,
+    "daily_report_generated": false,
+    "dashboard_snapshot_generated": false
+  },
+  "runner_command": "uv run python scripts/run_frozen_paper_validation_runner.py --daemon --poll-seconds 300 --confirm-paper-only --confirm-no-live-trading --confirm-no-autonomous-live --confirm-no-leverage --confirm-live-shorting-disabled --confirm-ai-no-broker-authority --confirm-no-level4 --confirm-no-forced-trades",
+  "runner_path_selected": "local_runner",
+  "runner_status": "active",
+  "schedule_or_runner_id": "frozen-validation-runner-v0.6-local",
+  "temporal_cloud_schedule_created": false,
+  "temporal_cloud_schedule_id": null,
+  "timestamp": "2026-05-18T21:14:17.462730Z",
+  "validation_day_index": 1,
+  "validation_start_timestamp_utc": "2026-05-18T16:51:09.038248Z",
+  "validation_status": "active",
+  "validation_target_end_timestamp_utc": "2026-07-13T16:51:09.038248Z",
+  "validation_window_active": true
+}

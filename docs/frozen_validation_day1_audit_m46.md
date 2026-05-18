@@ -52,3 +52,10 @@ Latest source of truth: `docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md`.
 ## Next Operational Step
 
 Implement or start a documented local runner, or replace the registry with an explicitly approved durable paper-only schedule in a later milestone.
+
+## M47 Resolution
+
+Milestone 47 activated the paper-only local runner `frozen-validation-runner-v0.6-local` and wrote
+`docs/evidence/frozen_validation_runner_m47.json`. M46 remains the accepted Day-1 audit packet and
+its NO-GO result is retained as historical evidence; the specific operational blocker is resolved
+by the M47 runner evidence.
