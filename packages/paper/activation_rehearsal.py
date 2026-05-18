@@ -45,8 +45,11 @@ from packages.risk.shorts import (
 )
 
 M44D_APPROVAL = "MILESTONE_44D_SHORT_AND_SCALE_IN_REHEARSAL_AND_LONG_SHORT_SCALEIN_READINESS"
+M44E_APPROVAL = "MILESTONE_44E_SCALE_IN_REPAIR_AND_REHEARSAL"
 ACTIVATION_REHEARSAL_M44D_EVIDENCE_PATH = "docs/evidence/activation_rehearsal_m44d.json"
 FROZEN_READINESS_M44D_EVIDENCE_PATH = "docs/evidence/frozen_readiness_m44d.json"
+SCALE_IN_REHEARSAL_M44E_EVIDENCE_PATH = "docs/evidence/scale_in_rehearsal_m44e.json"
+FROZEN_READINESS_M44E_EVIDENCE_PATH = "docs/evidence/frozen_readiness_m44e.json"
 LATEST_V06_SPEC_PATH = "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md"
 FLAT_START_CLEANUP_M44_EVIDENCE_PATH = "docs/evidence/flat_start_cleanup_m44.json"
 PRIMARY_SIGNAL_DATA_GATE_M44C_EVIDENCE_PATH = (
@@ -129,7 +132,7 @@ class ActivationRehearsalModel(BaseModel):
 
 class ActivationRehearsalRequest(ActivationRehearsalModel):
     mode: Literal["fake", "real-paper"] = "fake"
-    rehearsal_mode: Literal["short", "scale-in", "full"] = "full"
+    rehearsal_mode: Literal["short", "scale-in", "scale-in-repair", "full"] = "full"
     operator_approval: str | None = None
     short_primary_symbol: str = "IWM"
     short_fallback_symbol: str = "SPY"
@@ -209,6 +212,7 @@ class OrderRequestSummary(ActivationRehearsalModel):
     role: str
     limit_price: float | None = None
     stop_price: float | None = None
+    order_class: str | None = None
     client_order_id_present: bool
 
 
@@ -285,6 +289,15 @@ class ScaleInRehearsalSummary(ActivationRehearsalModel):
     blockers: tuple[str, ...] = ()
 
 
+class ScaleInRepairSummary(ActivationRehearsalModel):
+    suspected_root_cause: str
+    files_changed_for_repair: tuple[str, ...]
+    order_shape_changed: bool
+    risk_gate_changed: bool
+    broker_adapter_changed: bool
+    spec_changed: bool
+
+
 class ActivationRehearsalPacket(ActivationRehearsalModel):
     packet_id: str
     timestamp: datetime
@@ -339,11 +352,93 @@ class FrozenReadinessM44DPacket(ActivationRehearsalModel):
     level4_ready: bool = False
 
 
+class ScaleInRehearsalM44EPacket(ActivationRehearsalModel):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str = LATEST_V06_SPEC_PATH
+    latest_spec_version: Literal["v0.6"] = "v0.6"
+    operator_approval_marker: str | None
+    m44d_activation_rehearsal_reference: str = ACTIVATION_REHEARSAL_M44D_EVIDENCE_PATH
+    m44d_short_proof_accepted: bool
+    m44d_scale_in_failure_summary: dict[str, Any]
+    repair_summary: ScaleInRepairSummary
+    pre_run_broker_state: BrokerStateSummary
+    selected_symbol: str | None
+    fallback_used: bool
+    initial_entry_request_summary: OrderRequestSummary | None
+    initial_entry_result: OrderResultSummary | None
+    initial_fill_result: OrderResultSummary | None
+    initial_protective_stop_result: StopVerificationSummary | None
+    scale_in_entry_request_summary: OrderRequestSummary | None
+    scale_in_fill_result: OrderResultSummary | None
+    additive_protective_stop_result: StopVerificationSummary | None
+    aggregate_long_protection_check: AggregateProtectionSummary | None
+    cleanup_stop_cancel_result: str | None
+    cleanup_sell_result: OrderResultSummary | None
+    emergency_reprotect_result: StopVerificationSummary | None
+    post_rehearsal_orphan_stop_cleanup_result: str | None = None
+    final_open_orders_count: int = Field(ge=0)
+    final_positions_count: int = Field(ge=0)
+    final_reconciliation: str
+    broker_writes_performed: bool
+    real_scale_in_broker_write_performed: bool
+    schedules_activated: bool = False
+    frozen_validation_started: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    level4_ready: bool = False
+    m45_long_short_scalein_readiness: bool
+    blockers: tuple[str, ...]
+
+
+class FrozenReadinessM44EPacket(ActivationRehearsalModel):
+    packet_id: str
+    timestamp: datetime
+    latest_spec_path: str = LATEST_V06_SPEC_PATH
+    latest_spec_version: Literal["v0.6"] = "v0.6"
+    flat_start_cleanup_m44_packet_reference: str = FLAT_START_CLEANUP_M44_EVIDENCE_PATH
+    primary_signal_data_gate_m44c_packet_reference: str = (
+        PRIMARY_SIGNAL_DATA_GATE_M44C_EVIDENCE_PATH
+    )
+    frozen_readiness_m44c_packet_reference: str = FROZEN_READINESS_M44C_EVIDENCE_PATH
+    activation_rehearsal_m44d_packet_reference: str = ACTIVATION_REHEARSAL_M44D_EVIDENCE_PATH
+    scale_in_rehearsal_m44e_packet_reference: str = SCALE_IN_REHEARSAL_M44E_EVIDENCE_PATH
+    tiingo_gate_status: str
+    m44d_short_proof_accepted: bool
+    m44e_scale_in_rehearsal_succeeded: bool
+    final_broker_baseline: BrokerStateSummary
+    shorts_enabled_at_validation_start: bool
+    scale_in_enabled_at_validation_start: bool
+    short_universe: tuple[str, ...]
+    live_shorting_enabled: bool = False
+    short_scale_in_enabled_at_validation_start: bool = False
+    m45_readiness: bool
+    operator_approval_required_for_m45: bool = True
+    blockers: tuple[str, ...]
+    schedules_activated: bool = False
+    frozen_validation_started: bool = False
+    live_trading_enabled: bool = False
+    autonomous_live_execution_enabled: bool = False
+    leverage_enabled: bool = False
+    level4_ready: bool = False
+
+
 class ActivationRehearsalResult(ActivationRehearsalModel):
     success: bool
     go_no_go: Literal["go", "no_go"]
     packet: ActivationRehearsalPacket
     readiness_packet: FrozenReadinessM44DPacket
+    blockers: tuple[str, ...]
+    broker_writes_performed: bool
+    real_broker_writes_performed: bool
+
+
+class ScaleInRepairM44EResult(ActivationRehearsalModel):
+    success: bool
+    go_no_go: Literal["go", "no_go"]
+    packet: ScaleInRehearsalM44EPacket
+    readiness_packet: FrozenReadinessM44EPacket
     blockers: tuple[str, ...]
     broker_writes_performed: bool
     real_broker_writes_performed: bool
@@ -527,6 +622,7 @@ def run_activation_rehearsal_m44d(
                         sleeper=sleeper,
                         clock=clock,
                         current_time=current_time,
+                        use_addon_oto_stop=False,
                     )
                     blockers.extend(scale_summary.blockers)
                 elif request.rehearsal_mode == "short":
@@ -554,10 +650,9 @@ def run_activation_rehearsal_m44d(
         and active_config.validation.short_policy.enabled_at_validation_start
         and active_config.validation.short_policy.real_short_lifecycle_proof_completed_by_m44d
         and active_config.validation.scale_in_policy.enabled_at_validation_start
-        and active_config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44d
+        and _scale_in_proof_completed(active_config)
         and active_config.shorts.enabled_at_validation_start
         and active_config.shorts.real_short_lifecycle_proof_completed_by_m44d
-        and active_config.scale_in.real_additive_stop_proof_completed_by_m44d
     )
     tiingo_gate_go = _tiingo_gate_go()
     if not tiingo_gate_go:
@@ -665,6 +760,226 @@ def build_frozen_readiness_m44d_packet(
     )
 
 
+def run_scale_in_repair_m44e(
+    request: ActivationRehearsalRequest,
+    *,
+    environ: Mapping[str, str] | None = None,
+    app_config: AppConfig | None = None,
+    client_factory: ActivationRehearsalClientFactory = build_activation_rehearsal_client,
+    sleeper: Sleeper = time.sleep,
+    clock: Clock = time.monotonic,
+    current_time: Callable[[], datetime] | None = None,
+) -> ScaleInRepairM44EResult:
+    active_environ = os.environ if environ is None else environ
+    active_config = load_app_config() if app_config is None else app_config
+    now = _now(current_time)
+    blockers = list(_request_gate_blockers_m44e(request, active_config, active_environ))
+
+    m44d_packet = _load_json_file(Path(ACTIVATION_REHEARSAL_M44D_EVIDENCE_PATH))
+    m44d_short_ok = _m44d_short_proof_accepted(m44d_packet)
+    m44d_scale_failure = _m44d_scale_in_failure_summary(m44d_packet)
+    if not m44d_short_ok:
+        blockers.append("m44d_short_proof_missing_or_invalid")
+    if not _m44d_final_baseline_flat(m44d_packet):
+        blockers.append("m44d_final_broker_baseline_not_flat")
+
+    client: ActivationRehearsalClient | None = None
+    pre_state = _empty_state()
+    final_state = _empty_state()
+    scale_summary = ScaleInRehearsalSummary(blockers=("scale_in_repair_not_run",))
+
+    if not blockers:
+        try:
+            if request.mode == "fake":
+                client = FakeActivationRehearsalClient()
+            else:
+                credentials = AlpacaPaperCredentials(
+                    api_key=active_environ.get("ALPACA_API_KEY", "").strip(),
+                    secret_key=active_environ.get("ALPACA_SECRET_KEY", "").strip(),
+                    base_url=active_environ.get("ALPACA_BASE_URL", "").strip(),
+                )
+                client = client_factory(credentials, request.timeout_seconds)
+        except (AlpacaClientError, ValueError) as exc:
+            blockers.append(_sanitized_exception("client_setup_failed", exc))
+
+    if client is not None:
+        try:
+            map_alpaca_account(client.get_account(), environment="paper")
+            clock_snapshot = map_alpaca_clock(client.get_clock())
+            pre_state = _broker_state(client, clock_snapshot=clock_snapshot)
+        except (AlpacaClientError, ValueError) as exc:
+            blockers.append(_sanitized_exception("broker_preflight_failed", exc))
+            clock_snapshot = None
+
+        if clock_snapshot is not None:
+            pre_blockers = _pre_run_state_blockers(pre_state, clock_snapshot)
+            blockers.extend(pre_blockers)
+            if not pre_blockers:
+                scale_summary = _run_scale_in_rehearsal(
+                    request=request,
+                    config=active_config,
+                    client=client,
+                    clock_snapshot=clock_snapshot,
+                    sleeper=sleeper,
+                    clock=clock,
+                    current_time=current_time,
+                    use_addon_oto_stop=True,
+                )
+                blockers.extend(scale_summary.blockers)
+                final_state = _safe_broker_state(client, clock_snapshot)
+                if final_state.open_orders_count != 0 or final_state.positions_count != 0:
+                    blockers.append("final_broker_baseline_not_flat")
+
+    if client is None:
+        final_state = pre_state
+    if final_state.reconciliation_summary == "unavailable":
+        final_state = pre_state
+
+    tiingo_gate_go = _tiingo_gate_go()
+    if not tiingo_gate_go:
+        blockers.append("tiingo_primary_signal_data_gate_not_go")
+    config_ready = _m44e_config_ready(active_config)
+    if not config_ready:
+        blockers.append("v0_6_long_short_scalein_config_not_ready")
+    if request.mode != "real-paper":
+        blockers.append("real_m44e_scale_in_rehearsal_not_performed")
+
+    unique_blockers = tuple(dict.fromkeys(blockers))
+    m45_ready = (
+        not unique_blockers
+        and m44d_short_ok
+        and scale_summary.succeeded
+        and final_state.open_orders_count == 0
+        and final_state.positions_count == 0
+        and final_state.reconciliation_summary == "flat_zero_positions_zero_open_orders"
+        and config_ready
+        and tiingo_gate_go
+        and request.mode == "real-paper"
+    )
+    packet = ScaleInRehearsalM44EPacket(
+        packet_id=_packet_id("scale-in-rehearsal-m44e", now),
+        timestamp=now,
+        operator_approval_marker=request.operator_approval,
+        m44d_short_proof_accepted=m44d_short_ok,
+        m44d_scale_in_failure_summary=m44d_scale_failure,
+        repair_summary=_m44e_repair_summary(),
+        pre_run_broker_state=pre_state,
+        selected_symbol=scale_summary.selected_symbol,
+        fallback_used=scale_summary.fallback_used,
+        initial_entry_request_summary=scale_summary.initial_entry_request_summary,
+        initial_entry_result=scale_summary.initial_entry_result,
+        initial_fill_result=scale_summary.initial_fill_result,
+        initial_protective_stop_result=scale_summary.initial_protective_stop_result,
+        scale_in_entry_request_summary=scale_summary.scale_in_entry_request_summary,
+        scale_in_fill_result=scale_summary.scale_in_fill_result,
+        additive_protective_stop_result=scale_summary.additive_protective_stop_result,
+        aggregate_long_protection_check=scale_summary.aggregate_long_protection_check,
+        cleanup_stop_cancel_result=scale_summary.cleanup_stop_cancel_result,
+        cleanup_sell_result=scale_summary.cleanup_sell_result,
+        emergency_reprotect_result=scale_summary.emergency_reprotect_result,
+        final_open_orders_count=final_state.open_orders_count,
+        final_positions_count=final_state.positions_count,
+        final_reconciliation=final_state.reconciliation_summary,
+        broker_writes_performed=scale_summary.broker_writes_performed,
+        real_scale_in_broker_write_performed=(
+            request.mode == "real-paper" and scale_summary.broker_writes_performed
+        ),
+        m45_long_short_scalein_readiness=m45_ready,
+        blockers=unique_blockers,
+    )
+    readiness_packet = build_frozen_readiness_m44e_packet(
+        scale_in_packet=packet,
+        app_config=active_config,
+        now=now,
+        tiingo_gate_go=tiingo_gate_go,
+    )
+    return ScaleInRepairM44EResult(
+        success=m45_ready,
+        go_no_go="go" if m45_ready else "no_go",
+        packet=packet,
+        readiness_packet=readiness_packet,
+        blockers=unique_blockers,
+        broker_writes_performed=scale_summary.broker_writes_performed,
+        real_broker_writes_performed=(
+            request.mode == "real-paper" and scale_summary.broker_writes_performed
+        ),
+    )
+
+
+def build_frozen_readiness_m44e_packet(
+    *,
+    scale_in_packet: ScaleInRehearsalM44EPacket,
+    app_config: AppConfig | None = None,
+    now: datetime | None = None,
+    tiingo_gate_go: bool | None = None,
+) -> FrozenReadinessM44EPacket:
+    active_config = load_app_config() if app_config is None else app_config
+    gate_go = _tiingo_gate_go() if tiingo_gate_go is None else tiingo_gate_go
+    blockers = list(scale_in_packet.blockers)
+    if not scale_in_packet.m44d_short_proof_accepted:
+        blockers.append("m44d_short_proof_missing_or_invalid")
+    scale_succeeded = (
+        scale_in_packet.scale_in_fill_result is not None
+        and scale_in_packet.scale_in_fill_result.filled_quantity > 0
+        and scale_in_packet.additive_protective_stop_result is not None
+        and scale_in_packet.additive_protective_stop_result.verified
+        and scale_in_packet.aggregate_long_protection_check is not None
+        and scale_in_packet.aggregate_long_protection_check.passed
+        and scale_in_packet.final_open_orders_count == 0
+        and scale_in_packet.final_positions_count == 0
+        and scale_in_packet.final_reconciliation == "flat_zero_positions_zero_open_orders"
+    )
+    if not scale_succeeded:
+        blockers.append("m44e_scale_in_rehearsal_not_successful")
+    if not gate_go:
+        blockers.append("tiingo_primary_signal_data_gate_not_go")
+    if active_config.validation.active_spec_version != "v0.6":
+        blockers.append("latest_spec_not_v0_6")
+    if not active_config.validation.short_policy.enabled_at_validation_start:
+        blockers.append("shorts_not_enabled_at_validation_start")
+    if not active_config.validation.scale_in_policy.enabled_at_validation_start:
+        blockers.append("scale_ins_not_enabled_at_validation_start")
+    if not _scale_in_proof_completed(active_config):
+        blockers.append("scale_in_additive_stop_proof_not_recorded_in_config")
+    if active_config.validation.short_policy.live_shorting_enabled:
+        blockers.append("live_shorting_enabled")
+    if active_config.validation.scale_in_policy.short_scale_in_enabled_at_validation_start:
+        blockers.append("short_scale_ins_enabled_at_validation_start")
+    if scale_in_packet.final_open_orders_count != 0:
+        blockers.append("final_open_orders_not_zero")
+    if scale_in_packet.final_positions_count != 0:
+        blockers.append("final_positions_not_zero")
+    unique_blockers = tuple(dict.fromkeys(blockers))
+    timestamp = now or datetime.now(UTC)
+    return FrozenReadinessM44EPacket(
+        packet_id=_packet_id("frozen-readiness-m44e", timestamp),
+        timestamp=timestamp,
+        tiingo_gate_status="go" if gate_go else "no_go",
+        m44d_short_proof_accepted=scale_in_packet.m44d_short_proof_accepted,
+        m44e_scale_in_rehearsal_succeeded=scale_succeeded,
+        final_broker_baseline=BrokerStateSummary(
+            account_reachable=scale_in_packet.pre_run_broker_state.account_reachable,
+            clock_reachable=scale_in_packet.pre_run_broker_state.clock_reachable,
+            clock_is_open=scale_in_packet.pre_run_broker_state.clock_is_open,
+            paper_endpoint_proven=scale_in_packet.pre_run_broker_state.paper_endpoint_proven,
+            open_orders_count=scale_in_packet.final_open_orders_count,
+            positions_count=scale_in_packet.final_positions_count,
+            reconciliation_summary=scale_in_packet.final_reconciliation,
+            symbols_with_open_orders=(),
+            symbols_with_positions=(),
+        ),
+        shorts_enabled_at_validation_start=(
+            active_config.validation.short_policy.enabled_at_validation_start
+        ),
+        scale_in_enabled_at_validation_start=(
+            active_config.validation.scale_in_policy.enabled_at_validation_start
+        ),
+        short_universe=active_config.shorts.eligible_symbols,
+        m45_readiness=not unique_blockers,
+        blockers=unique_blockers,
+    )
+
+
 def write_activation_rehearsal_m44d_artifacts(
     result: ActivationRehearsalResult,
     *,
@@ -677,6 +992,20 @@ def write_activation_rehearsal_m44d_artifacts(
         Path(readiness_path),
     )
     return activation_output, readiness_output
+
+
+def write_scale_in_rehearsal_m44e_artifacts(
+    result: ScaleInRepairM44EResult,
+    *,
+    scale_in_path: str | Path = SCALE_IN_REHEARSAL_M44E_EVIDENCE_PATH,
+    readiness_path: str | Path = FROZEN_READINESS_M44E_EVIDENCE_PATH,
+) -> tuple[Path, Path]:
+    scale_output = _write_json(result.packet.model_dump(mode="json"), Path(scale_in_path))
+    readiness_output = _write_json(
+        result.readiness_packet.model_dump(mode="json"),
+        Path(readiness_path),
+    )
+    return scale_output, readiness_output
 
 
 def _request_gate_blockers(
@@ -721,6 +1050,61 @@ def _request_gate_blockers(
         blockers.append("frozen_validation_started_or_enabled")
     if config.validation.frozen_validation_start_allowed:
         blockers.append("frozen_validation_start_allowed_in_m44d")
+    if config.risk_level_4_micro_live.allow_margin:
+        blockers.append("leverage_or_margin_enabled")
+    if config.validation.level4_ready:
+        blockers.append("level4_ready_enabled")
+    if config.ai.allow_ai_to_create_orders:
+        blockers.append("ai_broker_write_authority_enabled")
+    if config.validation.active_spec_version != "v0.6":
+        blockers.append("active_spec_version_not_v0_6")
+    if config.validation.short_policy.live_shorting_enabled:
+        blockers.append("live_shorting_enabled_in_validation_policy")
+    return tuple(dict.fromkeys(blockers))
+
+
+def _request_gate_blockers_m44e(
+    request: ActivationRehearsalRequest,
+    config: AppConfig,
+    environ: Mapping[str, str],
+) -> tuple[str, ...]:
+    blockers: list[str] = []
+    if request.operator_approval != M44E_APPROVAL:
+        blockers.append("m44e_approval_marker_required")
+    if request.rehearsal_mode != "scale-in-repair":
+        blockers.append("m44e_requires_scale_in_repair_mode")
+    confirmations = {
+        "confirm_paper_endpoint": request.confirm_paper_endpoint,
+        "confirm_scale_in_rehearsal_only": request.confirm_scale_in_rehearsal_only,
+        "confirm_additive_sell_stop_required": request.confirm_additive_sell_stop_required,
+        "confirm_cleanup_to_flat": request.confirm_cleanup_to_flat,
+        "confirm_no_live_trading": request.confirm_no_live_trading,
+        "confirm_no_autonomous_live": request.confirm_no_autonomous_live,
+        "confirm_no_schedules": request.confirm_no_schedules,
+        "confirm_no_leverage": request.confirm_no_leverage,
+        "confirm_no_frozen_validation_start": request.confirm_no_frozen_validation_start,
+        "confirm_level4_not_ready": request.confirm_level4_not_ready,
+    }
+    blockers.extend(name for name, value in confirmations.items() if not value)
+    if request.mode == "real-paper":
+        if environ.get("ALPACA_API_KEY", "").strip() == "":
+            blockers.append("ALPACA_API_KEY_required")
+        if environ.get("ALPACA_SECRET_KEY", "").strip() == "":
+            blockers.append("ALPACA_SECRET_KEY_required")
+        if environ.get("ALPACA_BASE_URL", "").strip() != ALPACA_PAPER_BASE_URL:
+            blockers.append("ALPACA_BASE_URL_exact_paper_endpoint_required")
+    if config.system.environment != "paper":
+        blockers.append("system_environment_not_paper")
+    if not config.system.dry_run:
+        blockers.append("system_dry_run_not_true")
+    if config.system.live_trading_enabled or config.execution.allow_live_orders:
+        blockers.append("live_trading_enabled")
+    if config.system.autonomous_execution_enabled or config.execution.autonomous_execution_enabled:
+        blockers.append("autonomous_live_execution_enabled")
+    if config.validation.frozen_validation_enabled or config.validation.validation_clock_started:
+        blockers.append("frozen_validation_started_or_enabled")
+    if config.validation.frozen_validation_start_allowed:
+        blockers.append("frozen_validation_start_allowed_in_m44e")
     if config.risk_level_4_micro_live.allow_margin:
         blockers.append("leverage_or_margin_enabled")
     if config.validation.level4_ready:
@@ -1023,6 +1407,7 @@ def _run_scale_in_rehearsal(
     sleeper: Sleeper,
     clock: Clock,
     current_time: Callable[[], datetime] | None,
+    use_addon_oto_stop: bool,
 ) -> ScaleInRehearsalSummary:
     del clock_snapshot
     blockers: list[str] = []
@@ -1181,7 +1566,7 @@ def _run_scale_in_rehearsal(
             broker_writes=broker_writes,
         )
 
-    addon_payload = {
+    addon_payload: dict[str, Any] = {
         "symbol": selected_symbol,
         "side": "buy",
         "type": "limit",
@@ -1191,6 +1576,10 @@ def _run_scale_in_rehearsal(
         "client_order_id": f"{client_root}-addon",
         "extended_hours": False,
     }
+    if use_addon_oto_stop:
+        addon_payload["time_in_force"] = "gtc"
+        addon_payload["order_class"] = "oto"
+        addon_payload["stop_loss"] = {"stop_price": str(stop_price)}
     addon_request = _request_summary(addon_payload, role="scale_in_entry")
     try:
         addon_order = map_alpaca_order(client.submit_order(addon_payload))
@@ -1208,28 +1597,40 @@ def _run_scale_in_rehearsal(
     if addon_order is None or addon_order.filled_quantity <= 0:
         blockers.append("scale_in_entry_not_filled")
     else:
-        addon_stop_payload = {
-            "symbol": selected_symbol,
-            "side": "sell",
-            "type": "stop",
-            "time_in_force": "gtc",
-            "qty": _format_quantity(addon_order.filled_quantity),
-            "stop_price": str(stop_price),
-            "client_order_id": f"{client_root}-addon-stop",
-            "extended_hours": False,
-        }
-        try:
-            map_alpaca_order(client.submit_order(addon_stop_payload))
-            broker_writes = True
-        except AlpacaClientError as exc:
-            blockers.append(_sanitized_exception("additive_sell_stop_submit_failed", exc))
-        addon_stop_result = _stop_verification(
-            client,
-            symbol=selected_symbol,
-            side="sell",
-            required_quantity=addon_order.filled_quantity,
-            client_order_id=str(addon_stop_payload["client_order_id"]),
-        )
+        if use_addon_oto_stop:
+            addon_stop_result = _poll_stop_verification_excluding_client_ids(
+                client,
+                symbol=selected_symbol,
+                side="sell",
+                required_quantity=addon_order.filled_quantity,
+                excluded_client_order_ids=(str(initial_stop_payload["client_order_id"]),),
+                timeout_seconds=request.timeout_seconds,
+                sleeper=sleeper,
+                clock=clock,
+            )
+        else:
+            addon_stop_payload = {
+                "symbol": selected_symbol,
+                "side": "sell",
+                "type": "stop",
+                "time_in_force": "gtc",
+                "qty": _format_quantity(addon_order.filled_quantity),
+                "stop_price": str(stop_price),
+                "client_order_id": f"{client_root}-addon-stop",
+                "extended_hours": False,
+            }
+            try:
+                map_alpaca_order(client.submit_order(addon_stop_payload))
+                broker_writes = True
+            except AlpacaClientError as exc:
+                blockers.append(_sanitized_exception("additive_sell_stop_submit_failed", exc))
+            addon_stop_result = _stop_verification(
+                client,
+                symbol=selected_symbol,
+                side="sell",
+                required_quantity=addon_order.filled_quantity,
+                client_order_id=str(addon_stop_payload["client_order_id"]),
+            )
         if not addon_stop_result.verified:
             blockers.append("additive_protective_sell_stop_not_verified")
 
@@ -1244,7 +1645,7 @@ def _run_scale_in_rehearsal(
 
     try:
         for order in _symbol_open_orders(client, selected_symbol):
-            if order.order_type == "stop" and order.client_order_id.startswith(client_root):
+            if order.order_type == "stop" and order.side == "sell":
                 client.cancel_order(order.broker_order_id)
                 broker_writes = True
         cleanup_result = "session_protective_stops_cancelled"
@@ -1270,6 +1671,14 @@ def _run_scale_in_rehearsal(
                 clock=clock,
             )
             cleanup_sell_result = _order_result(cleanup_order, submitted=True)
+            _wait_for_position_quantity_at_most(
+                client,
+                symbol=selected_symbol,
+                max_quantity=0.0,
+                timeout_seconds=request.timeout_seconds,
+                sleeper=sleeper,
+                clock=clock,
+            )
         if _position_quantity(client, selected_symbol) > 0:
             blockers.append("long_scale_in_cleanup_sell_failed")
             emergency_result = _emergency_stop(
@@ -1541,6 +1950,27 @@ def _poll_order(
     return order if latest_payload is None else map_alpaca_order(latest_payload)
 
 
+def _wait_for_position_quantity_at_most(
+    client: ActivationRehearsalClient,
+    *,
+    symbol: str,
+    max_quantity: float,
+    timeout_seconds: float,
+    sleeper: Sleeper,
+    clock: Clock,
+) -> float:
+    quantity = _position_quantity(client, symbol)
+    if quantity <= max_quantity + 1e-9:
+        return quantity
+    deadline = clock() + timeout_seconds
+    while clock() < deadline:
+        sleeper(min(1.0, max(0.0, deadline - clock())))
+        quantity = _position_quantity(client, symbol)
+        if quantity <= max_quantity + 1e-9:
+            return quantity
+    return quantity
+
+
 def _terminal_or_filled(order: BrokerOrder) -> bool:
     return (
         order.status in {"filled", "cancelled", "expired", "rejected"}
@@ -1652,6 +2082,75 @@ def _stop_verification(
     )
 
 
+def _stop_verification_excluding_client_ids(
+    client: ActivationRehearsalClient,
+    *,
+    symbol: str,
+    side: Literal["buy", "sell"],
+    required_quantity: float,
+    excluded_client_order_ids: Sequence[str],
+) -> StopVerificationSummary:
+    excluded = set(excluded_client_order_ids)
+    for order in _symbol_open_orders(client, symbol):
+        if (
+            order.order_type == "stop"
+            and order.side == side
+            and order.client_order_id not in excluded
+            and order.quantity + 1e-9 >= required_quantity
+        ):
+            return StopVerificationSummary(
+                verified=True,
+                side=side,
+                required_quantity=required_quantity,
+                verified_quantity=order.quantity,
+                broker_order_id_present=True,
+                client_order_id_present=bool(order.client_order_id),
+                status=order.status,
+            )
+    return StopVerificationSummary(
+        verified=False,
+        side=side,
+        required_quantity=required_quantity,
+        verified_quantity=0.0,
+        reason="matching_additive_open_stop_not_found",
+    )
+
+
+def _poll_stop_verification_excluding_client_ids(
+    client: ActivationRehearsalClient,
+    *,
+    symbol: str,
+    side: Literal["buy", "sell"],
+    required_quantity: float,
+    excluded_client_order_ids: Sequence[str],
+    timeout_seconds: float,
+    sleeper: Sleeper,
+    clock: Clock,
+) -> StopVerificationSummary:
+    result = _stop_verification_excluding_client_ids(
+        client,
+        symbol=symbol,
+        side=side,
+        required_quantity=required_quantity,
+        excluded_client_order_ids=excluded_client_order_ids,
+    )
+    if result.verified:
+        return result
+    deadline = clock() + timeout_seconds
+    while clock() < deadline:
+        sleeper(min(1.0, max(0.0, deadline - clock())))
+        result = _stop_verification_excluding_client_ids(
+            client,
+            symbol=symbol,
+            side=side,
+            required_quantity=required_quantity,
+            excluded_client_order_ids=excluded_client_order_ids,
+        )
+        if result.verified:
+            return result
+    return result
+
+
 def _stop_verification_from_order(
     order: BrokerOrder | None,
     *,
@@ -1730,6 +2229,12 @@ def _emergency_stop(
 
 
 def _request_summary(payload: Mapping[str, Any], *, role: str) -> OrderRequestSummary:
+    nested_stop_loss = payload.get("stop_loss")
+    nested_stop_price = (
+        nested_stop_loss.get("stop_price")
+        if isinstance(nested_stop_loss, Mapping)
+        else None
+    )
     return OrderRequestSummary(
         symbol=str(payload["symbol"]).upper(),
         side=cast(Literal["buy", "sell"], payload["side"]),
@@ -1738,7 +2243,8 @@ def _request_summary(payload: Mapping[str, Any], *, role: str) -> OrderRequestSu
         time_in_force=str(payload["time_in_force"]),
         role=role,
         limit_price=_optional_float(payload.get("limit_price")),
-        stop_price=_optional_float(payload.get("stop_price")),
+        stop_price=_optional_float(payload.get("stop_price") or nested_stop_price),
+        order_class=None if payload.get("order_class") is None else str(payload["order_class"]),
         client_order_id_present=bool(payload.get("client_order_id")),
     )
 
@@ -1813,6 +2319,126 @@ def _tiingo_gate_go() -> bool:
         and payload.get("non_iex_primary_signal_data_verified") is True
         and payload.get("m45_readiness_impact") == "go"
         and not payload.get("blockers")
+    )
+
+
+def _scale_in_proof_completed(config: AppConfig) -> bool:
+    return (
+        config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44d
+        or config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44e
+        or config.scale_in.real_additive_stop_proof_completed_by_m44d
+        or config.scale_in.real_additive_stop_proof_completed_by_m44e
+    )
+
+
+def _m44e_config_ready(config: AppConfig) -> bool:
+    return (
+        config.validation.active_spec_version == "v0.6"
+        and config.validation.short_policy.enabled_at_validation_start
+        and config.validation.short_policy.real_short_lifecycle_proof_completed_by_m44d
+        and config.validation.scale_in_policy.enabled_at_validation_start
+        and _scale_in_proof_completed(config)
+        and config.validation_risk.max_scale_ins_per_day_at_start == 1
+        and config.shorts.enabled_at_validation_start
+        and config.shorts.real_short_lifecycle_proof_completed_by_m44d
+        and not config.validation.short_policy.live_shorting_enabled
+        and not config.validation.scale_in_policy.short_scale_in_enabled_at_validation_start
+    )
+
+
+def _load_json_file(path: Path) -> Mapping[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, Mapping) else None
+
+
+def _m44d_short_proof_accepted(payload: Mapping[str, Any] | None) -> bool:
+    if payload is None:
+        return False
+    short_rehearsal = payload.get("short_rehearsal")
+    final_state = payload.get("final_broker_baseline")
+    if not isinstance(short_rehearsal, Mapping) or not isinstance(final_state, Mapping):
+        return False
+    return (
+        short_rehearsal.get("succeeded") is True
+        and short_rehearsal.get("selected_symbol") in SHORT_CANDIDATES
+        and final_state.get("open_orders_count") == 0
+        and final_state.get("positions_count") == 0
+        and payload.get("frozen_validation_started") is False
+        and payload.get("schedules_activated") is False
+    )
+
+
+def _m44d_final_baseline_flat(payload: Mapping[str, Any] | None) -> bool:
+    if payload is None:
+        return False
+    final_state = payload.get("final_broker_baseline")
+    if not isinstance(final_state, Mapping):
+        return False
+    return (
+        final_state.get("open_orders_count") == 0
+        and final_state.get("positions_count") == 0
+        and final_state.get("reconciliation_summary") == "flat_zero_positions_zero_open_orders"
+    )
+
+
+def _m44d_scale_in_failure_summary(payload: Mapping[str, Any] | None) -> dict[str, Any]:
+    if payload is None:
+        return {
+            "packet_present": False,
+            "failure_point": "m44d_packet_missing",
+            "sanitized_reason": "missing_evidence",
+        }
+    scale = payload.get("scale_in_rehearsal")
+    if not isinstance(scale, Mapping):
+        return {
+            "packet_present": True,
+            "failure_point": "scale_in_rehearsal_missing",
+            "sanitized_reason": "missing_rehearsal_summary",
+        }
+    blockers = tuple(str(blocker) for blocker in scale.get("blockers", ()))
+    return {
+        "packet_present": True,
+        "selected_symbol": scale.get("selected_symbol"),
+        "initial_entry_filled": _summary_filled(scale.get("initial_fill_result")),
+        "initial_stop_verified": _summary_verified(scale.get("initial_protective_stop_result")),
+        "scale_in_entry_filled": _summary_filled(scale.get("scale_in_fill_result")),
+        "additive_stop_verified": _summary_verified(scale.get("additive_protective_stop_result")),
+        "sanitized_blockers": blockers,
+        "failure_point": (
+            "scale_in_entry_submit_failed"
+            if any(str(blocker).startswith("scale_in_entry_submit_failed") for blocker in blockers)
+            else "unknown"
+        ),
+    }
+
+
+def _summary_filled(value: object) -> bool:
+    return isinstance(value, Mapping) and float(value.get("filled_quantity") or 0.0) > 0.0
+
+
+def _summary_verified(value: object) -> bool:
+    return isinstance(value, Mapping) and value.get("verified") is True
+
+
+def _m44e_repair_summary() -> ScaleInRepairSummary:
+    return ScaleInRepairSummary(
+        suspected_root_cause=(
+            "alpaca_wash_trade_protection_rejected_plain_buy_limit_while_initial_sell_stop_open"
+        ),
+        files_changed_for_repair=(
+            "packages/paper/activation_rehearsal.py",
+            "scripts/run_activation_rehearsal_m44d.py",
+            "tests/unit/test_activation_rehearsal_m44d.py",
+        ),
+        order_shape_changed=True,
+        risk_gate_changed=False,
+        broker_adapter_changed=False,
+        spec_changed=True,
     )
 
 
@@ -1952,6 +2578,11 @@ class FakeActivationRehearsalClient:
         self.orders_by_client_order_id[str(payload["client_order_id"])] = dict(order)
         if status == "filled" and filled_qty > 0:
             self._apply_fill(order)
+            if payload.get("order_class") == "oto" and isinstance(
+                payload.get("stop_loss"),
+                Mapping,
+            ):
+                self._create_oto_stop_child(parent_payload=payload, filled_qty=filled_qty)
         return dict(order)
 
     def cancel_order(self, broker_order_id: str) -> Mapping[str, Any]:
@@ -1996,6 +2627,35 @@ class FakeActivationRehearsalClient:
             "market_value": str(new_qty * price),
             "opened_at": self.clock_payload["timestamp"],
         }
+
+    def _create_oto_stop_child(
+        self,
+        *,
+        parent_payload: Mapping[str, Any],
+        filled_qty: float,
+    ) -> None:
+        stop_loss = cast(Mapping[str, Any], parent_payload["stop_loss"])
+        child_side = "sell" if parent_payload["side"] == "buy" else "buy"
+        broker_order_id = f"m44d-paper-order-{len(self.orders_by_id) + 1}"
+        client_order_id = f"{parent_payload['client_order_id']}-oto-stop"
+        child = {
+            "id": broker_order_id,
+            "client_order_id": client_order_id,
+            "symbol": parent_payload["symbol"],
+            "side": child_side,
+            "asset_class": _asset_class_for_symbol(str(parent_payload["symbol"])),
+            "qty": str(filled_qty),
+            "filled_qty": "0",
+            "type": "stop",
+            "time_in_force": parent_payload["time_in_force"],
+            "status": "new",
+            "limit_price": None,
+            "stop_price": stop_loss.get("stop_price"),
+            "submitted_at": self.clock_payload["timestamp"],
+            "updated_at": self.clock_payload["timestamp"],
+        }
+        self.orders_by_id[broker_order_id] = dict(child)
+        self.orders_by_client_order_id[client_order_id] = dict(child)
 
 
 def _default_account() -> dict[str, Any]:

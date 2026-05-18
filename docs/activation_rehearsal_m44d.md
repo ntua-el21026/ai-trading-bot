@@ -132,3 +132,18 @@ The long scale-in rehearsal selected `XLK`.
 Because the real scale-in add-on did not fill and the additive-stop lifecycle was not proven, M45
 long+short+scale-in readiness is `NO-GO`. Frozen validation has not started, and no schedule was
 activated.
+
+## M44E Repair Path
+
+M44E does not rerun the accepted M44D short proof. It repairs only the long scale-in add-on order
+shape and reruns exactly one bounded long scale-in rehearsal.
+
+Likely M44D root cause: Alpaca wash-trade protection rejected a plain same-symbol `buy limit`
+while the initial protective `sell stop` was open. The repair preserves the existing stop and uses
+a broker-native OTO add-on order with an attached stop-loss child. The OTO child is verified as the
+additive protective sell stop for the added quantity.
+
+M44E evidence paths:
+
+- `docs/evidence/scale_in_rehearsal_m44e.json`
+- `docs/evidence/frozen_readiness_m44e.json`

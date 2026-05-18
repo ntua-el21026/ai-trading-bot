@@ -90,7 +90,7 @@ def test_v0_6_config_loads_with_long_short_scale_in_defaults() -> None:
     assert config.validation.flat_start_required is True
     assert config.validation.carry_in_positions_allowed is False
     assert config.validation.short_policy.enabled_at_validation_start is True
-    assert config.validation.scale_in_policy.enabled_at_validation_start is False
+    assert config.validation.scale_in_policy.enabled_at_validation_start is True
     assert config.shorts.enabled is True
     assert config.shorts.eligible_symbols == ("SPY", "QQQ", "DIA", "IWM")
     assert config.validation_ai.negative_only is True

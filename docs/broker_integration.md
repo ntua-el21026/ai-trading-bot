@@ -214,6 +214,12 @@ execution reference-price checks before any write. Tiingo EOD remains the primar
 provider; Alpaca market data used by the script is only an execution reference for bounded paper
 order collars.
 
+M44E reuses the runner in `scale-in-repair` mode. The add-on entry uses Alpaca `order_class=oto`
+with a nested `stop_loss` child so the additive stop is broker-grouped with the add-on fill. This
+avoids cancelling the already verified initial stop and keeps the repair within Alpaca's
+user-protection model. Cleanup cancels only the session-created sell stops for the rehearsal symbol
+before selling the current long quantity to flat.
+
 The required final broker baseline is zero open orders and zero positions. If cleanup fails after a
 stop cancellation, the script must emergency re-protect the remaining position and block M45
 readiness.

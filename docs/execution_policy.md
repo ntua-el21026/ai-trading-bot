@@ -214,3 +214,9 @@ Order roles used by v0.6 include `short_entry`, `short_protective_stop`, `short_
 `initial_entry`, `initial_protective_stop`, `scale_in_entry`, `add_on_protective_stop`, `cleanup`,
 and `incident_repair`. If cleanup fails after stop cancellation, emergency re-protection is required
 and M45 readiness is blocked.
+
+M44E extends the same runner with `--mode scale-in-repair`. This mode accepts the M44D short proof,
+does not rerun the short rehearsal, and repairs only the long scale-in add-on path. The repaired
+add-on uses an Alpaca OTO order with an attached stop-loss child when a plain add-on buy would be
+rejected while the initial sell stop is open. The existing stop remains intact during add-on
+submission, and aggregate stop coverage must still be verified before cleanup.

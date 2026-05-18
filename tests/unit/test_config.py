@@ -68,13 +68,14 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.validation.short_policy.real_short_lifecycle_proof_completed_by_m44d is True
     assert config.validation.short_policy.paper_only is True
     assert config.validation.short_policy.live_shorting_enabled is False
-    assert config.validation.scale_in_policy.enabled_at_validation_start is False
-    assert config.validation.scale_in_policy.required_clean_scheduled_runs_before_enable == 1
+    assert config.validation.scale_in_policy.enabled_at_validation_start is True
+    assert config.validation.scale_in_policy.required_clean_scheduled_runs_before_enable == 0
     assert config.validation.scale_in_policy.require_real_broker_additive_stop_proof is True
     assert config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44d is False
+    assert config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44e is True
     assert config.validation.scale_in_policy.short_scale_in_enabled_at_validation_start is False
     assert config.validation.exits.app_level_trailing_stop is False
-    assert config.validation_risk.max_scale_ins_per_day_at_start == 0
+    assert config.validation_risk.max_scale_ins_per_day_at_start == 1
     assert config.validation_risk.max_open_positions == 4
     assert config.shorts.enabled is True
     assert config.shorts.enabled_at_validation_start is True

@@ -980,6 +980,46 @@ rehearsal did not prove the add-on/additive-stop lifecycle because the add-on en
 with sanitized `invalid_order_request`. Cleanup restored zero open orders and zero positions.
 M45 long+short+scale-in readiness remains `NO-GO`.
 
+## Milestone 44E Scale-In Repair Runbook
+
+M44E is a compact repair milestone for the M44D scale-in add-on rejection. It must not rerun the
+short rehearsal unless the M44D short proof is invalid. It must not start M45, activate schedules,
+or start frozen validation.
+
+Use:
+
+```bash
+uv run python scripts/run_activation_rehearsal_m44d.py \
+  --mode scale-in-repair \
+  --operator-approval MILESTONE_44E_SCALE_IN_REPAIR_AND_REHEARSAL \
+  --scale-primary-symbol XLK \
+  --scale-fallback-symbol XLF \
+  --scale-initial-max-qty 1 \
+  --scale-addon-max-qty 1 \
+  --confirm-paper-endpoint \
+  --confirm-scale-in-rehearsal-only \
+  --confirm-additive-sell-stop-required \
+  --confirm-cleanup-to-flat \
+  --confirm-no-live-trading \
+  --confirm-no-autonomous-live \
+  --confirm-no-schedules \
+  --confirm-no-leverage \
+  --confirm-no-frozen-validation-start \
+  --confirm-level4-not-ready
+```
+
+The repaired add-on order uses Alpaca OTO with an attached stop-loss child when a plain add-on buy
+would conflict with the already open initial sell stop. The existing initial stop remains open until
+cleanup. Final readiness requires the add-on fill, child stop verification, aggregate protection,
+cleanup to zero open orders and zero positions, and refreshed M44E evidence.
+
+M44E real-paper result: `XLK` initial entry filled one share, initial sell stop verified one share,
+OTO add-on filled one share, additive child sell stop verified one share, aggregate two-share
+protection was verified, cleanup sold two shares, a transient session-created orphan emergency stop
+was canceled after flat-position verification, and final broker baseline was restored to zero open
+orders and zero positions. Refreshed M45 long+short+scale-in readiness is `GO`; M45 still requires
+separate explicit operator approval.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

@@ -88,7 +88,7 @@ validation_risk:
   max_tech_complex_exposure_pct: 0.10
   max_broad_beta_overlap_pct: 0.08
   max_new_entries_per_day: 2
-  max_scale_ins_per_day_at_start: 0
+  max_scale_ins_per_day_at_start: 1
   max_broker_writes_per_day: 10
   max_unresolved_critical_incidents: 0
   max_daily_loss_pct: 0.01

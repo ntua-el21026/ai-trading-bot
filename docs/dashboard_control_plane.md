@@ -189,3 +189,8 @@ Expected M44D/M45 readiness fields include:
 
 No dashboard action may activate schedules, start M45, enable live trading, enable autonomous
 execution, enable leverage, or expose broker/data-provider credentials.
+
+M44E readiness read models should also expose the scale-in repair status, suspected root cause,
+selected symbol, OTO add-on/child-stop verification status, aggregate protection result, cleanup
+result, and refreshed M45 GO/NO-GO state. These fields remain read-only evidence; they do not create
+dashboard order controls.

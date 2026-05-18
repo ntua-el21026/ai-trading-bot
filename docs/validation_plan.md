@@ -348,6 +348,12 @@ M44D real paper additive-stop rehearsal succeeds. The validation start remains f
 with zero open orders, zero positions, clean reconciliation, no schedules active, and no frozen
 clock started. M45 remains a separate operator-approved freeze/start milestone.
 
+M44E repairs the M44D scale-in add-on rejection without rerunning the accepted short proof. The
+M44E add-on uses a broker-native OTO order with an attached stop-loss child when a plain add-on buy
+would conflict with Alpaca wash-trade protection while the initial sell stop is open. M45
+long+short+scale-in validation may be considered only if M44E proves the real add-on fill,
+additive stop verification, aggregate protection, cleanup, and final flat baseline.
+
 ## Current Assumptions
 
 Earnings blackout logic requires a caller-supplied trading calendar and earnings date. If earnings

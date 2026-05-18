@@ -110,3 +110,8 @@ validation window. Daily and weekly evidence should distinguish:
 
 Reports must continue to state that live trading, autonomous live execution, leverage, schedules,
 frozen validation start, and Level 4 readiness are disabled until explicitly approved.
+
+M44E reporting must additionally record the repaired scale-in add-on order shape, including that the
+add-on used a broker-native OTO parent with an attached stop-loss child, the initial stop remained
+open during add-on submission, aggregate protection passed, cleanup restored flat state, and M45
+readiness remained gated by explicit operator approval.

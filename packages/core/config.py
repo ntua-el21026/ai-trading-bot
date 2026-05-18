@@ -265,6 +265,7 @@ class ScaleInConfig(StrictModel):
     block_if_protected_quantity_below_position_quantity: bool
     require_real_additive_stop_proof: bool = True
     real_additive_stop_proof_completed_by_m44d: bool = False
+    real_additive_stop_proof_completed_by_m44e: bool = False
 
     @model_validator(mode="after")
     def validate_scale_in_bounds(self) -> Self:
@@ -351,6 +352,7 @@ class ValidationScaleInPolicy(StrictModel):
     required_clean_scheduled_runs_before_enable: int = Field(ge=0)
     require_real_broker_additive_stop_proof: bool
     real_additive_stop_proof_completed_by_m44d: bool = False
+    real_additive_stop_proof_completed_by_m44e: bool = False
     short_scale_in_enabled_at_validation_start: bool = False
 
     @model_validator(mode="after")
@@ -361,8 +363,12 @@ class ValidationScaleInPolicy(StrictModel):
             raise ValueError("scale-in enablement requires a stage gate")
         if not self.require_real_broker_additive_stop_proof:
             raise ValueError("scale-in stage gate requires real broker additive-stop proof")
-        if self.enabled_at_validation_start and not self.real_additive_stop_proof_completed_by_m44d:
-            raise ValueError("M45 scale-in activation requires M44D additive-stop proof")
+        additive_stop_proof_completed = (
+            self.real_additive_stop_proof_completed_by_m44d
+            or self.real_additive_stop_proof_completed_by_m44e
+        )
+        if self.enabled_at_validation_start and not additive_stop_proof_completed:
+            raise ValueError("M45 scale-in activation requires M44D/M44E additive-stop proof")
         if self.short_scale_in_enabled_at_validation_start:
             raise ValueError("short scale-ins remain disabled at validation start")
         return self

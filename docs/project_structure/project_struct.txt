@@ -102,12 +102,14 @@ AI_Trading_Bot/
 │   │   ├── frozen_readiness_m44b.json
 │   │   ├── frozen_readiness_m44c.json
 │   │   ├── frozen_readiness_m44d.json
+│   │   ├── frozen_readiness_m44e.json
 │   │   ├── primary_signal_data_gate_m44b.json
 │   │   ├── primary_signal_data_gate_m44c.json
 │   │   ├── protected_position_monitoring_m36.json
 │   │   ├── repeated_controlled_batch_m40.json
 │   │   ├── repeated_controlled_batch_m40_preflight.json
 │   │   ├── scale_in_policy_m43.json
+│   │   ├── scale_in_rehearsal_m44e.json
 │   │   ├── supervised_scheduled_paper_readiness_m41.json
 │   │   └── supervised_scheduled_paper_run_m42.json
 │   ├── project_analytics/
@@ -160,6 +162,7 @@ AI_Trading_Bot/
 │   ├── reporting.md
 │   ├── risk_policy.md
 │   ├── scale_in_policy_m43.md
+│   ├── scale_in_rehearsal_m44e.md
 │   ├── supervised_scheduled_paper_readiness_m41.md
 │   ├── supervised_scheduled_paper_run_m42.md
 │   ├── temporal_workflows.md
@@ -381,4 +384,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 336
+Total directories: 46, Total files: 339

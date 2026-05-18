@@ -44,6 +44,7 @@ scale_in:
   block_if_protected_quantity_below_position_quantity: true
   require_real_additive_stop_proof: true
   real_additive_stop_proof_completed_by_m44d: false
+  real_additive_stop_proof_completed_by_m44e: true
 
 validation:
   frozen_validation_enabled: false
@@ -80,11 +81,12 @@ validation:
 
   scale_in_policy:
     implementation_present: true
-    enabled_at_validation_start: false
+    enabled_at_validation_start: true
     stage_gate_required: true
-    required_clean_scheduled_runs_before_enable: 1
+    required_clean_scheduled_runs_before_enable: 0
     require_real_broker_additive_stop_proof: true
     real_additive_stop_proof_completed_by_m44d: false
+    real_additive_stop_proof_completed_by_m44e: true
     short_scale_in_enabled_at_validation_start: false
 
   ai_policy:

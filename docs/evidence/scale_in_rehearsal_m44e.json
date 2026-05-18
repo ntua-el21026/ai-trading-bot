@@ -1,0 +1,158 @@
+{
+  "additive_protective_stop_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "reason": null,
+    "required_quantity": 1.0,
+    "side": "sell",
+    "status": "new",
+    "verified": true,
+    "verified_quantity": 1.0
+  },
+  "aggregate_long_protection_check": {
+    "passed": true,
+    "position_quantity": 2.0,
+    "protected_quantity_sum": 2.0,
+    "reason_code": "aggregate_protection_ok"
+  },
+  "autonomous_live_execution_enabled": false,
+  "blockers": [],
+  "broker_writes_performed": true,
+  "cleanup_sell_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "filled_quantity": 2.0,
+    "reason": null,
+    "side": "sell",
+    "status": "filled",
+    "submitted": true
+  },
+  "cleanup_stop_cancel_result": "session_protective_stops_cancelled",
+  "emergency_reprotect_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "reason": null,
+    "required_quantity": 1.0,
+    "side": "sell",
+    "status": "pending_new",
+    "verified": true,
+    "verified_quantity": 1.0
+  },
+  "fallback_used": false,
+  "final_open_orders_count": 0,
+  "final_positions_count": 0,
+  "final_reconciliation": "flat_zero_positions_zero_open_orders",
+  "frozen_validation_started": false,
+  "initial_entry_request_summary": {
+    "client_order_id_present": true,
+    "limit_price": 175.41,
+    "order_class": null,
+    "order_type": "limit",
+    "quantity": 1.0,
+    "role": "initial_entry",
+    "side": "buy",
+    "stop_price": null,
+    "symbol": "XLK",
+    "time_in_force": "day"
+  },
+  "initial_entry_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "filled_quantity": 1.0,
+    "reason": null,
+    "side": "buy",
+    "status": "filled",
+    "submitted": true
+  },
+  "initial_fill_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "filled_quantity": 1.0,
+    "reason": null,
+    "side": "buy",
+    "status": "filled",
+    "submitted": true
+  },
+  "initial_protective_stop_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "reason": null,
+    "required_quantity": 1.0,
+    "side": "sell",
+    "status": "new",
+    "verified": true,
+    "verified_quantity": 1.0
+  },
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_trading_enabled": false,
+  "m44d_activation_rehearsal_reference": "docs/evidence/activation_rehearsal_m44d.json",
+  "m44d_scale_in_failure_summary": {
+    "additive_stop_verified": false,
+    "failure_point": "scale_in_entry_submit_failed",
+    "initial_entry_filled": true,
+    "initial_stop_verified": true,
+    "packet_present": true,
+    "sanitized_blockers": [
+      "scale_in_entry_submit_failed:invalid_order_request",
+      "scale_in_entry_not_filled"
+    ],
+    "scale_in_entry_filled": false,
+    "selected_symbol": "XLK"
+  },
+  "m44d_short_proof_accepted": true,
+  "m45_long_short_scalein_readiness": true,
+  "operator_approval_marker": "MILESTONE_44E_SCALE_IN_REPAIR_AND_REHEARSAL",
+  "packet_id": "scale-in-rehearsal-m44e-20260518T161923Z",
+  "post_rehearsal_orphan_stop_cleanup_result": "session_created_orphan_emergency_stop_cancelled_after_flat_position_verification",
+  "pre_run_broker_state": {
+    "account_reachable": true,
+    "clock_is_open": true,
+    "clock_reachable": true,
+    "open_orders_count": 0,
+    "paper_endpoint_proven": true,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "symbols_with_open_orders": [],
+    "symbols_with_positions": []
+  },
+  "real_scale_in_broker_write_performed": true,
+  "repair_summary": {
+    "broker_adapter_changed": false,
+    "files_changed_for_repair": [
+      "packages/paper/activation_rehearsal.py",
+      "scripts/run_activation_rehearsal_m44d.py",
+      "tests/unit/test_activation_rehearsal_m44d.py"
+    ],
+    "order_shape_changed": true,
+    "risk_gate_changed": false,
+    "spec_changed": true,
+    "suspected_root_cause": "alpaca_wash_trade_protection_rejected_plain_buy_limit_while_initial_sell_stop_open"
+  },
+  "scale_in_entry_request_summary": {
+    "client_order_id_present": true,
+    "limit_price": 175.41,
+    "order_class": "oto",
+    "order_type": "limit",
+    "quantity": 1.0,
+    "role": "scale_in_entry",
+    "side": "buy",
+    "stop_price": 170.15,
+    "symbol": "XLK",
+    "time_in_force": "gtc"
+  },
+  "scale_in_fill_result": {
+    "broker_order_id_present": true,
+    "client_order_id_present": true,
+    "filled_quantity": 1.0,
+    "reason": null,
+    "side": "buy",
+    "status": "filled",
+    "submitted": true
+  },
+  "schedules_activated": false,
+  "selected_symbol": "XLK",
+  "timestamp": "2026-05-18T16:19:23.225054Z"
+}

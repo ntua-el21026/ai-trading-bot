@@ -6,8 +6,9 @@
 **Primary objective:** Build a production-grade autonomous trading system that can independently generate, validate, execute, manage, reconcile, and report trades using deterministic strategy logic, bounded AI-assisted news/catalyst analysis, hard risk controls, Temporal durable workflows, broker reconciliation, and complete auditability.
 
 **v0.6 policy extension:** freeze-readiness policy for M45 long+short+scale-in frozen paper
-validation. v0.6 requires M44D to rehearse one real Alpaca paper short lifecycle and one real
-Alpaca paper long scale-in lifecycle, then restore a flat broker baseline before M45 can start.
+validation. v0.6 requires real Alpaca paper proof for one short lifecycle and one long scale-in
+lifecycle, then a flat broker baseline before M45 can start. M44D supplied the short proof; M44E is
+the dedicated repair milestone for the long scale-in additive-stop proof.
 This version does not start frozen validation, activate unattended operation, enable live trading,
 enable autonomous live execution, enable live shorting, enable leverage, claim Level 4 readiness,
 or grant AI broker authority.
@@ -44,7 +45,7 @@ Daily / swing timeframe
 Alpaca paper first
 Alpaca live only after validation
 Long and paper-only broad-ETF shorts if M44D proof passes
-Long scale-ins enabled at validation start if M44D additive-stop proof passes
+Long scale-ins enabled at validation start if M44D or M44E additive-stop proof passes
 No leverage
 No options
 No live shorting
@@ -72,10 +73,10 @@ No low-latency scalping
 14. Expanded Level 4 and Level 5 require evidence from stable paper and micro-live runs.
 15. Live shorts, leverage, options, futures, crypto, and prediction markets are excluded from v0.1.
 16. v0.6 enables paper-only short validation at M45 start only after M44D proof.
-17. M45 may start the 8-week frozen paper validation only after M44D readiness passes.
+17. M45 may start the 8-week frozen paper validation only after M44D/M44E readiness passes.
 18. Frozen validation starts flat, with zero broker positions and zero open orders.
 19. Frozen validation can include broad-ETF paper shorts; live shorting remains forbidden.
-20. Long scale-ins can be enabled at validation T0 only after M44D additive-stop proof.
+20. Long scale-ins can be enabled at validation T0 only after M44D or M44E additive-stop proof.
 21. AI/news is negative-only during the first frozen validation window.
 ```
 
@@ -83,9 +84,9 @@ No low-latency scalping
 
 ## 2.1 v0.6 Frozen Validation Policy
 
-M45 is the only milestone allowed to start the 8-week frozen paper validation clock. M44D prepares
-the repository, configuration, evidence, short lifecycle proof, scale-in lifecycle proof, and flat
-broker baseline only.
+M45 is the only milestone allowed to start the 8-week frozen paper validation clock. M44D/M44E
+prepare the repository, configuration, evidence, short lifecycle proof, scale-in lifecycle proof,
+and flat broker baseline only.
 
 v0.6 keeps the following non-negotiables unchanged:
 
@@ -100,7 +101,7 @@ v0.6 keeps the following non-negotiables unchanged:
   inverse ETFs are introduced;
 - Level 4 readiness is not claimed.
 
-The frozen validation start mode after M44D GO is:
+The frozen validation start mode after M44D/M44E GO is:
 
 ```text
 mode: paper
@@ -212,7 +213,7 @@ Frozen validation uses a paper-only validation risk envelope:
 | max tech-complex exposure | 10% |
 | max broad-beta overlap | 8% |
 | max new entries per day | 2 |
-| max scale-ins per day at start | 0 |
+| max scale-ins per day at start | 1 |
 | max broker writes per day | 10 |
 | max unresolved critical incidents | 0 |
 | max daily loss | 1.0% |
@@ -221,7 +222,8 @@ Frozen validation uses a paper-only validation risk envelope:
 | soft drawdown review | 4.0% |
 | hard drawdown fail/restart | 6.0% |
 
-Long scale-ins are enabled at validation start only after M44D real paper additive-stop proof.
+Long scale-ins are enabled at validation start only after M44D or M44E real paper additive-stop
+proof.
 Scale-in policy:
 
 - one initial long entry plus one add-on entry per symbol;
@@ -234,12 +236,15 @@ Scale-in policy:
 - no short scale-ins at validation start;
 - no AI authorization for scale-ins.
 
-M44D proof requirements:
+M44D/M44E proof requirements:
 
 - one paper long initial entry in `XLK` or fallback `XLF`;
 - initial protective sell-stop submitted and verified;
 - one add-on long entry filled without cancelling/replacing existing stop;
-- additive protective sell-stop submitted for added quantity only;
+- additive protective sell-stop submitted for added quantity only. If Alpaca wash-trade
+  protection rejects a plain add-on buy while the initial sell stop is open, the add-on may use a
+  broker-native OTO order with an attached stop-loss child; the existing initial stop must remain
+  open during add-on submission;
 - aggregate protection verified for total position quantity;
 - cleanup cancels only session-created stops, sells current long quantity only, and verifies flat
   state;
@@ -347,7 +352,8 @@ M45 may start only if all are true:
 8. Short architecture is present and paper-only shorts are enabled at validation start.
 9. M44D short lifecycle rehearsal succeeded and final short-rehearsal state was flat.
 10. Scale-in implementation is present and long scale-ins are enabled at validation start.
-11. M44D scale-in lifecycle rehearsal succeeded and final scale-in-rehearsal state was flat.
+11. M44D or M44E scale-in lifecycle rehearsal succeeded and final scale-in-rehearsal state was
+    flat.
 12. AI/news negative-only policy is frozen.
 13. Tiingo EOD/non-IEX primary signal data gate passed or is explicitly waived by governance.
 14. Required tests and checks pass.
@@ -1869,7 +1875,7 @@ Temporal `OrderLifecycleWorkflow`:
 ### 15.8 Deterministic Paper Scale-In Policy
 
 v0.6 keeps the conservative paper-mode scale-in implementation and permits long scale-ins at
-validation T0 only after M44D proves the real additive-stop lifecycle. This policy does not start
+validation T0 only after M44D or M44E proves the real additive-stop lifecycle. This policy does not start
 frozen validation, activate schedules, enable live trading, enable autonomous live execution,
 permit leverage, enable live shorts, or grant AI broker authority.
 
@@ -1900,6 +1906,9 @@ scale_in:
   allow_stop_replacement: false
   allow_stop_cancel_before_scale_in: false
   block_if_protected_quantity_below_position_quantity: true
+  require_real_additive_stop_proof: true
+  real_additive_stop_proof_completed_by_m44d: false
+  real_additive_stop_proof_completed_by_m44e: true
 ```
 
 Existing position rule:
@@ -1944,6 +1953,9 @@ Do not cancel or replace existing protective stops in the scale-in path.
 Keep the existing protective stop intact.
 After an add-on entry fill, submit a separate protective stop only for the newly filled quantity.
 Verify the add-on stop through broker read-back.
+If broker user-protection rules reject a plain add-on buy while a same-symbol sell stop is open,
+use a broker-native OTO add-on order with an attached stop-loss child. The grouped child stop is the
+additive stop proof and does not permit cancelling the existing initial stop before the add-on.
 If add-on stop verification fails, classify a SAFE INCIDENT, block further new risk, and use only
 the already approved emergency cleanup path when that path explicitly permits it.
 ```

@@ -194,16 +194,19 @@ succeeds. Short risk remains paper-only:
 - every filled short quantity requires a verified protective buy stop;
 - short scale-ins remain disabled at validation start.
 
-v0.6 also makes long scale-ins eligible for M45 paper validation only after the M44D additive-stop
-rehearsal succeeds:
+v0.6 also makes long scale-ins eligible for M45 paper validation only after the M44D or M44E
+additive-stop rehearsal succeeds:
 
 - one initial entry plus one add-on entry per symbol;
 - maximum total symbol quantity is two shares;
 - an existing verified stop is required before add-on entry;
 - the add-on fill requires an additive sell stop for the added quantity;
+- if a plain add-on buy is rejected by Alpaca wash-trade protection while the initial sell stop is
+  open, a broker-native OTO add-on with an attached stop-loss child may satisfy the additive-stop
+  proof;
 - aggregate verified stop quantity must cover total open long quantity;
 - no stop cancel/replace is allowed during the scale-in entry path.
 
-The final M44D and M45 start baseline must be flat with zero open orders, zero positions, and clean
+The final M44E and M45 start baseline must be flat with zero open orders, zero positions, and clean
 reconciliation. Live trading, autonomous live execution, leverage, and Level 4 readiness remain out
 of scope.

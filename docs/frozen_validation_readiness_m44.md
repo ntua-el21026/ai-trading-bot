@@ -233,3 +233,36 @@ M44D real-paper result:
 - cleanup restored final flat broker baseline with zero open orders and zero positions;
 - M45 long+short+scale-in readiness is `NO-GO` until the scale-in additive-stop lifecycle is proven
   in a separately approved repair milestone.
+
+## Milestone 44E Scale-In Repair
+
+M44E keeps v0.6 as the latest source of truth and does not create v0.7. It accepts the M44D short
+proof, repairs only the long scale-in add-on order shape, and reruns exactly one bounded real paper
+long scale-in rehearsal.
+
+Repair policy:
+
+- no real short rehearsal rerun;
+- `XLK` primary, `XLF` fallback;
+- initial long entry remains one share maximum;
+- add-on long entry remains one share maximum;
+- the existing initial protective sell stop remains open during add-on submission;
+- the add-on may use Alpaca OTO with an attached stop-loss child to satisfy additive-stop proof
+  without triggering wash-trade protection;
+- cleanup must restore zero open orders, zero positions, and clean flat reconciliation.
+
+M44E evidence paths:
+
+- scale-in repair evidence: `docs/evidence/scale_in_rehearsal_m44e.json`;
+- refreshed readiness: `docs/evidence/frozen_readiness_m44e.json`;
+- runbook: `docs/scale_in_rehearsal_m44e.md`.
+
+M45 long+short+scale-in readiness is `GO` only after M44D short proof is accepted, M44E scale-in
+proof succeeds, the final broker baseline is flat, Tiingo EOD remains verified, and no schedules or
+frozen validation clock have been started.
+
+M44E result: the real repair rehearsal selected `XLK`, filled the initial entry, verified the
+initial sell stop, filled the OTO add-on, verified the additive child sell stop, verified aggregate
+two-share protection, sold two shares in cleanup, canceled a transient session-created orphan
+emergency stop after flat-position verification, and refreshed M45 long+short+scale-in readiness to
+`GO`. M45 still requires explicit operator approval and has not started.

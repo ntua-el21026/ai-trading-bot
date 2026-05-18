@@ -11,13 +11,19 @@ from packages.paper.activation_rehearsal import (
     cli_request_from_args,
     load_runtime_request_environment,
     run_activation_rehearsal_m44d,
+    run_scale_in_repair_m44e,
     write_activation_rehearsal_m44d_artifacts,
+    write_scale_in_rehearsal_m44e_artifacts,
 )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("short", "scale-in", "full"), default="full")
+    parser.add_argument(
+        "--mode",
+        choices=("short", "scale-in", "scale-in-repair", "full"),
+        default="full",
+    )
     parser.add_argument("--broker-mode", choices=("fake", "real-paper"), default="real-paper")
     parser.add_argument("--operator-approval")
     parser.add_argument("--short-primary-symbol", default="IWM")
@@ -45,11 +51,18 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     request = cli_request_from_args(args)
-    result = run_activation_rehearsal_m44d(
-        request,
-        environ=load_runtime_request_environment(),
-    )
-    activation_path, readiness_path = write_activation_rehearsal_m44d_artifacts(result)
+    if request.rehearsal_mode == "scale-in-repair":
+        result = run_scale_in_repair_m44e(
+            request,
+            environ=load_runtime_request_environment(),
+        )
+        activation_path, readiness_path = write_scale_in_rehearsal_m44e_artifacts(result)
+    else:
+        result = run_activation_rehearsal_m44d(
+            request,
+            environ=load_runtime_request_environment(),
+        )
+        activation_path, readiness_path = write_activation_rehearsal_m44d_artifacts(result)
     print(
         json.dumps(
             {
