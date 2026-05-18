@@ -168,3 +168,24 @@ pause-new-risk, force-reconciliation, force-report, acknowledge-incident, and re
 paths. Current dashboard/control-plane implementation has local ledger read models, contract tests,
 a dev runtime smoke harness, and a dashboard-only static preview harness. The preview is not
 production dashboard evidence and does not satisfy Level 4 readiness by itself.
+
+## Milestone 44D Dashboard Read-Model Expectations
+
+For v0.6 frozen paper readiness, dashboard/read-model surfaces should be able to distinguish long,
+short, and scale-in evidence without exposing secrets or order-entry controls. The dashboard remains
+read-only for broker state and must not allow AI, natural language, or frontend controls to create,
+cancel, replace, or modify orders.
+
+Expected M44D/M45 readiness fields include:
+
+- latest spec version `v0.6`;
+- Tiingo EOD primary signal-data gate status;
+- short rehearsal status and final flat result;
+- long scale-in rehearsal status and aggregate protection result;
+- final open orders and positions counts;
+- schedules active status;
+- frozen validation clock status;
+- Level 4 readiness status.
+
+No dashboard action may activate schedules, start M45, enable live trading, enable autonomous
+execution, enable leverage, or expose broker/data-provider credentials.

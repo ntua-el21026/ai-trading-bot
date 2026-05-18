@@ -58,22 +58,30 @@ def test_load_app_config_uses_safe_defaults() -> None:
     assert config.scale_in.allow_stop_replacement is False
     assert config.scale_in.allow_stop_cancel_before_scale_in is False
     assert config.scale_in.block_if_protected_quantity_below_position_quantity is True
-    assert config.validation.active_spec_version == "v0.5"
+    assert config.validation.active_spec_version == "v0.6"
     assert config.validation.frozen_validation_enabled is False
     assert config.validation.frozen_validation_start_allowed is False
     assert config.validation.flat_start_required is True
     assert config.validation.carry_in_positions_allowed is False
     assert config.validation.validation_clock_started is False
-    assert config.validation.short_policy.enabled_at_validation_start is False
+    assert config.validation.short_policy.enabled_at_validation_start is True
+    assert config.validation.short_policy.real_short_lifecycle_proof_completed_by_m44d is True
+    assert config.validation.short_policy.paper_only is True
+    assert config.validation.short_policy.live_shorting_enabled is False
     assert config.validation.scale_in_policy.enabled_at_validation_start is False
-    assert config.validation.scale_in_policy.required_clean_scheduled_runs_before_enable == 10
+    assert config.validation.scale_in_policy.required_clean_scheduled_runs_before_enable == 1
     assert config.validation.scale_in_policy.require_real_broker_additive_stop_proof is True
+    assert config.validation.scale_in_policy.real_additive_stop_proof_completed_by_m44d is False
+    assert config.validation.scale_in_policy.short_scale_in_enabled_at_validation_start is False
     assert config.validation.exits.app_level_trailing_stop is False
     assert config.validation_risk.max_scale_ins_per_day_at_start == 0
     assert config.validation_risk.max_open_positions == 4
-    assert config.shorts.enabled is False
+    assert config.shorts.enabled is True
+    assert config.shorts.enabled_at_validation_start is True
+    assert config.shorts.real_short_lifecycle_proof_completed_by_m44d is True
     assert config.shorts.paper_only_short_exposure is True
     assert config.shorts.allow_live_shorting is False
+    assert config.shorts.short_scale_in_enabled_at_validation_start is False
     assert config.shorts.eligible_symbols == ("SPY", "QQQ", "DIA", "IWM")
     assert config.universe_buckets.short_eligible_broad_etfs == ("SPY", "QQQ", "DIA", "IWM")
     assert config.risk_level_4_micro_live.allow_margin is False

@@ -75,23 +75,23 @@ def _short_input(**updates: object) -> ShortEntryRiskInput:
     return ShortEntryRiskInput.model_validate(data)
 
 
-def test_v0_5_is_latest_detected_spec() -> None:
+def test_v0_6_is_latest_detected_spec() -> None:
     assert Path(LATEST_V05_SPEC_PATH).is_file()
-    assert "SPEC_v0.5.md" in Path("AGENTS.md").read_text(encoding="utf-8")
-    assert "SPEC_v0.5.md" in Path("README.md").read_text(encoding="utf-8")
+    assert "SPEC_v0.6.md" in Path("AGENTS.md").read_text(encoding="utf-8")
+    assert "SPEC_v0.6.md" in Path("README.md").read_text(encoding="utf-8")
 
 
-def test_v0_5_config_loads_with_frozen_start_defaults() -> None:
+def test_v0_6_config_loads_with_long_short_scale_in_defaults() -> None:
     config = load_app_config()
 
-    assert config.validation.active_spec_version == "v0.5"
+    assert config.validation.active_spec_version == "v0.6"
     assert config.validation.frozen_validation_enabled is False
     assert config.validation.validation_clock_started is False
     assert config.validation.flat_start_required is True
     assert config.validation.carry_in_positions_allowed is False
-    assert config.validation.short_policy.enabled_at_validation_start is False
+    assert config.validation.short_policy.enabled_at_validation_start is True
     assert config.validation.scale_in_policy.enabled_at_validation_start is False
-    assert config.shorts.enabled is False
+    assert config.shorts.enabled is True
     assert config.shorts.eligible_symbols == ("SPY", "QQQ", "DIA", "IWM")
     assert config.validation_ai.negative_only is True
     assert config.live_universe.symbols == (
@@ -128,14 +128,23 @@ def test_short_side_semantics_are_signed_and_side_aware() -> None:
     assert can_open_position_side(current_side="short", requested_side="long") is False
 
 
-def test_shorts_disabled_blocks_all_short_entries() -> None:
+def test_default_short_policy_can_pass_rehearsed_broad_etf_gates() -> None:
     result = evaluate_short_entry_risk(policy=load_app_config().shorts, short_input=_short_input())
 
-    assert result.allowed is False
-    assert "shorts_disabled" in result.reason_codes
+    assert result.allowed is True
     assert result.broker_side == "sell"
     assert result.protective_side == "buy"
     assert result.signed_quantity == -1
+
+
+def test_shorts_disabled_blocks_all_short_entries() -> None:
+    result = evaluate_short_entry_risk(
+        policy=_short_policy(enabled=False, enabled_at_validation_start=False),
+        short_input=_short_input(),
+    )
+
+    assert result.allowed is False
+    assert "shorts_disabled" in result.reason_codes
 
 
 def test_enabled_shorts_still_require_paper_mode() -> None:
@@ -419,7 +428,7 @@ def test_frozen_readiness_packet_requires_flat_baseline_and_non_iex_gate(tmp_pat
     assert packet.flat_start_achieved is True
     assert packet.m45_readiness is False
     assert "non_iex_primary_signal_data_not_verified" in packet.blockers
-    assert payload["frozen_readiness"]["shorts_enabled"] is False
+    assert payload["frozen_readiness"]["shorts_enabled"] is True
     assert payload["frozen_readiness"]["frozen_validation_started"] is False
     assert not _contains_sensitive_token(payload)
 

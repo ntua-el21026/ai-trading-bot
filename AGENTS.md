@@ -4,7 +4,9 @@
 
 This repository contains an autonomous AI-assisted trading-bot system.
 
-The current intended product is a **Temporal-orchestrated, broker-reconciled, long-only US equities/ETF swing-trading bot** with:
+The current intended product is a **Temporal-orchestrated, broker-reconciled US equities/ETF
+swing-trading bot** with long entries, paper-only broad-ETF shorts, and bounded long scale-ins
+for frozen paper validation:
 
 - deterministic strategy, risk, execution, and reconciliation logic;
 - AI used only as a bounded news/catalyst/risk-intelligence layer;
@@ -18,7 +20,7 @@ The latest specification file is the source of truth for product behavior, syste
 At the time of writing, the latest expected spec is:
 
 ```text
-Autonomous_AI_Trading_Bot_SPEC_v0.5.md
+Autonomous_AI_Trading_Bot_SPEC_v0.6.md
 ```
 
 If a newer spec exists, use the newest versioned spec file instead.

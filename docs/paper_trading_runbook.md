@@ -950,6 +950,36 @@ operator supplies explicit M45 approval.
 M44C result: the real read-only Tiingo EOD check verified the configured sample symbols and the
 refreshed readiness packet reports M45 readiness `GO`. Frozen validation has not started.
 
+## Milestone 44D Activation Rehearsal
+
+M44D changes the next freeze target to v0.6 long+short+scale-in paper validation. The rehearsal
+script is:
+
+```bash
+uv run python scripts/run_activation_rehearsal_m44d.py --mode full
+```
+
+The real command requires the explicit
+`MILESTONE_44D_SHORT_AND_SCALE_IN_REHEARSAL_AND_LONG_SHORT_SCALEIN_READINESS` approval marker and
+all paper-only safety confirmations. It must not run unless the broker baseline is flat, Tiingo EOD
+evidence remains GO, the paper session is acceptable, and the approved symbols are unchanged:
+
+- short rehearsal: `IWM`, fallback `SPY`, one share maximum;
+- long scale-in rehearsal: `XLK`, fallback `XLF`, one initial share plus one add-on share maximum.
+
+The command must restore a flat final broker baseline before M45 readiness can be GO. It writes:
+
+- `docs/evidence/activation_rehearsal_m44d.json`;
+- `docs/evidence/frozen_readiness_m44d.json`.
+
+M44D does not start M45, activate schedules, enable live trading, enable autonomous execution,
+enable leverage, or claim Level 4 readiness.
+
+M44D real-paper result: the short rehearsal succeeded and cleaned flat, but the long scale-in
+rehearsal did not prove the add-on/additive-stop lifecycle because the add-on entry was rejected
+with sanitized `invalid_order_request`. Cleanup restored zero open orders and zero positions.
+M45 long+short+scale-in readiness remains `NO-GO`.
+
 ## Frozen Paper Acceptance Criteria
 
 These are gates before Level 4 micro-live consideration, not current achievements:

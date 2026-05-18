@@ -480,9 +480,12 @@ def build_frozen_readiness_m44_packet(
         blockers.append("spec_v0_5_missing")
     if active_config.validation.validation_clock_started:
         blockers.append("validation_clock_already_started")
-    if active_config.shorts.enabled:
+    if active_config.validation.active_spec_version == "v0.5" and active_config.shorts.enabled:
         blockers.append("shorts_enabled_in_default_config")
-    if active_config.validation.scale_in_policy.enabled_at_validation_start:
+    if (
+        active_config.validation.active_spec_version == "v0.5"
+        and active_config.validation.scale_in_policy.enabled_at_validation_start
+    ):
         blockers.append("scale_in_enabled_at_validation_start")
 
     packet = M44ReadinessPacket(
@@ -804,7 +807,7 @@ def _cleanup_gate_blockers(
         blockers.append("autonomous_live_execution_enabled")
     if app_config.risk_level_4_micro_live.allow_margin:
         blockers.append("leverage_enabled")
-    if app_config.shorts.enabled:
+    if app_config.validation.active_spec_version == "v0.5" and app_config.shorts.enabled:
         blockers.append("shorts_enabled_in_default_config")
     if app_config.validation.validation_clock_started:
         blockers.append("validation_clock_already_started")

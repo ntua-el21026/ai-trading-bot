@@ -195,3 +195,41 @@ M44C result: the real read-only Tiingo EOD check verified `SPY`, `QQQ`, `AAPL`, 
 `XLK` with sufficient completed daily history and no missing core fields. The refreshed readiness
 packet records M45 readiness `GO`, with frozen validation still not started and explicit M45
 operator approval still required.
+
+## Milestone 44D v0.6 Activation Rehearsal
+
+M44D supersedes the M44C long-only start target with v0.6. The new M45 target is frozen paper
+validation with deterministic long entries, paper-only broad-ETF shorts, and deterministic long
+scale-ins, only if M44D proves both real paper lifecycle paths and restores a flat broker baseline.
+
+v0.6 policy changes:
+
+- shorts are paper-only and may be enabled at M45 start after M44D proof;
+- live shorting remains forbidden;
+- the short universe is restricted to `SPY`, `QQQ`, `DIA`, and `IWM`;
+- no individual-stock shorts, sector-ETF shorts, leveraged ETFs, inverse ETFs, or short scale-ins
+  are allowed at T0;
+- long scale-ins may be enabled at M45 start after M44D additive-stop proof;
+- long scale-ins allow one initial entry plus one add-on entry per symbol;
+- additive stops are required for the add-on quantity and aggregate protected quantity must cover
+  the total open long quantity;
+- Tiingo EOD remains the primary signal data provider;
+- M45 still requires a final flat baseline and separate operator approval.
+
+M44D evidence paths:
+
+- activation rehearsal: `docs/evidence/activation_rehearsal_m44d.json`;
+- refreshed readiness: `docs/evidence/frozen_readiness_m44d.json`;
+- runbook: `docs/activation_rehearsal_m44d.md`.
+
+M44D does not start M45, activate schedules, enable live trading, enable autonomous live execution,
+enable leverage, or claim Level 4 readiness.
+
+M44D real-paper result:
+
+- short lifecycle: `IWM` succeeded and cleaned to flat;
+- long scale-in lifecycle: `XLK` initial entry and initial stop succeeded, but the add-on entry was
+  rejected with sanitized `invalid_order_request`;
+- cleanup restored final flat broker baseline with zero open orders and zero positions;
+- M45 long+short+scale-in readiness is `NO-GO` until the scale-in additive-stop lifecycle is proven
+  in a separately approved repair milestone.

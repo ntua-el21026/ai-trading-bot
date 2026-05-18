@@ -341,6 +341,13 @@ remains NO-GO unless the Tiingo EOD gate verifies or an explicit governance waiv
 The M44C real read-only check verified Tiingo EOD access and refreshed readiness to M45 `GO`;
 starting the frozen window still requires the separate M45 operator approval milestone.
 
+M44D changes the M45 target to v0.6 long+short+scale-in frozen paper validation. Shorts are
+paper-only, broad-ETF-only, and restricted to `SPY`, `QQQ`, `DIA`, and `IWM`; live shorting and
+short scale-ins remain forbidden. Long scale-ins are eligible at validation start only after the
+M44D real paper additive-stop rehearsal succeeds. The validation start remains flat: M44D must end
+with zero open orders, zero positions, clean reconciliation, no schedules active, and no frozen
+clock started. M45 remains a separate operator-approved freeze/start milestone.
+
 ## Current Assumptions
 
 Earnings blackout logic requires a caller-supplied trading calendar and earnings date. If earnings

@@ -42,6 +42,8 @@ scale_in:
   allow_stop_replacement: false
   allow_stop_cancel_before_scale_in: false
   block_if_protected_quantity_below_position_quantity: true
+  require_real_additive_stop_proof: true
+  real_additive_stop_proof_completed_by_m44d: false
 
 validation:
   frozen_validation_enabled: false
@@ -50,7 +52,7 @@ validation:
   carry_in_positions_allowed: false
   validation_clock_started: false
   validation_window_weeks: 8
-  active_spec_version: "v0.5"
+  active_spec_version: "v0.6"
   active_mode: "paper"
   live_trading_enabled: false
   autonomous_live_execution_enabled: false
@@ -69,16 +71,21 @@ validation:
     early_close_new_entries_allowed: false
 
   short_policy:
-    enabled_at_validation_start: false
+    enabled_at_validation_start: true
     implementation_present: true
-    activation_requires_future_rehearsal: true
+    activation_requires_future_rehearsal: false
+    real_short_lifecycle_proof_completed_by_m44d: true
+    paper_only: true
+    live_shorting_enabled: false
 
   scale_in_policy:
     implementation_present: true
     enabled_at_validation_start: false
     stage_gate_required: true
-    required_clean_scheduled_runs_before_enable: 10
+    required_clean_scheduled_runs_before_enable: 1
     require_real_broker_additive_stop_proof: true
+    real_additive_stop_proof_completed_by_m44d: false
+    short_scale_in_enabled_at_validation_start: false
 
   ai_policy:
     enabled: true

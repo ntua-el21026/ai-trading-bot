@@ -1,0 +1,48 @@
+{
+  "activation_rehearsal_m44d_packet_reference": "docs/evidence/activation_rehearsal_m44d.json",
+  "autonomous_live_execution_enabled": false,
+  "blockers": [
+    "scale_in_entry_submit_failed:invalid_order_request",
+    "scale_in_entry_not_filled",
+    "scale_in_rehearsal_not_successful",
+    "scale_ins_not_enabled_at_validation_start"
+  ],
+  "final_broker_baseline": {
+    "account_reachable": true,
+    "clock_is_open": true,
+    "clock_reachable": true,
+    "open_orders_count": 0,
+    "paper_endpoint_proven": true,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "symbols_with_open_orders": [],
+    "symbols_with_positions": []
+  },
+  "flat_start_cleanup_m44_packet_reference": "docs/evidence/flat_start_cleanup_m44.json",
+  "frozen_readiness_m44c_packet_reference": "docs/evidence/frozen_readiness_m44c.json",
+  "frozen_validation_started": false,
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_shorting_enabled": false,
+  "live_trading_enabled": false,
+  "m45_readiness": false,
+  "operator_approval_required_for_m45": true,
+  "packet_id": "frozen-readiness-m44d-20260518T141543Z",
+  "primary_signal_data_gate_m44c_packet_reference": "docs/evidence/primary_signal_data_gate_m44c.json",
+  "scale_in_enabled_at_validation_start": false,
+  "scale_in_rehearsal_succeeded": false,
+  "schedules_activated": false,
+  "short_rehearsal_succeeded": true,
+  "short_scale_in_enabled_at_validation_start": false,
+  "short_universe": [
+    "SPY",
+    "QQQ",
+    "DIA",
+    "IWM"
+  ],
+  "shorts_enabled_at_validation_start": true,
+  "tiingo_gate_status": "go",
+  "timestamp": "2026-05-18T14:15:43.905996Z"
+}

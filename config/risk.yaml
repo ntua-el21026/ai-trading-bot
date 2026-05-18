@@ -39,10 +39,13 @@ risk_level_4_expanded:
   require_protective_stop: true
 
 shorts:
-  enabled: false
+  enabled: true
   paper_only_short_exposure: true
   allow_live_shorting: false
-  require_explicit_short_activation: true
+  require_explicit_short_activation: false
+  enabled_at_validation_start: true
+  real_short_lifecycle_proof_completed_by_m44d: true
+  short_scale_in_enabled_at_validation_start: false
   eligible_symbols:
     - SPY
     - QQQ

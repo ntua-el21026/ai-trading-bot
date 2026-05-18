@@ -5,19 +5,18 @@ Spec-governed autonomous AI-assisted trading bot repository.
 The latest identified source-of-truth spec is:
 
 ```text
-docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.5.md
+docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md
 ```
 
 ## Current Status
 
-This repository is at Milestone 44 v0.5 frozen-readiness preparation. Milestones 39-43 proved
-controlled paper entry/stop paths, supervised scheduled one-shot behavior, and scale-in policy
-helpers. Milestone 44 creates the v0.5 frozen-validation spec, adds default-disabled paper-only
-short-side architecture, freezes validation-start policy as long-only/flat-start, and supports
-operator-approved risk-reducing cleanup of the existing AAPL/MSFT/XLK paper holds. It does not
-start frozen validation, activate unattended schedules, enable live trading, enable autonomous
-live execution, enable leverage, enable shorts, perform real short orders, or claim Level 4
-readiness.
+This repository is at Milestone 44D v0.6 readiness preparation. Milestones 39-44C proved controlled
+paper entry/stop paths, supervised scheduled one-shot behavior, flat broker cleanup, and Tiingo EOD
+primary signal-data verification. Milestone 44D creates the v0.6 frozen-validation spec and prepares
+M45 for long+paper-short+long-scale-in validation only if the real paper short and scale-in
+rehearsals succeed and the broker baseline is restored flat. It does not start frozen validation,
+activate unattended schedules, enable live trading, enable autonomous live execution, enable live
+shorting, enable leverage, or claim Level 4 readiness.
 
 Implemented pieces:
 
@@ -38,7 +37,8 @@ Implemented pieces:
 - workflow skeletons and safe Temporal activity contracts under `apps/workers/`
 - signal, query, and retry-policy contracts
 - deterministic `RISK_ON` / `CAUTION` / `RISK_OFF` regime classification
-- long-only deterministic candidate evaluation for configured trend, breakout, volume, RS63, ATR, universe, price, ADV, earnings, held-symbol, and duplicate-intent gates
+- deterministic candidate evaluation for configured long signals and gated paper-only broad-ETF
+  shorts, with no AI broker authority
 - stop-level and exit-trigger calculation helpers that do not submit orders
 - deterministic risk checks for new-risk eligibility
 - deterministic scale-in policy helpers for one initial entry plus at most one add-on entry per

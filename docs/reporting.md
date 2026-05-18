@@ -95,3 +95,18 @@ uv run --group dev pytest tests/unit/test_paper_dry_run_orchestration.py
 ```
 
 These tests are fixture/local tests only. They are not paper trading evidence.
+
+## Milestone 44D Reporting Expectations
+
+v0.6 frozen paper reports must show whether long, short, and scale-in paths are active for the
+validation window. Daily and weekly evidence should distinguish:
+
+- long entries and protective sell stops;
+- paper-only short entries, signed negative quantities, and protective buy stops;
+- long scale-in add-on entries and additive protective sell stops;
+- aggregate protected quantity versus open position quantity;
+- final flat baseline evidence before M45 start;
+- any emergency re-protection or cleanup incident.
+
+Reports must continue to state that live trading, autonomous live execution, leverage, schedules,
+frozen validation start, and Level 4 readiness are disabled until explicitly approved.

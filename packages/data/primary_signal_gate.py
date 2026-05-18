@@ -1022,8 +1022,11 @@ def _app_safety_blockers(app_config: AppConfig) -> tuple[str, ...]:
         blockers.append("autonomous_live_execution_enabled")
     if app_config.risk_level_4_micro_live.allow_margin:
         blockers.append("leverage_enabled")
-    if app_config.shorts.enabled:
-        blockers.append("shorts_enabled")
+    if (
+        app_config.shorts.allow_live_shorting
+        or app_config.validation.short_policy.live_shorting_enabled
+    ):
+        blockers.append("live_shorting_enabled")
     if (
         app_config.validation.validation_clock_started
         or app_config.validation.frozen_validation_enabled

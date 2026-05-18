@@ -196,3 +196,21 @@ protective-stop verification, partial-fill handling, duplicate-order prevention,
 manual-control evidence. Current implementation has paper-only broker boundaries, but no end-to-end
 paper operations, frozen paper evidence, or live trading approval. The fake/local dry-run path and
 the Milestone 21A default-refusing smoke harness are validation tooling only.
+
+## Milestone 44D v0.6 Execution Policy
+
+M44D adds a dedicated activation rehearsal runner at
+`scripts/run_activation_rehearsal_m44d.py`. The runner is not a scheduler and does not start frozen
+validation. It is allowed to perform exactly two bounded real Alpaca paper rehearsal flows when all
+gates pass:
+
+- one broad-ETF paper short lifecycle with broker `sell` entry, signed negative position
+  reconciliation, protective `buy` stop, buy-to-cover cleanup, and final flat verification;
+- one long scale-in lifecycle with initial `buy`, initial protective `sell` stop, add-on `buy`,
+  additive protective `sell` stop, aggregate protection verification, cleanup sell, and final flat
+  verification.
+
+Order roles used by v0.6 include `short_entry`, `short_protective_stop`, `short_cover`,
+`initial_entry`, `initial_protective_stop`, `scale_in_entry`, `add_on_protective_stop`, `cleanup`,
+and `incident_repair`. If cleanup fails after stop cancellation, emergency re-protection is required
+and M45 readiness is blocked.

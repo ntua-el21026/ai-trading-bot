@@ -79,7 +79,8 @@ AI_Trading_Bot/
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.2.md
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.3.md
 │   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.4.md
-│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.5.md
+│   │   ├── Autonomous_AI_Trading_Bot_SPEC_v0.5.md
+│   │   └── Autonomous_AI_Trading_Bot_SPEC_v0.6.md
 │   ├── checklists/
 │   │   ├── credential_separation_checklist.md
 │   │   ├── kill_switch_rearm_checklist.md
@@ -87,6 +88,7 @@ AI_Trading_Bot/
 │   │   ├── paper_daily_checklist.md
 │   │   └── paper_weekly_review.md
 │   ├── evidence/
+│   │   ├── activation_rehearsal_m44d.json
 │   │   ├── clean_controlled_session_m39.json
 │   │   ├── corrected_cleanup_m37.json
 │   │   ├── corrected_cleanup_m38.json
@@ -99,6 +101,7 @@ AI_Trading_Bot/
 │   │   ├── frozen_readiness_m44.json
 │   │   ├── frozen_readiness_m44b.json
 │   │   ├── frozen_readiness_m44c.json
+│   │   ├── frozen_readiness_m44d.json
 │   │   ├── primary_signal_data_gate_m44b.json
 │   │   ├── primary_signal_data_gate_m44c.json
 │   │   ├── protected_position_monitoring_m36.json
@@ -132,6 +135,7 @@ AI_Trading_Bot/
 │   │   ├── level4_micro_live_go_no_go_template.md
 │   │   ├── paper_daily_report_template.md
 │   │   └── paper_incident_report_template.md
+│   ├── activation_rehearsal_m44d.md
 │   ├── ai_intelligence.md
 │   ├── alerting.md
 │   ├── architecture.md
@@ -226,6 +230,7 @@ AI_Trading_Bot/
 │   │   └── schema.py
 │   ├── paper/
 │   │   ├── __init__.py
+│   │   ├── activation_rehearsal.py
 │   │   ├── dry_run.py
 │   │   ├── execution.py
 │   │   ├── first_session.py
@@ -281,6 +286,7 @@ AI_Trading_Bot/
 │   ├── check_telegram_alert_delivery.py
 │   ├── check_temporal_cloud_runtime.py
 │   ├── check_vercel_dashboard_preview.py
+│   ├── run_activation_rehearsal_m44d.py
 │   ├── run_first_controlled_paper_session.py
 │   ├── run_flat_start_cleanup_m44.py
 │   ├── run_paper_dry_run.py
@@ -299,6 +305,7 @@ AI_Trading_Bot/
 │   │   ├── test_temporal_sdk_environment.py
 │   │   └── test_workflow_contracts.py
 │   └── unit/
+│       ├── test_activation_rehearsal_m44d.py
 │       ├── test_ai_feedback_calibration.py
 │       ├── test_ai_news.py
 │       ├── test_ai_parser.py
@@ -374,4 +381,4 @@ AI_Trading_Bot/
 ├── uv.lock
 └── vercel.json
 
-Total directories: 46, Total files: 329
+Total directories: 46, Total files: 336

@@ -1,7 +1,7 @@
-"""Dormant paper-only short-side risk policy helpers for v0.5.
+"""Paper-only short-side risk policy helpers for v0.6.
 
 These helpers are pure validation logic. They do not submit broker orders and are intentionally
-default-disabled by configuration for the first frozen validation window.
+limited to paper-only broad-ETF validation policy.
 """
 
 from __future__ import annotations

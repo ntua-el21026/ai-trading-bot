@@ -164,7 +164,7 @@ class MarketDataConfig(StrictModel):
     @model_validator(mode="after")
     def validate_market_data_policy(self) -> Self:
         if not self.require_non_iex_primary_signal_data:
-            raise ValueError("v0.5 requires non-IEX primary signal data before M45")
+            raise ValueError("v0.6 requires non-IEX primary signal data before M45")
         if not self.fail_if_primary_signal_feed_is_iex:
             raise ValueError("IEX-only primary signal data must fail the M45 gate")
         if self.primary_signal_provider == "tiingo":
@@ -263,6 +263,8 @@ class ScaleInConfig(StrictModel):
     allow_stop_replacement: bool
     allow_stop_cancel_before_scale_in: bool
     block_if_protected_quantity_below_position_quantity: bool
+    require_real_additive_stop_proof: bool = True
+    real_additive_stop_proof_completed_by_m44d: bool = False
 
     @model_validator(mode="after")
     def validate_scale_in_bounds(self) -> Self:
@@ -284,6 +286,8 @@ class ScaleInConfig(StrictModel):
             raise ValueError("scale-in requires protective stop after added fill")
         if not self.block_if_protected_quantity_below_position_quantity:
             raise ValueError("under-protected positions must block scale-in")
+        if not self.require_real_additive_stop_proof:
+            raise ValueError("M45 scale-in activation requires real additive-stop proof")
         return self
 
 
@@ -302,11 +306,11 @@ class ValidationLongPolicy(StrictModel):
     @model_validator(mode="after")
     def validate_long_policy(self) -> Self:
         if not self.enabled:
-            raise ValueError("v0.5 frozen validation starts with long policy enabled")
+            raise ValueError("v0.6 frozen validation starts with long policy enabled")
         if self.active_breakout_lookback != 20:
-            raise ValueError("v0.5 frozen validation active breakout must be 20D")
+            raise ValueError("v0.6 frozen validation active breakout must be 20D")
         if 55 not in self.research_breakout_lookbacks:
-            raise ValueError("v0.5 must keep 55D breakout research-only")
+            raise ValueError("v0.6 must keep 55D breakout research-only")
         if not self.same_day_reentry_forbidden:
             raise ValueError("same-day re-entry must be forbidden at validation start")
         if self.early_close_new_entries_allowed:
@@ -318,15 +322,25 @@ class ValidationShortPolicy(StrictModel):
     enabled_at_validation_start: bool
     implementation_present: bool
     activation_requires_future_rehearsal: bool
+    real_short_lifecycle_proof_completed_by_m44d: bool = False
+    paper_only: bool = True
+    live_shorting_enabled: bool = False
 
     @model_validator(mode="after")
     def validate_short_policy(self) -> Self:
-        if self.enabled_at_validation_start:
-            raise ValueError("shorts must remain disabled at validation start")
         if not self.implementation_present:
-            raise ValueError("v0.5 requires dormant short-side implementation")
-        if not self.activation_requires_future_rehearsal:
-            raise ValueError("short activation requires a future rehearsal milestone")
+            raise ValueError("v0.6 requires short-side implementation")
+        if (
+            self.enabled_at_validation_start
+            and not self.real_short_lifecycle_proof_completed_by_m44d
+        ):
+            raise ValueError("M45 short activation requires M44D lifecycle proof")
+        if self.enabled_at_validation_start and self.activation_requires_future_rehearsal:
+            raise ValueError("short activation cannot still require a future rehearsal after M44D")
+        if not self.paper_only:
+            raise ValueError("short validation must remain paper-only")
+        if self.live_shorting_enabled:
+            raise ValueError("live shorting remains forbidden")
         return self
 
 
@@ -336,19 +350,21 @@ class ValidationScaleInPolicy(StrictModel):
     stage_gate_required: bool
     required_clean_scheduled_runs_before_enable: int = Field(ge=0)
     require_real_broker_additive_stop_proof: bool
+    real_additive_stop_proof_completed_by_m44d: bool = False
+    short_scale_in_enabled_at_validation_start: bool = False
 
     @model_validator(mode="after")
     def validate_scale_in_policy(self) -> Self:
         if not self.implementation_present:
             raise ValueError("scale-in implementation must remain present")
-        if self.enabled_at_validation_start:
-            raise ValueError("scale-ins must be disabled at validation start")
         if not self.stage_gate_required:
             raise ValueError("scale-in enablement requires a stage gate")
-        if self.required_clean_scheduled_runs_before_enable < 10:
-            raise ValueError("scale-in stage gate requires at least 10 clean scheduled runs")
         if not self.require_real_broker_additive_stop_proof:
             raise ValueError("scale-in stage gate requires real broker additive-stop proof")
+        if self.enabled_at_validation_start and not self.real_additive_stop_proof_completed_by_m44d:
+            raise ValueError("M45 scale-in activation requires M44D additive-stop proof")
+        if self.short_scale_in_enabled_at_validation_start:
+            raise ValueError("short scale-ins remain disabled at validation start")
         return self
 
 
@@ -425,7 +441,7 @@ class ValidationConfig(StrictModel):
     carry_in_positions_allowed: bool
     validation_clock_started: bool
     validation_window_weeks: int = Field(gt=0)
-    active_spec_version: Literal["v0.5"]
+    active_spec_version: Literal["v0.6"]
     active_mode: Literal["paper"]
     live_trading_enabled: bool
     autonomous_live_execution_enabled: bool
@@ -441,13 +457,13 @@ class ValidationConfig(StrictModel):
     @model_validator(mode="after")
     def validate_frozen_start_boundaries(self) -> Self:
         if self.frozen_validation_enabled or self.frozen_validation_start_allowed:
-            raise ValueError("M44 must not enable or allow frozen validation start")
+            raise ValueError("M44D must not enable or allow frozen validation start")
         if not self.flat_start_required:
-            raise ValueError("v0.5 requires a flat broker baseline before validation")
+            raise ValueError("v0.6 requires a flat broker baseline before validation")
         if self.carry_in_positions_allowed:
             raise ValueError("carry-in positions are not allowed at validation start")
         if self.validation_clock_started:
-            raise ValueError("M44 must not start the validation clock")
+            raise ValueError("M44D must not start the validation clock")
         if self.live_trading_enabled or self.autonomous_live_execution_enabled:
             raise ValueError("validation config cannot enable live or autonomous live execution")
         if self.level4_ready:
@@ -514,7 +530,7 @@ class UniverseBucketsConfig(StrictModel):
     def validate_buckets(self) -> Self:
         expected_short = ("SPY", "QQQ", "DIA", "IWM")
         if self.short_eligible_broad_etfs != expected_short:
-            raise ValueError("v0.5 short-eligible universe must be SPY/QQQ/DIA/IWM only")
+            raise ValueError("v0.6 short-eligible universe must be SPY/QQQ/DIA/IWM only")
         for symbol in (*self.broad_etfs, *self.sector_etfs, *self.single_name_mega_caps):
             if symbol != symbol.upper():
                 raise ValueError("universe bucket symbols must be uppercase")
@@ -652,6 +668,9 @@ class ShortsConfig(StrictModel):
     paper_only_short_exposure: bool
     allow_live_shorting: bool
     require_explicit_short_activation: bool
+    enabled_at_validation_start: bool = False
+    real_short_lifecycle_proof_completed_by_m44d: bool = False
+    short_scale_in_enabled_at_validation_start: bool = False
     eligible_symbols: tuple[str, ...]
     allow_individual_stock_shorts: bool
     allow_sector_etf_shorts: bool
@@ -682,8 +701,15 @@ class ShortsConfig(StrictModel):
             raise ValueError("short capability must be paper-only")
         if self.allow_live_shorting:
             raise ValueError("live shorting is not allowed")
-        if not self.require_explicit_short_activation:
-            raise ValueError("short activation requires explicit future approval")
+        if self.enabled_at_validation_start and not self.enabled:
+            raise ValueError("validation-start shorts require shorts.enabled=true")
+        if (
+            self.enabled_at_validation_start
+            and not self.real_short_lifecycle_proof_completed_by_m44d
+        ):
+            raise ValueError("validation-start shorts require M44D real paper proof")
+        if self.short_scale_in_enabled_at_validation_start:
+            raise ValueError("short scale-ins remain disabled at validation start")
         if self.eligible_symbols != ("SPY", "QQQ", "DIA", "IWM"):
             raise ValueError("initial short universe must be SPY/QQQ/DIA/IWM only")
         forbidden = {
@@ -709,7 +735,7 @@ class ShortsConfig(StrictModel):
         if missing:
             raise ValueError(f"required short gates disabled: {missing}")
         if self.max_add_entries_per_symbol != 0:
-            raise ValueError("short add-on entries are disabled in v0.5")
+            raise ValueError("short add-on entries are disabled in v0.6")
         if self.max_total_symbol_qty != 1:
             raise ValueError("short total symbol quantity cap must be one share")
         return self
@@ -740,8 +766,8 @@ class ValidationRiskConfig(StrictModel):
 
     @model_validator(mode="after")
     def validate_validation_risk(self) -> Self:
-        if self.max_scale_ins_per_day_at_start != 0:
-            raise ValueError("scale-ins are disabled at validation start")
+        if self.max_scale_ins_per_day_at_start not in {0, 1}:
+            raise ValueError("v0.6 validation allows at most one max long scale-in per day")
         if self.max_unresolved_critical_incidents != 0:
             raise ValueError("validation start requires zero unresolved critical incidents")
         if self.soft_drawdown_review_pct >= self.hard_drawdown_fail_pct:

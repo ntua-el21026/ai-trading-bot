@@ -1,4 +1,4 @@
-"""Side-aware execution semantics for v0.5 signed positions."""
+"""Side-aware execution semantics for v0.6 signed positions."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def can_open_position_side(
     current_side: PositionSide,
     requested_side: PositionSide,
 ) -> bool:
-    """Return whether v0.5 can open requested side without a same-symbol reversal."""
+    """Return whether v0.6 can open requested side without a same-symbol reversal."""
 
     if requested_side == "flat":
         return True

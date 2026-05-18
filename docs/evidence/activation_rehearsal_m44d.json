@@ -1,0 +1,221 @@
+{
+  "autonomous_live_execution_enabled": false,
+  "blockers": [
+    "scale_in_entry_submit_failed:invalid_order_request",
+    "scale_in_entry_not_filled"
+  ],
+  "broker_writes_performed": true,
+  "final_broker_baseline": {
+    "account_reachable": true,
+    "clock_is_open": true,
+    "clock_reachable": true,
+    "open_orders_count": 0,
+    "paper_endpoint_proven": true,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "symbols_with_open_orders": [],
+    "symbols_with_positions": []
+  },
+  "frozen_validation_started": false,
+  "latest_spec_path": "docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md",
+  "latest_spec_version": "v0.6",
+  "level4_ready": false,
+  "leverage_enabled": false,
+  "live_trading_enabled": false,
+  "m45_long_short_scalein_readiness": false,
+  "operator_approval_marker": "MILESTONE_44D_SHORT_AND_SCALE_IN_REHEARSAL_AND_LONG_SHORT_SCALEIN_READINESS",
+  "packet_id": "activation-rehearsal-m44d-20260518T141121Z",
+  "pre_run_broker_state": {
+    "account_reachable": true,
+    "clock_is_open": true,
+    "clock_reachable": true,
+    "open_orders_count": 0,
+    "paper_endpoint_proven": true,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders",
+    "symbols_with_open_orders": [],
+    "symbols_with_positions": []
+  },
+  "real_scale_in_broker_write_performed": true,
+  "real_short_broker_write_performed": true,
+  "scale_in_rehearsal": {
+    "additive_protective_stop_result": null,
+    "aggregate_long_protection_check": {
+      "passed": true,
+      "position_quantity": 0.0,
+      "protected_quantity_sum": 0.0,
+      "reason_code": "aggregate_protection_ok"
+    },
+    "blockers": [
+      "scale_in_entry_submit_failed:invalid_order_request",
+      "scale_in_entry_not_filled"
+    ],
+    "broker_writes_performed": true,
+    "cleanup_sell_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "sell",
+      "status": "filled",
+      "submitted": true
+    },
+    "cleanup_stop_cancel_result": "session_protective_stops_cancelled",
+    "emergency_reprotect_result": null,
+    "fallback_used": false,
+    "final_open_orders_count": 0,
+    "final_positions_count": 0,
+    "final_reconciliation": "flat_zero_positions_zero_open_orders",
+    "initial_entry_request_summary": {
+      "client_order_id_present": true,
+      "limit_price": 177.01,
+      "order_type": "limit",
+      "quantity": 1.0,
+      "role": "initial_entry",
+      "side": "buy",
+      "stop_price": null,
+      "symbol": "XLK",
+      "time_in_force": "day"
+    },
+    "initial_entry_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "buy",
+      "status": "filled",
+      "submitted": true
+    },
+    "initial_fill_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "buy",
+      "status": "filled",
+      "submitted": true
+    },
+    "initial_protective_stop_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "reason": null,
+      "required_quantity": 1.0,
+      "side": "sell",
+      "status": "new",
+      "verified": true,
+      "verified_quantity": 1.0
+    },
+    "scale_in_entry_request_summary": {
+      "client_order_id_present": true,
+      "limit_price": 177.01,
+      "order_type": "limit",
+      "quantity": 1.0,
+      "role": "scale_in_entry",
+      "side": "buy",
+      "stop_price": null,
+      "symbol": "XLK",
+      "time_in_force": "day"
+    },
+    "scale_in_fill_result": null,
+    "selected_symbol": "XLK",
+    "succeeded": false
+  },
+  "schedules_activated": false,
+  "short_rehearsal": {
+    "account_shorting_snapshot": {
+      "environment": "paper",
+      "equity_above_2000": true,
+      "equity_available": true,
+      "shorting_enabled": true
+    },
+    "aggregate_short_protection_check": {
+      "passed": true,
+      "position_quantity": 0.0,
+      "protected_quantity_sum": 0.0,
+      "reason_code": "aggregate_protection_ok"
+    },
+    "asset_shortability_snapshot": {
+      "asset_class": "etf",
+      "easy_to_borrow": true,
+      "marginable": true,
+      "shortable": true,
+      "symbol": "IWM",
+      "tradable": true
+    },
+    "blockers": [],
+    "broker_writes_performed": true,
+    "buy_to_cover_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "buy",
+      "status": "filled",
+      "submitted": true
+    },
+    "cleanup_stop_cancel_result": "short_protective_stop_cancelled",
+    "emergency_reprotect_result": null,
+    "fallback_used": false,
+    "fill_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "sell",
+      "status": "filled",
+      "submitted": true
+    },
+    "final_open_orders_count": 0,
+    "final_positions_count": 0,
+    "final_reconciliation": "flat_zero_positions_zero_open_orders",
+    "protective_buy_stop_request_summary": {
+      "client_order_id_present": true,
+      "limit_price": null,
+      "order_type": "stop",
+      "quantity": 1.0,
+      "role": "short_protective_stop",
+      "side": "buy",
+      "stop_price": 283.59,
+      "symbol": "IWM",
+      "time_in_force": "gtc"
+    },
+    "protective_buy_stop_verification": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "reason": null,
+      "required_quantity": 1.0,
+      "side": "buy",
+      "status": "pending_new",
+      "verified": true,
+      "verified_quantity": 1.0
+    },
+    "selected_symbol": "IWM",
+    "short_entry_result": {
+      "broker_order_id_present": true,
+      "client_order_id_present": true,
+      "filled_quantity": 1.0,
+      "reason": null,
+      "side": "sell",
+      "status": "filled",
+      "submitted": true
+    },
+    "short_order_request_summary": {
+      "client_order_id_present": true,
+      "limit_price": 275.33,
+      "order_type": "limit",
+      "quantity": 1.0,
+      "role": "short_entry",
+      "side": "sell",
+      "stop_price": null,
+      "symbol": "IWM",
+      "time_in_force": "day"
+    },
+    "signed_position_result": {
+      "short_position_observed": false,
+      "signed_qty_after_short_fill": 0.0,
+      "symbol": "IWM"
+    },
+    "succeeded": true
+  },
+  "timestamp": "2026-05-18T14:11:21.178016Z"
+}

@@ -197,3 +197,23 @@ single operator-invoked broker lifecycle smoke harness.
 - Milestone 27 readiness aggregation does not invoke broker write smokes or touch broker state; it
   records existing broker evidence only.
 - Level 4 micro-live readiness remains unsatisfied.
+
+## Milestone 44D Broker Rehearsal Boundary
+
+M44D adds an explicitly gated real Alpaca paper rehearsal script for v0.6 readiness:
+`scripts/run_activation_rehearsal_m44d.py`.
+
+The script is allowed to call Alpaca paper write endpoints only for:
+
+- one broad-ETF short rehearsal and cleanup;
+- one long scale-in rehearsal and cleanup.
+
+The script must use the exact paper endpoint, must refuse live endpoints, must not activate
+schedules, and must leave no recurring workflow active. It uses broker read-only state, asset, and
+execution reference-price checks before any write. Tiingo EOD remains the primary signal-data
+provider; Alpaca market data used by the script is only an execution reference for bounded paper
+order collars.
+
+The required final broker baseline is zero open orders and zero positions. If cleanup fails after a
+stop cancellation, the script must emergency re-protect the remaining position and block M45
+readiness.

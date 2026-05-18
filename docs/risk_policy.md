@@ -180,3 +180,30 @@ autonomous live execution remain disabled. Level 4 readiness is not satisfied be
 real broker/provider, managed database runtime, dashboard, alerting, and go/no-go evidence are still
 absent. The Milestone 21A harness is not actual paper trading and does not satisfy frozen paper or
 Level 4 evidence gates.
+
+## Milestone 44D v0.6 Risk Policy
+
+v0.6 makes shorts eligible for M45 paper validation only after the M44D real paper rehearsal
+succeeds. Short risk remains paper-only:
+
+- live shorting is disabled;
+- short universe is `SPY`, `QQQ`, `DIA`, `IWM`;
+- individual-stock shorts, sector-ETF shorts, leveraged ETFs, and inverse ETFs are rejected;
+- maximum total short symbol quantity is one share;
+- only one open short symbol is allowed;
+- every filled short quantity requires a verified protective buy stop;
+- short scale-ins remain disabled at validation start.
+
+v0.6 also makes long scale-ins eligible for M45 paper validation only after the M44D additive-stop
+rehearsal succeeds:
+
+- one initial entry plus one add-on entry per symbol;
+- maximum total symbol quantity is two shares;
+- an existing verified stop is required before add-on entry;
+- the add-on fill requires an additive sell stop for the added quantity;
+- aggregate verified stop quantity must cover total open long quantity;
+- no stop cancel/replace is allowed during the scale-in entry path.
+
+The final M44D and M45 start baseline must be flat with zero open orders, zero positions, and clean
+reconciliation. Live trading, autonomous live execution, leverage, and Level 4 readiness remain out
+of scope.
