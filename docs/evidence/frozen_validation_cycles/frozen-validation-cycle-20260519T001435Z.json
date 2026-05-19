@@ -1,0 +1,33 @@
+{
+  "blockers": [],
+  "broker_state": {
+    "open_orders_count": 0,
+    "positions_count": 0,
+    "reconciliation_summary": "flat_zero_positions_zero_open_orders"
+  },
+  "broker_writes_performed": false,
+  "broker_writes_reason": "none",
+  "candidate_generation_status": "no_trade_activation_cycle_no_forced_candidates",
+  "cycle_label": "daily_report",
+  "cycle_result": "no_trade",
+  "due_cycle_detected": true,
+  "forced_trades": false,
+  "frozen_policy_drift_detected": false,
+  "m45_evidence_reference": "docs/evidence/frozen_paper_validation_start_m45.json",
+  "market_data_status": {
+    "feed": "eod",
+    "latest_check_result": "verified",
+    "provider": "tiingo",
+    "sample_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "XLK"
+    ]
+  },
+  "packet_id": "frozen-validation-cycle-20260519T001435Z",
+  "timestamp": "2026-05-19T00:14:35.625167Z",
+  "validation_status": "active",
+  "validation_window_active": true
+}
