@@ -126,18 +126,6 @@ Spec-governed constraints confirmed:
 - Temporal workflows must remain deterministic and call activities for broker, database, AI/news, alert, wall-clock, random, and other side effects.
 - Vercel/dashboard is dashboard/control-plane only; execution workers run outside Vercel and broker credentials must not be exposed to frontend code.
 
-## Worktree State
-
-Initial `git status --short` returned no output. The worktree was clean at audit start.
-
-After running the requested project snapshot scripts and adding this audit document, documentation files are expected to be modified:
-
-- `docs/post_milestone_11_audit.md`
-- `docs/project_structure/project_struct.txt`
-- `docs/project_analytics/project_analytics.txt`
-
-No application code was intentionally changed.
-
 ## Implementation Inventory
 
 | Area | Status | Evidence | Notes |
