@@ -1,6 +1,6 @@
 # Historical README snapshot
 
-Retained from commit `6724e2b72a23f0920f15f72ee907119a7d565316` before portfolio presentation changes. Statements below describe their original source and observation time. Relative Markdown links have been adjusted for this directory; current status is in the repository README and its linked status records.
+Historical README from commit `6724e2b72a23f0920f15f72ee907119a7d565316`. Relative Markdown links use this directory; current status is in the repository README and its linked status records.
 
 # AI Trading Bot
 

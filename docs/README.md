@@ -20,4 +20,4 @@ The [v0.6 specification](app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md) is the curr
 - [evidence/](evidence/) retains machine-readable observations. A `GO` for a preparation step does not imply active deployment, completed acceptance or live-trading readiness.
 - [Level 4 readiness](level4_micro_live_readiness.md) records future operational gates; it does not enable live trading.
 
-No runbook command should be treated as a required portfolio setup step. Source review and fake/local tests need no provider credentials. Retain private configuration outside Git and preserve evidence when a prerequisite is unavailable or a gate fails.
+Source review and fake/local tests need no provider credentials. Keep private configuration outside Git and retain failed-gate evidence.
