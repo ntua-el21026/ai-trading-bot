@@ -1,5 +1,8 @@
 # AI Trading Bot
 
+Publication preparation: private documents are excluded and historical paper records are explicitly redacted. See [publication scope](docs/PUBLICATION_SCOPE.md). This local candidate is pending remote cleanup and publication verification.
+
+
 Paper-trading research framework for US equities/ETFs, with deterministic strategy, risk, execution and reconciliation components, Temporal workflow boundaries and bounded AI-assisted news analysis. The [v0.6 specification](docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md) governs the paper-validation policy. Live trading and completed autonomous operation are not established by the retained evidence.
 
 Maintained by **Michail-Athanasios Peppas**. AI-assisted implementation/review records remain part of the repository's provenance; repository ownership does not replace attribution to imported components or external providers.
