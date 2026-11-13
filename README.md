@@ -1,74 +1,66 @@
 # AI Trading Bot
 
-A paper-trading research framework with deterministic strategy, risk, execution
-and reconciliation components, Temporal orchestration and a bounded advisory
-AI/news layer. AI has no broker-write authority and cannot override risk limits.
+Paper-trading research framework for US equities/ETFs, with deterministic strategy, risk, execution and reconciliation components, Temporal workflow boundaries and bounded AI-assisted news analysis. The [v0.6 specification](docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md) governs the paper-validation policy. Live trading and completed autonomous operation are not established by the retained evidence.
 
-## Recorded state
+Maintained by **Michail-Athanasios Peppas**. AI-assisted implementation/review records remain part of the repository's provenance; repository ownership does not replace attribution to imported components or external providers.
 
-The v0.6 paper-validation clock started on 18 May 2026 with a 13 July target.
-The latest committed May observations do **not** establish completion of that
-56-day run. The [durable-runner evidence](docs/evidence/durable_runner_m47b.json)
-records deployment_ready_not_active, no accepted heartbeat and off-PC NO_GO.
-Elapsed calendar time is not validation evidence. Live trading, profitability
-and completed autonomous operation are not supported claims.
+## Implemented boundaries
 
-The source contains controlled paper-operation tooling as well as fake/local
-adapters. Those operator-gated paths are distinct from the offline entry point
-below. Earlier milestone descriptions and detailed validation commands remain in
-the [historical README](docs/history/readme-before-portfolio-preparation.md).
+| Area | Implementation |
+| --- | --- |
+| Data and backtests | [packages/data/](packages/data/) normalizes supplied observations; [packages/backtesting/](packages/backtesting/) evaluates explicit supplied signals under declared fee/slippage and timing conventions |
+| Deterministic decisions | [Strategy](packages/strategy/), [risk](packages/risk/) and [execution](packages/execution/) modules define filters, bounded sizing, execution intents, idempotency and lifecycle contracts |
+| Broker and reconciliation | [packages/broker/](packages/broker/) supplies fake clients and explicitly gated Alpaca paper adapters; [reconciliation](packages/reconciliation/) compares broker/internal state |
+| Durable orchestration | [Worker workflows](apps/workers/app/workflows/) and activities separate deterministic orchestration from side effects; several workflow classes retain skeleton/placeholder activity paths |
+| Ledger | [packages/ledger/](packages/ledger/) provides local SQLite repositories and explicit PostgreSQL runtime boundaries; [db/migrations/](db/migrations/) retains the audit schema |
+| AI/news | [packages/ai/](packages/ai/) implements shortlist-only retrieval, provider budgets, schema validation, neutral fallbacks and non-increasing influence |
+| Paper validation | [packages/paper/](packages/paper/) and [scripts/](scripts/) contain fake/local demonstrations and separately gated paper-session/readiness/runner tooling |
+| Monitoring | [Reporting](packages/reporting/), [control-plane contracts](packages/control_plane/) and a [static dashboard preview](apps/dashboard/README.md) expose retained state |
 
-## Architecture
+AI has no broker-write authority, cannot create or modify orders and cannot override deterministic risk limits. The frozen validation policy is negative-only for AI influence. Paper-only short and long scale-in validation paths do not enable live shorts, leverage or autonomous live execution.
 
-- Data models normalize supplied market/broker observations and retain provenance.
-- Deterministic strategy and risk modules construct bounded execution intents.
-- Temporal workflows coordinate activities; external effects belong in activities.
-- Broker adapters reconcile order/fill/stop state behind explicit paper gates.
-- SQLite supports local tests; managed PostgreSQL requires separate configuration.
-- News/AI components return schema-checked advisory results and neutral fallbacks.
-- Reporting and a read-only dashboard project retained operational state.
+The backtest consumes caller-supplied signals; it is not evidence of a predictive signal generator or profitability. A full Temporal deployment and each broker-connected session require their own operational qualification.
 
-The backtest consumes explicit supplied signals under its declared fee/slippage
-and timing convention. It does not establish a predictive model or causal signal
-generator. Any future strategy result needs independent data/split/execution
-qualification.
+## Recorded project status
 
-## Offline setup and tests
+The v0.6 paper-validation clock started on **18 May 2026**, with a **13 July** target. The latest committed May observations do **not** establish completion of the 56-day run. The [durable-runner evidence](docs/evidence/durable_runner_m47b.json) records `deployment_ready_not_active`, a missing heartbeat and off-PC `NO_GO`. Calendar time alone is not validation evidence.
 
-Python 3.12 or later and uv are required. Install dependencies in an isolated
-environment, keep credentials unset and retain fake/local defaults.
+The reportable state is the committed evidence, including unsuccessful gates and incomplete operation. No new broker session, training, profitability test, long-run acceptance or deployment was performed for this documentation update. Earlier milestone narratives remain in the [historical README](docs/history/readme-before-portfolio-preparation.md).
 
-~~~bash
-uv sync --dev
+## Offline review and setup
+
+```bash
+git clone https://github.com/ntua-el21026/ai-trading-bot.git
+cd ai-trading-bot
+```
+
+Python **3.12+** and uv are declared for backend development; `pyproject.toml` and `uv.lock` define dependencies. In an isolated environment, keep credentials unset and use fake/local defaults:
+
+```bash
+uv sync --locked --group dev
 uv run --group dev pytest tests/unit -m "not integration"
-uv run python scripts/run_paper_dry_run.py
-~~~
+uv run python scripts/run_paper_dry_run.py --mode fake-local
+```
 
-The dry run uses fake adapters and in-memory SQLite. It does not call broker,
-AI/news, alert, market-data, Temporal or managed database services. Do not substitute
-paper-operation or credentialed smoke commands for this demonstration.
+The dry-run entry point explicitly accepts only `fake-local`, using in-memory SQLite, fake broker/alert clients and neutral AI. It does not call broker, AI/news, market-data, Temporal or managed-database services. The commands above are reader instructions; the unit suite and dry run were not executed in this documentation pass because this fresh checkout has no installed project dependencies.
 
-Temporal server/replay tests, managed-database integration, provider smoke tests,
-long-duration paper acceptance and deployment qualification are separate gates.
-A unit pass or dashboard build does not satisfy them.
+The dashboard is a minimal static HTML/CSS preview generated by Node **20+**, with no frontend framework or browser backend calls. Its root package scripts can be inspected or run independently:
 
-## Technical documentation
+```bash
+npm run build
+PYTHONPATH=. python3 scripts/check_vercel_dashboard_preview.py --frontend-only
+```
 
-Start with the [v0.6 specification](docs/app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md)
-and the source modules under packages and apps. Configuration under config
-defines strategy, execution, risk, regime, universe, Temporal and AI boundaries.
-Keep their acceptance criteria and financial parameters unchanged during
-presentation work. The historical README links runbooks and milestone-specific
-checks, including intentionally gated commands.
+`npm run build` writes `apps/dashboard/dist/`; it does not start a worker. The frontend-only check reports structural failures separately from missing activation gates; a zero exit status does not activate or qualify deployment. Vercel configuration targets this preview, while execution workers belong outside Vercel. Provider deployment and scheduler activation are separate owner operations.
 
-## Attribution, limitations and release
+## Configuration and operating documentation
 
-Maintained by Michail-Athanasios Peppas, with AI-assisted implementation/review
-records retained for provenance. The [MIT license](LICENSE) covers material for
-which that grant applies; provider data, imported components and third-party
-services retain their own terms.
+[config/](config/) separates system, strategy, regime, universe, risk, execution, market-data, Temporal and AI policy. `config/system.yaml` defaults to paper/dry-run with live trading and autonomous execution disabled. Keep the declared risk parameters and acceptance criteria unchanged when inspecting the project.
 
-Use synthetic fixtures for public demonstrations. Review paper-session identifiers,
-private operations records and provider/data terms before publication. Code
-accessibility, reuse licensing, long-run research acceptance and authorization to
-operate a broker-connected system are separate decisions.
+[.env.example](.env.example) lists optional provider/runtime variables. Local fake tests do not need them. `DATABASE_URL`, `TEMPORAL_ADDRESS`/`TEMPORAL_NAMESPACE`, Alpaca paper keys, news/AI keys and alert credentials belong to their separately gated integrations. Public dashboard inputs are restricted to `NEXT_PUBLIC_APP_ENV` and `NEXT_PUBLIC_DASHBOARD_ENV`; never expose provider keys through the frontend.
+
+[docs/README.md](docs/README.md) is the technical index. Temporal test-server/replay checks, managed-database integration, provider smoke tests, controlled paper operations and long-duration acceptance are distinct gates. A static build or unit pass does not satisfy them. The runbooks describe operational prerequisites; they are not an instruction to activate services during source review.
+
+## Licensing and limitations
+
+The [MIT license](LICENSE) covers material for which that grant applies. Provider data, imported components and third-party services retain their own access and reuse terms. Use synthetic fixtures for demonstrations; private operational records, paper-session identifiers and data terms require review before publication. Research acceptance and authorization to operate a broker-connected system are separate decisions.
