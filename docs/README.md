@@ -1,6 +1,6 @@
 # Technical documentation index
 
-The [v0.6 specification](app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md) is the current policy reference. Versioned earlier specifications, milestone narratives, AI research notes and recorded evidence preserve their historical role; they do not establish that all target capabilities are active.
+The [v0.6 specification](app/Autonomous_AI_Trading_Bot_SPEC_v0.6.md) is the current policy reference. Versioned earlier specifications, milestone narratives, AI research notes and recorded evidence preserve their historical role.
 
 ## Implementation and contracts
 
