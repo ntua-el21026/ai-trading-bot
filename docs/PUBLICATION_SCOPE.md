@@ -1,6 +1,6 @@
 # Publication scope and historical evidence
 
-This local source candidate excludes a completed private account document and
+The published source excludes a completed private account document and
 copies of broker legal agreements whose redistribution permission has not been
 established. The original private history remains in owner-controlled storage.
 Official broker documents are referenced through [Alpaca disclosures](https://alpaca.markets/disclosures).
@@ -15,6 +15,8 @@ and application code are preserved. Original private records remain separately
 required for an authorized forensic reproduction.
 
 The repository's incomplete validation, refused activation and operational gates
-remain in force. Preparation performs no broker calls, trades or deployment.
-Local history removal does not certify that GitHub caches or existing deployment
-sources have been purged. Publication requires separate server-side clearance.
+remain in force. These source records do not establish completed broker operation
+or live-trading authorization.
+Repository history cleanup does not certify that GitHub caches or existing
+deployment sources have been purged. Historical object and cache clearance
+requires separate server-side verification.
